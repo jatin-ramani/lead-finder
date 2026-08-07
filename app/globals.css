@@ -1839,3 +1839,126 @@ code {
 .lf-user-status--online { background: #4ade80; }
 .lf-user-status--degraded { background: #fbbf24; }
 .lf-user-status--offline { background: #f87171; }
+
+
+/* ==========================================================================
+   BUSINESSES  (Phase 2)
+   ========================================================================== */
+
+/* Refetch: the rows stay, dimmed, so paging reads as movement through one
+   table rather than a reload. Pointer events are blocked so a click cannot
+   land on a row that is about to be replaced. */
+.lf-table-card.is-refetching .lf-table {
+  opacity: 0.55;
+  pointer-events: none;
+  transition: opacity 140ms ease;
+}
+
+/* Suspense fallback for the route: the table's footprint, so the page does
+   not jump when the real table replaces it. */
+.lf-table-card--pending {
+  min-height: 420px;
+  padding: 20px;
+}
+
+/* ── Bulk selection bar ───────────────────────────────────────────────────*/
+.lf-bulk-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 12px;
+  padding: 10px 14px;
+  border: 1px solid color-mix(in srgb, var(--lf-accent) 34%, var(--lf-border));
+  border-radius: 12px;
+  background: var(--lf-accent-soft);
+  animation: lf-bulk-in 140ms ease both;
+}
+
+@keyframes lf-bulk-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.lf-bulk-count {
+  font-size: 13px;
+  color: var(--lf-text);
+}
+
+.lf-bulk-count strong {
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.lf-bulk-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Table row focus ──────────────────────────────────────────────────────*/
+/* Rows are keyboard-operable, so they need a visible focus state. `outline`
+   on a <tr> is unreliable across browsers; an inset shadow on the cells is
+   not, and it follows the row across a horizontal scroll. */
+.lf-table-row:focus-visible {
+  outline: none;
+}
+
+.lf-table-row:focus-visible > td {
+  background: var(--lf-raised);
+  box-shadow: inset 0 2px 0 var(--lf-accent), inset 0 -2px 0 var(--lf-accent);
+}
+
+.lf-table-row:focus-visible > td:first-child {
+  box-shadow:
+    inset 2px 0 0 var(--lf-accent),
+    inset 0 2px 0 var(--lf-accent),
+    inset 0 -2px 0 var(--lf-accent);
+}
+
+.lf-table-row:focus-visible > td:last-child {
+  box-shadow:
+    inset -2px 0 0 var(--lf-accent),
+    inset 0 2px 0 var(--lf-accent),
+    inset 0 -2px 0 var(--lf-accent);
+}
+
+/* Counts and page ranges sit in columns and must not jitter as they change. */
+.lf-pagination .ant-pagination-total-text,
+.lf-pagination .ant-pagination-item {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Filter bar, narrow screens ───────────────────────────────────────────*/
+@media (max-width: 900px) {
+  /* Four controls plus two buttons wrap into an unreadable staircase at this
+     width. Each control takes a full row instead, and the two buttons share
+     the last one. */
+  .lf-filter-card .lf-filter-control,
+  .lf-filter-card .lf-filter-search {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .lf-filter-card .ms-auto {
+    margin-inline-start: 0;
+  }
+}
+
+@media (max-width: 560px) {
+  .lf-bulk-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .lf-bulk-actions {
+    justify-content: space-between;
+  }
+}
