@@ -1,4 +1,8 @@
-import { ApiOutlined, ShopOutlined } from "@ant-design/icons";
+import {
+  ApiOutlined,
+  RadarChartOutlined,
+  ShopOutlined,
+} from "@ant-design/icons";
 import type { ReactNode } from "react";
 
 export interface NavItem {
@@ -19,12 +23,25 @@ export interface NavSection {
 /**
  * The navigation lists routes that exist and work. Nothing else.
  *
- * Dashboard, Leads and Scanner were removed with the old data layer they were
- * built on and return in the phases that rebuild them. A link to a page that
- * 404s, or to one showing an empty shell, is worse than no link: it teaches
- * people the product is broken.
+ * Dashboard and Leads were removed with the old data layer they were built on
+ * and return in the phases that rebuild them. A link to a page that 404s, or
+ * to one showing an empty shell, is worse than no link: it teaches people the
+ * product is broken.
  */
 export const NAV_SECTIONS: NavSection[] = [
+  {
+    label: "Discover",
+    items: [
+      {
+        key: "scanner",
+        href: "/scanner",
+        label: "Scanner",
+        icon: <RadarChartOutlined />,
+        title: "Scanner",
+        subtitle: "Pull businesses from Geoapify for a city and category",
+      },
+    ],
+  },
   {
     label: "Pipeline",
     items: [

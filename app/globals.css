@@ -1962,3 +1962,185 @@ code {
     justify-content: space-between;
   }
 }
+
+
+/* ==========================================================================
+   SCANNER  (Phase 3)
+   ========================================================================== */
+
+/* ── Totals strip ─────────────────────────────────────────────────────────*/
+.lf-scan-stats {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.lf-scan-stat {
+  padding: 14px 16px;
+  border: 1px solid var(--lf-border);
+  border-radius: 12px;
+  background: var(--lf-card);
+  box-shadow: var(--lf-shadow);
+}
+
+.lf-scan-stat-label {
+  margin: 0 0 4px;
+  font-size: 12px;
+  color: var(--lf-text-secondary);
+}
+
+/* The label carries a tooltip, so it must be focusable and look it. */
+.lf-scan-stat-hint {
+  border-bottom: 1px dotted var(--lf-text-muted);
+  cursor: help;
+}
+
+.lf-scan-stat-value {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 650;
+  line-height: 1.2;
+  color: var(--lf-text);
+  /* These sit in a row and change as scans finish; proportional digits would
+     make the whole strip shuffle sideways. */
+  font-variant-numeric: tabular-nums;
+}
+
+.lf-scan-stat-value--accent {
+  color: var(--lf-accent);
+}
+
+@media (max-width: 1199px) {
+  .lf-scan-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .lf-scan-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .lf-scan-stat-value {
+    font-size: 18px;
+  }
+}
+
+/* ── Live scan panel ──────────────────────────────────────────────────────*/
+.lf-scan-live {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.lf-scan-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lf-scan-target {
+  margin: 0;
+  font-size: 14px;
+  color: var(--lf-text);
+  overflow-wrap: anywhere;
+}
+
+.lf-scan-target strong {
+  font-weight: 650;
+}
+
+.lf-scan-sep {
+  margin: 0 7px;
+  color: var(--lf-text-muted);
+}
+
+.lf-scan-id {
+  margin: 2px 0 0;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11.5px;
+  color: var(--lf-text-muted);
+}
+
+.lf-scan-status {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.lf-scan-status--running {
+  color: var(--lf-accent);
+}
+
+.lf-scan-status--ok {
+  color: var(--lf-up);
+}
+
+.lf-scan-status--bad {
+  color: var(--lf-down);
+}
+
+.lf-scan-figures {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.lf-scan-figures > div {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--lf-raised);
+}
+
+.lf-scan-figures dt {
+  margin-bottom: 2px;
+  font-size: 12px;
+  color: var(--lf-text-secondary);
+}
+
+.lf-scan-figures dd {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 650;
+  color: var(--lf-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.lf-scan-note {
+  margin: 0;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: var(--lf-accent-soft);
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--lf-text-secondary);
+}
+
+.lf-form-note {
+  margin: 12px 0 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--lf-text-muted);
+}
+
+/* ── History table ────────────────────────────────────────────────────────*/
+/* Rows here are records, not links — nothing opens, so they must not offer
+   a pointer or a hover lift that implies otherwise. */
+.lf-table-row--static > td {
+  cursor: default;
+}
+
+.lf-num {
+  font-variant-numeric: tabular-nums;
+  font-weight: 550;
+}
+
+.lf-num--accent {
+  color: var(--lf-accent);
+}

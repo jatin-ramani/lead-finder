@@ -158,6 +158,13 @@ export type WebsiteDataResponse = DetailResponse<WebsiteData>;
 /** Job lifecycle values written by the backend. */
 export type JobStatus = "Pending" | "Running" | "Completed" | "Failed";
 
+/**
+ * A scan job, as `GET /scan/jobs` returns it.
+ *
+ * Note what is **absent**: there is no timestamp of any kind. Scan jobs cannot
+ * be dated, so history is ordered by id and nothing may claim to show when a
+ * scan ran. (Scrape jobs do carry `started_at` / `completed_at`.)
+ */
 export interface ScanJob {
   id: number;
   city: string | null;
@@ -166,6 +173,18 @@ export interface ScanJob {
   progress: number;
   total_businesses: number;
   new_businesses: number;
+
+  /**
+   * Dead columns. Present in the model and the migration, written by no code
+   * — always `0`, `0` and `null`. They appear to be the remains of an
+   * unimplemented grid scan.
+   *
+   * Modelled so nobody rediscovers them in a payload and assumes they mean
+   * something. **Do not render these.**
+   */
+  total_cells?: number;
+  completed_cells?: number;
+  current_cell?: string | null;
 }
 
 /** `GET /scan/jobs/latest` renames its counters; the list endpoint does not. */

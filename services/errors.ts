@@ -87,18 +87,23 @@ export class ApiError extends Error {
   }
 
   /**
-   * The id of the job that blocked this request, for a 409.
+   * The job this failure relates to, when the backend names one.
    *
-   * The backend puts it in `details.job_id` so the UI can link straight to the
-   * job already running instead of telling the user to go and find it.
+   * Two endpoints do. A 409 from a bulk scrape carries the id of the job
+   * already running, so the UI can link to it rather than telling the user to
+   * go and find it. A failed scan carries the id of the job it just marked
+   * "Failed", so the response and the history agree.
    */
-  get conflictingJobId(): number | null {
-    if (this.code !== ErrorCode.CONFLICT) return null;
-
+  get jobId(): number | null {
     const details = this.details as { job_id?: unknown } | null;
     const id = details?.job_id;
 
     return typeof id === "number" ? id : null;
+  }
+
+  /** The blocking job's id, specifically for a 409. */
+  get conflictingJobId(): number | null {
+    return this.code === ErrorCode.CONFLICT ? this.jobId : null;
   }
 
   /** True when retrying could plausibly succeed without the user changing anything. */

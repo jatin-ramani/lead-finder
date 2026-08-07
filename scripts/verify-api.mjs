@@ -221,6 +221,68 @@ console.log("\njobs and dashboard");
 
   const scanJobs = await call("/scan/jobs");
   check("GET /scan/jobs → an array", Array.isArray(scanJobs.body));
+  check(
+    "  unpaginated — no envelope, so summing it is honest",
+    Array.isArray(scanJobs.body) && !("pagination" in scanJobs.body),
+  );
+
+  const scanJob = scanJobs.body?.[0];
+
+  if (scanJob) {
+    check(
+      "  a scan job carries snake_case counters",
+      hasKeys(scanJob, [
+        "id",
+        "city",
+        "category",
+        "status",
+        "progress",
+        "total_businesses",
+        "new_businesses",
+      ]),
+    );
+    check(
+      "  and NO timestamp of any kind (history cannot be dated)",
+      !("created_at" in scanJob) &&
+        !("started_at" in scanJob) &&
+        !("completed_at" in scanJob),
+      "one appeared — ScanHistory can now show when a scan ran",
+    );
+    check(
+      "  the grid-scan columns are still dead (never render them)",
+      scanJob.total_cells === 0 &&
+        scanJob.completed_cells === 0 &&
+        scanJob.current_cell === null,
+      "one is now populated — revisit types/api.ts",
+    );
+  }
+
+  const latest = await call("/scan/jobs/latest");
+
+  if (latest.status === 200) {
+    check(
+      "GET /scan/jobs/latest → camelCase counters, unlike the list",
+      hasKeys(latest.body, [
+        "id",
+        "city",
+        "category",
+        "status",
+        "progress",
+        "totalBusinesses",
+        "newBusinesses",
+      ]),
+    );
+    check(
+      "  status is one the polling state machine knows",
+      ["Pending", "Running", "Completed", "Failed"].includes(latest.body.status),
+      latest.body.status,
+    );
+  } else {
+    check(
+      "GET /scan/jobs/latest → 404 before any scan (an empty state, not an error)",
+      latest.status === 404 && latest.body?.error === "NOT_FOUND",
+    );
+  }
 
   const scrapeJobs = await call("/scrape/jobs");
   check(
