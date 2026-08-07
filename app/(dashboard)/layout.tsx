@@ -1,13 +1,19 @@
 import type { ReactNode } from "react";
 
 import AppShell from "@/components/AppShell";
-import BusinessProvider from "@/providers/BusinessProvider";
+import QueryProvider from "@/providers/QueryProvider";
 
 /**
  * Shell for every workspace route.
  *
- * `BusinessProvider` sits above `AppShell` so the top-navbar search and refresh
- * button operate on the same dataset the pages render.
+ * `QueryProvider` sits above `AppShell` rather than inside each page so the
+ * cache spans navigations — moving between routes reuses what was already
+ * fetched instead of starting again.
+ *
+ * It replaces a `BusinessProvider` that fetched the entire business list once
+ * and shared the array. That worked only while the list endpoint returned
+ * everything; it is now paginated, and server state belongs in a cache that
+ * understands staleness, retries and invalidation.
  */
 export default function DashboardLayout({
   children,
@@ -15,8 +21,8 @@ export default function DashboardLayout({
   children: ReactNode;
 }) {
   return (
-    <BusinessProvider>
+    <QueryProvider>
       <AppShell>{children}</AppShell>
-    </BusinessProvider>
+    </QueryProvider>
   );
 }

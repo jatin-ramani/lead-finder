@@ -1,4 +1,4 @@
-import type { Business, BusinessStats } from "@/types/business";
+import type { Business } from "@/types/api";
 
 /** Treats empty strings, "null" and "-" as missing, which the scraper does emit. */
 export function isPresent(value?: string | null): value is string {
@@ -80,44 +80,10 @@ export function avatarColor(seed: string): string {
   return AVATAR_COLORS[hash % AVATAR_COLORS.length];
 }
 
-export function computeStats(
-  businesses: Business[],
-  todayScan: number,
-): BusinessStats {
-  let noWebsite = 0;
-  let emails = 0;
-  let phones = 0;
-
-  for (const business of businesses) {
-    if (!hasWebsite(business)) noWebsite += 1;
-    if (isPresent(business.email)) emails += 1;
-    if (isPresent(business.phone)) phones += 1;
-  }
-
-  return {
-    total: businesses.length,
-    noWebsite,
-    hasWebsite: businesses.length - noWebsite,
-    emails,
-    phones,
-    todayScan,
-  };
-}
-
-/** Unique, sorted, non-empty values for a field — powers the filter dropdowns. */
-export function uniqueValues(
-  businesses: Business[],
-  key: keyof Business,
-): string[] {
-  const set = new Set<string>();
-  for (const business of businesses) {
-    const value = business[key];
-    if (typeof value === "string" && isPresent(value)) {
-      set.add(value.trim());
-    }
-  }
-  return Array.from(set).sort((a, b) => a.localeCompare(b));
-}
+// `computeStats` and `uniqueValues` used to live here. Both aggregated the
+// full business list in the browser, which only worked because the client held
+// every row. `GET /dashboard/stats` returns the same figures computed in SQL,
+// and paginated lists mean the client no longer has the data to aggregate.
 
 export function toSelectOptions(values: string[]) {
   return values.map((value) => ({ label: value, value }));

@@ -5,8 +5,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
 
-import { API_BASE_URL } from "@/lib/api";
+import { useApiHealth } from "@/features/system/hooks/useApiHealth";
 import { activeNavItem, NAV_SECTIONS } from "@/lib/navigation";
+import { API_BASE_URL } from "@/services";
 import { SIDEBAR_BG, SIDEBAR_BORDER, sidebarTheme } from "@/lib/theme";
 
 const { Sider } = Layout;
@@ -45,6 +46,7 @@ export default function Sidebar({
   const pathname = usePathname();
   const activeKey = useMemo(() => activeNavItem(pathname).key, [pathname]);
   const isCollapsed = collapsed && !inDrawer;
+  const health = useApiHealth();
 
   const content = (
     <div className="lf-sidebar" style={{ background: SIDEBAR_BG }}>
@@ -110,12 +112,27 @@ export default function Sidebar({
         className="lf-sidebar-footer"
         style={{ borderTop: `1px solid ${SIDEBAR_BORDER}` }}
       >
+        {/*
+          This used to be a hardcoded green dot and the word "Connected",
+          shown whether or not the API was reachable — a status indicator that
+          could only ever report good news. It now reflects the real health
+          probe, sharing its cache entry with the System page so the two never
+          disagree and only one request is ever in flight.
+        */}
         {isCollapsed ? (
-          <Tooltip title={`API · ${API_BASE_URL}`} placement="right">
+          <Tooltip
+            title={`${health.label} · ${API_BASE_URL}`}
+            placement="right"
+          >
             <div className="lf-user-card lf-user-card--collapsed">
               <span className="lf-user-avatar" aria-hidden>
                 LF
-                <span className="lf-user-status" />
+                <span
+                  className={`lf-user-status lf-user-status--${health.connection}`}
+                />
+              </span>
+              <span className="lf-visually-hidden">
+                API status: {health.label}
               </span>
             </div>
           </Tooltip>
@@ -123,11 +140,16 @@ export default function Sidebar({
           <div className="lf-user-card">
             <span className="lf-user-avatar" aria-hidden>
               LF
-              <span className="lf-user-status" />
+              <span
+                className={`lf-user-status lf-user-status--${health.connection}`}
+              />
             </span>
             <span className="lf-user-text">
               <span className="lf-user-name">Lead Finder</span>
-              <span className="lf-user-role">Connected</span>
+              {/* Polite: it changes on a background poll, with no user action. */}
+              <span className="lf-user-role" aria-live="polite">
+                {health.label}
+              </span>
             </span>
           </div>
         )}
