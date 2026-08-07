@@ -93,6 +93,90 @@ export function formatNumber(value: number): string {
   return new Intl.NumberFormat("en-US").format(value);
 }
 
+/**
+ * Parses a timestamp from the API.
+ *
+ * The backend writes `datetime.now(timezone.utc)` into a naive `DateTime`
+ * column, so the offset is dropped on the way to the database and the JSON
+ * comes back as `2026-08-07T03:58:55.597176` — a UTC instant wearing no
+ * timezone designator.
+ *
+ * ECMAScript says a date-time string without a designator is **local** time.
+ * Handing that string straight to `new Date()` therefore shifts every
+ * timestamp by the viewer's UTC offset — five and a half hours in India,
+ * enough to render "8 hours ago" as "14 hours ago" or push it onto the wrong
+ * day. Appending `Z` when no designator is present is what keeps it honest.
+ */
+export function parseApiDate(value?: string | null): Date | null {
+  if (!isPresent(value)) return null;
+
+  const raw = value.trim();
+  const hasZone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(raw);
+  const parsed = new Date(hasZone ? raw : `${raw}Z`);
+
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+const RELATIVE_UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
+  ["year", 365 * 24 * 60 * 60],
+  ["month", 30 * 24 * 60 * 60],
+  ["day", 24 * 60 * 60],
+  ["hour", 60 * 60],
+  ["minute", 60],
+];
+
+/** "3 hours ago". Returns null when there is no timestamp to format. */
+export function formatRelativeTime(value?: string | null): string | null {
+  const date = parseApiDate(value);
+  if (!date) return null;
+
+  const seconds = Math.round((date.getTime() - Date.now()) / 1000);
+  const magnitude = Math.abs(seconds);
+
+  if (magnitude < 45) return "just now";
+
+  const formatter = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+
+  for (const [unit, secondsPerUnit] of RELATIVE_UNITS) {
+    if (magnitude >= secondsPerUnit) {
+      return formatter.format(Math.round(seconds / secondsPerUnit), unit);
+    }
+  }
+
+  return "just now";
+}
+
+/** The full local date and time, for a tooltip behind the relative one. */
+export function formatAbsoluteTime(value?: string | null): string | null {
+  const date = parseApiDate(value);
+  if (!date) return null;
+
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
+}
+
+/** "1m 23s" — how long something took. Null unless both ends are known. */
+export function formatDuration(
+  from?: string | null,
+  to?: string | null,
+): string | null {
+  const start = parseApiDate(from);
+  const end = parseApiDate(to);
+
+  if (!start || !end) return null;
+
+  const seconds = Math.max(0, Math.round((end.getTime() - start.getTime()) / 1000));
+
+  if (seconds < 60) return `${seconds}s`;
+
+  const minutes = Math.floor(seconds / 60);
+  const remainder = seconds % 60;
+
+  return remainder === 0 ? `${minutes}m` : `${minutes}m ${remainder}s`;
+}
+
 export function formatTime(date: Date | null): string {
   if (!date) return "—";
   return new Intl.DateTimeFormat("en-US", {

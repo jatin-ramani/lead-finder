@@ -1,5 +1,6 @@
 import {
   ApiOutlined,
+  DashboardOutlined,
   RadarChartOutlined,
   ShopOutlined,
 } from "@ant-design/icons";
@@ -23,15 +24,22 @@ export interface NavSection {
 /**
  * The navigation lists routes that exist and work. Nothing else.
  *
- * Dashboard and Leads were removed with the old data layer they were built on
- * and return in the phases that rebuild them. A link to a page that 404s, or
- * to one showing an empty shell, is worse than no link: it teaches people the
- * product is broken.
+ * Leads and the scraping screens return in the phases that build them. A link
+ * to a page that 404s, or to one showing an empty shell, is worse than no
+ * link: it teaches people the product is broken.
  */
 export const NAV_SECTIONS: NavSection[] = [
   {
-    label: "Discover",
+    label: "Overview",
     items: [
+      {
+        key: "dashboard",
+        href: "/",
+        label: "Dashboard",
+        icon: <DashboardOutlined />,
+        title: "Dashboard",
+        subtitle: "Where your pipeline stands right now",
+      },
       {
         key: "scanner",
         href: "/scanner",
@@ -60,7 +68,7 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       {
         key: "system",
-        href: "/",
+        href: "/system",
         label: "System",
         icon: <ApiOutlined />,
         title: "System",

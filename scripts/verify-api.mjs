@@ -218,6 +218,51 @@ console.log("\njobs and dashboard");
       "withoutEmail",
     ]),
   );
+  check(
+    "  websiteData → completed, failed, pending, totalScraped",
+    hasKeys(stats.body?.websiteData, [
+      "completed",
+      "failed",
+      "pending",
+      "totalScraped",
+    ]),
+  );
+  check(
+    "  scanJobs → total, running, completed",
+    hasKeys(stats.body?.scanJobs, ["total", "running", "completed"]),
+  );
+  check(
+    "  scrapeJobs → total, running, completed, failed",
+    hasKeys(stats.body?.scrapeJobs, ["total", "running", "completed", "failed"]),
+  );
+  check(
+    "  latestScanJob is a job or null (never absent)",
+    "latestScanJob" in (stats.body ?? {}),
+  );
+  check(
+    "  counts are internally consistent",
+    stats.body?.business?.withWebsite + stats.body?.business?.withoutWebsite ===
+      stats.body?.business?.totalBusinesses,
+  );
+
+  const latestScrape = stats.body?.latestScrapeJob;
+
+  if (latestScrape?.completed_at) {
+    // The backend writes datetime.now(timezone.utc) into a naive column, so
+    // the offset is dropped and the string arrives designator-less. JS parses
+    // that as LOCAL time. If a designator ever appears, parseApiDate's
+    // append-Z rule would double-shift and must be revisited.
+    check(
+      "  scrape timestamps carry NO timezone designator (parseApiDate appends Z)",
+      !/(?:Z|[+-]\d{2}:?\d{2})$/i.test(latestScrape.completed_at),
+      `got ${latestScrape.completed_at} — revisit lib/format.ts parseApiDate`,
+    );
+  }
+
+  check(
+    "  no dashboard field claims a time window (no trend/today data exists)",
+    !JSON.stringify(stats.body ?? {}).match(/today|trend|previous|delta/i),
+  );
 
   const scanJobs = await call("/scan/jobs");
   check("GET /scan/jobs → an array", Array.isArray(scanJobs.body));

@@ -3,64 +3,87 @@
 import { ReloadOutlined } from "@ant-design/icons";
 import { Button } from "antd";
 
-import ConnectionCard from "@/features/system/components/ConnectionCard";
-import RuntimeCard from "@/features/system/components/RuntimeCard";
-import { useSystemStatus } from "@/features/system/hooks/useSystemStatus";
+import ErrorState from "@/components/feedback/ErrorState";
+import CoveragePanel from "@/features/dashboard/components/CoveragePanel";
+import DashboardHero from "@/features/dashboard/components/DashboardHero";
+import LatestActivity from "@/features/dashboard/components/LatestActivity";
+import LiveActivityBar from "@/features/dashboard/components/LiveActivityBar";
+import NextActions from "@/features/dashboard/components/NextActions";
+import ScrapeHealthPanel from "@/features/dashboard/components/ScrapeHealthPanel";
+import { useDashboard } from "@/features/dashboard/hooks/useDashboard";
 
 /**
- * System — the only route in Phase 1.
+ * The product's homepage.
  *
- * It reports the state of the backend this app talks to: reachable or not,
- * which version, which database engine. That makes it the honest landing page
- * while the feature routes are rebuilt, and it stays useful afterwards — it is
- * the first place to look when something is behaving oddly.
+ * Reads one endpoint — `GET /dashboard/stats` — which returns every figure in
+ * a single call, so the whole page is one request rather than six.
  *
- * It is also the proof that the foundation works: it exercises the typed API
- * client, the query cache, polling, the shared error state with its request id,
- * and the loading and offline paths, against three real endpoints.
+ * It is arranged around the questions someone actually opens this to ask:
+ * how big is the opportunity (the hero), is anything running right now (the
+ * live bar, which renders nothing when nothing is), how is the data holding up
+ * (coverage and scraping health), what just happened, and what should I do
+ * next.
+ *
+ * One question it deliberately does not answer is "what happened today".
+ * Businesses and scan jobs carry no timestamp, so no honest time window can be
+ * drawn — see `LatestActivity`.
  */
-export default function SystemPage() {
-  const {
-    health,
-    version,
-    info,
-    isLoading,
-    isFetching,
-    healthError,
-    versionError,
-    infoError,
-    refresh,
-  } = useSystemStatus();
+export default function DashboardPage() {
+  const { stats, derived, isLoading, isFetching, error, refetch } = useDashboard();
+
+  // A failed first load has nothing behind it, so the error takes the page.
+  // A failed refresh keeps the last good numbers rather than blanking them.
+  if (error && !stats) {
+    return (
+      <ErrorState
+        error={error}
+        onRetry={() => void refetch()}
+        title="Could not load your dashboard"
+      />
+    );
+  }
 
   return (
     <div className="flex flex-col gap-5">
       <div className="lf-page-actions">
         <Button
           icon={<ReloadOutlined spin={isFetching} />}
-          onClick={refresh}
+          onClick={() => void refetch()}
           disabled={isFetching}
         >
-          {isFetching ? "Checking…" : "Check now"}
+          {isFetching ? "Refreshing…" : "Refresh"}
         </Button>
       </div>
 
-      <div className="lf-grid-2">
-        <ConnectionCard
-          health={health}
-          isLoading={isLoading}
-          error={healthError}
-          onRetry={refresh}
-        />
+      <LiveActivityBar
+        scanJob={stats?.latestScanJob}
+        scrapeJob={stats?.latestScrapeJob}
+      />
 
-        <RuntimeCard
-          version={version}
-          info={info}
+      <DashboardHero
+        business={stats?.business}
+        opportunityShare={derived.opportunityShare}
+        isLoading={isLoading}
+      />
+
+      <NextActions stats={stats} derived={derived} />
+
+      <div className="lf-grid-2">
+        <CoveragePanel business={stats?.business} isLoading={isLoading} />
+
+        <ScrapeHealthPanel
+          websiteData={stats?.websiteData}
+          neverScraped={derived.neverScraped}
+          successRate={derived.scrapeSuccessRate}
           isLoading={isLoading}
-          versionError={versionError}
-          infoError={infoError}
-          onRetry={refresh}
         />
       </div>
+
+      <LatestActivity
+        scanJob={stats?.latestScanJob}
+        scrapeJob={stats?.latestScrapeJob}
+        isLoading={isLoading}
+      />
     </div>
   );
 }
