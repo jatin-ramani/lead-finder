@@ -1,26 +1,1529 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* Theme is driven by data-theme on <html>, stamped before paint by the bootstrap
+   script, so `dark:` utilities follow the attribute rather than the OS. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ── Design tokens ─────────────────────────────────────────────────────────
+   Dark is the designed default. Surfaces here are the exact values the chart
+   palette was validated against — see lib/theme.ts CHART_COLORS.             */
+:root,
+[data-theme="dark"] {
+  --lf-accent: #e5b93c;
+  --lf-accent-hover: #f0c95e;
+  --lf-accent-soft: rgba(229, 185, 60, 0.12);
+  --lf-accent-ring: rgba(229, 185, 60, 0.22);
+
+  --lf-page: #0a0a0b;
+  --lf-card: #141416;
+  --lf-elevated: #1c1c21;
+  --lf-raised: #1a1a1e;
+  --lf-track: #232329;
+  --lf-border: #26262c;
+  --lf-border-subtle: #1e1e23;
+
+  --lf-text: #f4f4f5;
+  --lf-text-secondary: #a1a1aa;
+  --lf-text-muted: #71717a;
+
+  --lf-up: #4ade80;
+  --lf-down: #f87171;
+
+  --lf-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --lf-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
+}
+
+[data-theme="light"] {
+  --lf-accent: #a97f14;
+  --lf-accent-hover: #8f6b0f;
+  --lf-accent-soft: rgba(169, 127, 20, 0.1);
+  --lf-accent-ring: rgba(169, 127, 20, 0.2);
+
+  --lf-page: #f7f7f5;
+  --lf-card: #ffffff;
+  --lf-elevated: #ffffff;
+  --lf-raised: #fafaf8;
+  --lf-track: #ecebe6;
+  --lf-border: #e3e3de;
+  --lf-border-subtle: #ededE8;
+
+  --lf-text: #0b0b0b;
+  --lf-text-secondary: #52514e;
+  --lf-text-muted: #898781;
+
+  --lf-up: #067647;
+  --lf-down: #b42318;
+
+  --lf-shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 1px 3px rgba(16, 24, 40, 0.06);
+  --lf-shadow-lg: 0 12px 28px rgba(16, 24, 40, 0.1);
+  color-scheme: light;
+}
+
+html,
+body {
+  height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  background: var(--lf-page);
+  color: var(--lf-text);
+  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--lf-accent-ring);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--lf-text-muted) 45%, transparent)
+    transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--lf-text-muted) 38%, transparent);
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ── Motion ───────────────────────────────────────────────────────────────*/
+@keyframes lf-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes lf-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ── Shell ────────────────────────────────────────────────────────────────*/
+.lf-shell {
+  min-height: 100vh;
+  background: var(--lf-page);
+}
+
+.lf-main {
+  min-height: 100vh;
+  background: var(--lf-page);
+  transition: margin-inline-start 0.2s ease;
+  /* Layout[hasSider] is a flex row; without this a wide table can stretch the
+     column and push the whole page into horizontal scroll. */
+  min-width: 0;
+}
+
+.lf-content {
+  padding: 4px 28px 32px;
+  animation: lf-fade-in 0.24s ease both;
+}
+
+@media (max-width: 640px) {
+  .lf-content {
+    padding: 4px 16px 24px;
+  }
+}
+
+.lf-sider {
+  overflow: hidden;
+}
+
+@media (max-width: 991px) {
+  .lf-sider {
+    display: none;
+  }
+}
+
+/* antd's own `.ant-btn { display: inline-flex }` is injected after this sheet
+   and matches at equal specificity, so these need !important to win. */
+.lf-mobile-only {
+  display: none !important;
+}
+
+@media (max-width: 991px) {
+  .lf-mobile-only {
+    display: inline-flex !important;
+  }
+  .lf-desktop-only {
+    display: none !important;
+  }
+}
+
+/* ── Sidebar ──────────────────────────────────────────────────────────────*/
+.lf-sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.lf-brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  height: 76px;
+  flex-shrink: 0;
+  padding-inline: 18px;
+  text-decoration: none;
+}
+
+.lf-logo-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  color: #1a1508;
+  background: linear-gradient(140deg, #f3ca55 0%, #d9a520 100%);
+  box-shadow: 0 2px 10px rgba(229, 185, 60, 0.3);
+}
+
+.lf-brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+  min-width: 0;
+}
+
+.lf-brand-name {
+  font-size: 14.5px;
+  font-weight: 640;
+  letter-spacing: -0.01em;
+  color: #f4f4f5;
+}
+
+.lf-brand-sub {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: #6c6c78;
+}
+
+.lf-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 12px 8px;
+}
+
+.lf-nav-section + .lf-nav-section {
+  margin-top: 22px;
+}
+
+.lf-nav-section-label {
+  margin: 0 0 8px;
+  padding-inline: 10px;
+  font-size: 9.5px;
+  font-weight: 650;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #56565f;
+}
+
+.lf-nav-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lf-nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  height: 40px;
+  padding-inline: 10px;
+  border-radius: 9px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #8e8e99;
+  text-decoration: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.lf-nav-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: #f4f4f5;
+}
+
+.lf-nav-item.is-active {
+  background: var(--lf-accent-soft);
+  color: #e5b93c;
+  font-weight: 560;
+}
+
+/* Gold rail on the active row — the reference's selection cue. */
+.lf-nav-item.is-active::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: -12px;
+  top: 50%;
+  translate: 0 -50%;
+  width: 3px;
+  height: 20px;
+  border-start-end-radius: 3px;
+  border-end-end-radius: 3px;
+  background: #e5b93c;
+}
+
+.lf-nav-icon {
+  display: inline-flex;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.lf-nav-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lf-nav-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: #e5b93c;
+  flex-shrink: 0;
+}
+
+.lf-sidebar-footer {
+  flex-shrink: 0;
+  padding: 12px;
+}
+
+.lf-user-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.lf-user-card--collapsed {
+  justify-content: center;
+  padding: 8px;
+}
+
+.lf-user-avatar {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 9px;
+  font-size: 11.5px;
+  font-weight: 650;
+  color: #1a1508;
+  background: linear-gradient(140deg, #f3ca55 0%, #d9a520 100%);
+}
+
+.lf-user-status {
+  position: absolute;
+  inset-block-end: -1px;
+  inset-inline-end: -1px;
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: #4ade80;
+  border: 2px solid #0e0e10;
+  animation: lf-pulse 2.6s ease-in-out infinite;
+}
+
+.lf-user-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+  min-width: 0;
+}
+
+.lf-user-name {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #e4e4e7;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lf-user-role {
+  font-size: 10.5px;
+  color: #6c6c78;
+}
+
+/* ── Header ───────────────────────────────────────────────────────────────*/
+.lf-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: color-mix(in srgb, var(--lf-page) 88%, transparent);
+  backdrop-filter: saturate(180%) blur(10px);
+  border-bottom: 1px solid var(--lf-border-subtle);
+  /* Layout.Header sets line-height to its own height (76px); left alone that
+     inflates the title block past the header and clips it off the top. */
+  line-height: normal;
+}
+
+.lf-header-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 100%;
+  min-width: 0;
+}
+
+.lf-collapse-btn {
+  color: var(--lf-text-muted);
+  flex-shrink: 0;
+}
+
+/* Title absorbs the free space and is the only thing allowed to shrink, so the
+   action cluster can never be pushed off the right edge. */
+.lf-header-title {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.lf-page-title {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 650;
+  letter-spacing: -0.022em;
+  line-height: 1.25;
+  color: var(--lf-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lf-page-subtitle {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: var(--lf-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .lf-page-subtitle {
+    display: none;
+  }
+  .lf-page-title {
+    font-size: 18px;
+  }
+}
+
+.lf-header-actions {
+  margin-inline-start: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+@media (max-width: 560px) {
+  .lf-header-actions {
+    gap: 2px;
+  }
+  /* Header padding comes from the antd Layout token, so it needs overriding
+     rather than a utility class. */
+  .lf-header {
+    padding-inline: 12px !important;
+  }
+}
+
+/* Secondary actions that can go once the bar gets tight. */
+@media (max-width: 480px) {
+  .lf-hide-sm {
+    display: none !important;
+  }
+}
+
+.lf-global-search {
+  width: 280px;
+  border-radius: 999px;
+}
+
+.lf-global-search .ant-input-affix-wrapper,
+.lf-global-search.ant-input-affix-wrapper {
+  border-radius: 999px;
+  background: var(--lf-card);
+}
+
+@media (max-width: 1199px) {
+  .lf-global-search {
+    width: 200px;
+  }
+}
+
+@media (max-width: 900px) {
+  .lf-global-search {
+    display: none;
+  }
+}
+
+.lf-export-btn {
+  border-radius: 999px;
+  font-weight: 550;
+}
+
+.lf-icon-btn {
+  color: var(--lf-text-secondary);
+}
+
+.lf-avatar-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 650;
+  color: #1a1508;
+  background: linear-gradient(140deg, #f3ca55 0%, #d9a520 100%);
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+.lf-avatar-trigger:hover {
+  filter: brightness(1.08);
+}
+
+/* ── Cards ────────────────────────────────────────────────────────────────*/
+.lf-card {
+  border: 1px solid var(--lf-border);
+  border-radius: 14px;
+  background: var(--lf-card);
+  box-shadow: var(--lf-shadow);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  overflow: hidden;
+}
+
+.lf-card:hover {
+  border-color: color-mix(in srgb, var(--lf-accent) 26%, var(--lf-border));
+}
+
+.lf-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding: 18px 20px 0;
+}
+
+@media (max-width: 640px) {
+  .lf-card-head {
+    padding: 16px 16px 0;
+  }
+  .lf-card-body {
+    padding: 16px;
+  }
+}
+
+.lf-card-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 620;
+  letter-spacing: -0.012em;
+  color: var(--lf-text);
+}
+
+.lf-card-desc {
+  margin: 3px 0 0;
+  font-size: 12.5px;
+  color: var(--lf-text-muted);
+}
+
+.lf-card-body {
+  padding: 18px 20px 20px;
+}
+
+.lf-card-link {
+  color: var(--lf-accent);
+  font-weight: 550;
+}
+
+.lf-grid-2 {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+}
+
+@media (max-width: 1100px) {
+  .lf-grid-2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ── Stat cards ───────────────────────────────────────────────────────────*/
+.lf-stat-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+@media (max-width: 1500px) {
+  .lf-stat-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 860px) {
+  .lf-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .lf-stat-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.lf-stat-card {
+  padding: 17px 18px;
+  border: 1px solid var(--lf-border);
+  border-radius: 14px;
+  background: var(--lf-card);
+  box-shadow: var(--lf-shadow);
+  transition: border-color 0.18s ease, transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.lf-stat-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--lf-accent) 30%, var(--lf-border));
+  box-shadow: var(--lf-shadow-lg);
+}
+
+.lf-stat-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.lf-stat-label {
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  line-height: 1.5;
+  color: var(--lf-text-muted);
+}
+
+.lf-stat-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  font-size: 14px;
+}
+
+/* Proportional figures: tabular-nums makes large standalone numbers look loose. */
+.lf-stat-value {
+  margin: 12px 0 0;
+  font-size: 30px;
+  font-weight: 660;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: var(--lf-text);
+}
+
+.lf-stat-meta {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 10px 0 0;
+  font-size: 11.5px;
+}
+
+.lf-share-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.lf-stat-caption {
+  color: var(--lf-text-muted);
+}
+
+/* ── Donut ────────────────────────────────────────────────────────────────*/
+.lf-donut-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+.lf-donut-figure {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  flex-shrink: 0;
+}
+
+.lf-donut {
+  width: 100%;
+  height: 100%;
+}
+
+.lf-donut-arc {
+  transition: opacity 0.16s ease;
+  cursor: pointer;
+}
+
+.lf-donut-centre {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  text-align: center;
+  padding-inline: 44px;
+}
+
+.lf-donut-centre-value {
+  font-size: 27px;
+  font-weight: 660;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: var(--lf-text);
+}
+
+.lf-donut-centre-label {
+  margin-top: 2px;
+  font-size: 10.5px;
+  font-weight: 550;
+  line-height: 1.3;
+  color: var(--lf-text-muted);
+}
+
+.lf-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lf-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 9px;
+  border-radius: 8px;
+  transition: background-color 0.14s ease;
+  cursor: default;
+}
+
+.lf-legend-row.is-hovered {
+  background: var(--lf-raised);
+}
+
+.lf-legend-dot {
+  width: 9px;
+  height: 9px;
+  flex-shrink: 0;
+  border-radius: 3px;
+}
+
+.lf-legend-label {
+  flex: 1;
+  min-width: 0;
+  font-size: 12.5px;
+  color: var(--lf-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lf-legend-value {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 620;
+  color: var(--lf-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.lf-legend-share {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--lf-text-muted);
+  min-width: 30px;
+  text-align: end;
+}
+
+/* ── Horizontal bars ──────────────────────────────────────────────────────*/
+.lf-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.lf-bar-row {
+  display: grid;
+  grid-template-columns: 104px minmax(0, 1fr) 78px;
+  align-items: center;
+  gap: 12px;
+}
+
+@media (max-width: 560px) {
+  .lf-bar-row {
+    grid-template-columns: 76px minmax(0, 1fr) 66px;
+    gap: 8px;
+  }
+}
+
+.lf-bar-label {
+  font-size: 12.5px;
+  font-weight: 550;
+  color: var(--lf-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lf-bar-track {
+  display: flex;
+  align-items: center;
+  /* The 2px surface gap between adjacent fills, not a border. */
+  gap: 2px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--lf-track);
+  overflow: hidden;
+}
+
+.lf-bar-fill {
+  height: 100%;
+  transition: width 0.4s ease;
+}
+
+.lf-bar-fill--lead {
+  border-start-start-radius: 999px;
+  border-end-start-radius: 999px;
+}
+
+.lf-bar-fill--site {
+  border-start-end-radius: 4px;
+  border-end-end-radius: 4px;
+}
+
+.lf-bar-value {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+  justify-content: flex-end;
+  font-size: 12.5px;
+  color: var(--lf-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.lf-bar-value strong {
+  font-weight: 640;
+  color: var(--lf-text);
+}
+
+.lf-bars-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  margin-top: 6px;
+  padding-top: 13px;
+  border-top: 1px solid var(--lf-border-subtle);
+}
+
+.lf-legend-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11.5px;
+  color: var(--lf-text-secondary);
+}
+
+.lf-legend-more {
+  margin-inline-start: auto;
+  font-size: 11.5px;
+  color: var(--lf-text-muted);
+}
+
+/* ── Meters ───────────────────────────────────────────────────────────────*/
+.lf-meters {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.lf-meter-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.lf-meter-label {
+  font-size: 12.5px;
+  color: var(--lf-text-secondary);
+}
+
+.lf-meter-value {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 13.5px;
+  font-weight: 640;
+  color: var(--lf-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.lf-meter-total {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--lf-text-muted);
+}
+
+.lf-meter-track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--lf-track);
+  overflow: hidden;
+}
+
+.lf-meter-track > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.45s ease;
+}
+
+/* ── Feed / top leads ─────────────────────────────────────────────────────*/
+.lf-feed {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lf-feed-row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: background-color 0.14s ease;
+}
+
+.lf-feed-row:hover {
+  background: var(--lf-raised);
+}
+
+.lf-feed-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 650;
+  color: #0b0b0b;
+}
+
+.lf-feed-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+
+.lf-feed-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--lf-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lf-feed-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-width: 0;
+}
+
+.lf-feed-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  font-size: 11.5px;
+  color: var(--lf-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lf-feed-chevron {
+  font-size: 11px;
+  color: var(--lf-text-muted);
+  opacity: 0;
+  flex-shrink: 0;
+  transition: opacity 0.14s ease;
+}
+
+.lf-feed-row:hover .lf-feed-chevron {
+  opacity: 1;
+}
+
+/* ── Filter bar ───────────────────────────────────────────────────────────*/
+.lf-filter-card {
+  border: 1px solid var(--lf-border);
+  border-radius: 14px;
+  background: var(--lf-card);
+  box-shadow: var(--lf-shadow);
+  padding: 14px 16px;
+}
+
+.lf-filter-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 620;
+  color: var(--lf-text-muted);
+}
+
+.lf-filter-control {
+  min-width: 150px;
+}
+
+.lf-filter-search {
+  min-width: 200px;
+  max-width: 250px;
+  flex: 1 1 190px;
+}
+
+.lf-filter-summary {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: var(--lf-text-muted);
+}
+
+.lf-filter-summary strong {
+  color: var(--lf-text);
+}
+
+@media (max-width: 767px) {
+  .lf-filter-control,
+  .lf-filter-search {
+    min-width: 0;
+    max-width: none;
+    flex: 1 1 100%;
+  }
+}
+
+.lf-alert-retry {
+  border: 0;
+  background: transparent;
+  color: var(--lf-accent);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+/* ── Table ────────────────────────────────────────────────────────────────*/
+.lf-table-card {
+  border: 1px solid var(--lf-border);
+  border-radius: 14px;
+  background: var(--lf-card);
+  box-shadow: var(--lf-shadow);
+  overflow: hidden;
+}
+
+.lf-table .ant-table {
+  background: transparent;
+}
+
+.lf-table .ant-table-thead > tr > th {
+  font-size: 10px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--lf-border) !important;
+}
+
+.lf-table-row {
+  transition: background-color 0.14s ease;
+}
+
+.lf-table .ant-table-tbody > tr > td {
+  border-bottom: 1px solid var(--lf-border-subtle);
+}
+
+.lf-table .ant-table-pagination {
+  padding: 14px 16px;
+  margin: 0 !important;
+}
+
+.lf-cell-business {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: start;
+}
+
+.lf-cell-business-name {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--lf-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 0.14s ease;
+}
+
+.lf-cell-business:hover .lf-cell-business-name {
+  color: var(--lf-accent);
+}
+
+.lf-cell-business-sub {
+  display: block;
+  font-size: 11.5px;
+  color: var(--lf-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lf-cell-contact,
+.lf-cell-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--lf-text-secondary);
+  text-decoration: none;
+  transition: color 0.14s ease;
+}
+
+.lf-cell-contact:hover,
+.lf-cell-link:hover {
+  color: var(--lf-accent);
+}
+
+.lf-cell-contact-icon {
+  font-size: 12px;
+  color: var(--lf-text-muted);
+  flex-shrink: 0;
+}
+
+.lf-cell-link {
+  color: var(--lf-accent);
+}
+
+.lf-cell-more {
+  flex-shrink: 0;
+  padding: 0 5px;
+  border-radius: 5px;
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 16px;
+  color: var(--lf-text-muted);
+  background: var(--lf-track);
+}
+
+.lf-cell-link-icon {
+  font-size: 10px;
+  opacity: 0;
+  flex-shrink: 0;
+  transition: opacity 0.14s ease;
+}
+
+.lf-cell-link:hover .lf-cell-link-icon {
+  opacity: 1;
+}
+
+.lf-tag {
+  margin-inline-end: 0;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 560;
+  line-height: 20px;
+  padding-inline: 8px;
+}
+
+/* ── Empty state ──────────────────────────────────────────────────────────*/
+.lf-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 56px 24px;
+  text-align: center;
+  animation: lf-fade-in 0.24s ease both;
+}
+
+.lf-empty--compact {
+  padding: 40px 24px;
+}
+
+.lf-empty-illustration {
+  color: var(--lf-text-muted);
+  margin-bottom: 8px;
+}
+
+.lf-empty-title {
+  margin: 8px 0 0;
+  font-size: 16px;
+  font-weight: 640;
+  color: var(--lf-text);
+}
+
+.lf-empty-description {
+  margin: 6px auto 0;
+  max-width: 44ch;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--lf-text-muted);
+}
+
+/* ── Drawer & modal (fixed px widths must not exceed a phone viewport) ────*/
+@media (max-width: 520px) {
+  .lf-drawer .ant-drawer-content-wrapper {
+    width: 100% !important;
+    max-width: 100vw;
+  }
+}
+
+.ant-modal {
+  max-width: calc(100vw - 24px);
+}
+
+@media (max-width: 520px) {
+  .ant-modal {
+    margin: 8px auto;
+    vertical-align: middle;
+  }
+}
+
+.lf-drawer-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 640;
+  letter-spacing: -0.015em;
+  color: var(--lf-text);
+  overflow-wrap: anywhere;
+}
+
+.lf-drawer-section-title {
+  margin: 0 0 10px;
+  font-size: 10px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
+  color: var(--lf-text-muted);
+}
+
+.lf-detail-list {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--lf-border-subtle);
+  border-radius: 11px;
+  overflow: hidden;
+}
+
+.lf-detail-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+  background: var(--lf-card);
+  transition: background-color 0.14s ease;
+}
+
+.lf-detail-row + .lf-detail-row {
+  border-top: 1px solid var(--lf-border-subtle);
+}
+
+.lf-detail-row:hover {
+  background: var(--lf-raised);
+}
+
+.lf-detail-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--lf-text-secondary);
+  background: var(--lf-track);
+}
+
+.lf-detail-label {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 550;
+  color: var(--lf-text-muted);
+}
+
+.lf-detail-value {
+  display: block;
+  font-size: 13.5px;
+  color: var(--lf-text);
+  overflow-wrap: anywhere;
+}
+
+.lf-detail-value--link {
+  color: var(--lf-accent);
+  text-decoration: none;
+}
+
+.lf-detail-value--link:hover {
+  text-decoration: underline;
+}
+
+.lf-detail-value--muted {
+  color: var(--lf-text-muted);
+  font-style: italic;
+}
+
+.lf-analysis {
+  padding: 16px;
+  border: 1px dashed var(--lf-border);
+  border-radius: 12px;
+  background: var(--lf-raised);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.lf-analysis--highlight {
+  border-style: solid;
+  border-color: var(--lf-accent);
+  box-shadow: 0 0 0 3px var(--lf-accent-ring);
+}
+
+.lf-metric-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  border-radius: 9px;
+  background: var(--lf-card);
+  border: 1px solid var(--lf-border-subtle);
+}
+
+.lf-metric-icon {
+  font-size: 14px;
+}
+
+.lf-metric-label {
+  flex: 1;
+  font-size: 13px;
+  color: var(--lf-text-secondary);
+}
+
+.lf-metric-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--lf-text-muted);
+}
+
+.lf-analysis-note {
+  margin: 12px 0 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--lf-text-muted);
+}
+
+/* ── Panels (Scanner / Settings) ──────────────────────────────────────────*/
+.lf-panel {
+  border: 1px solid var(--lf-border);
+  border-radius: 14px;
+  background: var(--lf-card);
+  box-shadow: var(--lf-shadow);
+  transition: border-color 0.18s ease;
+}
+
+.lf-panel:hover {
+  border-color: color-mix(in srgb, var(--lf-accent) 26%, var(--lf-border));
+}
+
+.lf-accent-text {
+  color: var(--lf-accent);
+}
+
+.lf-panel-title {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  font-size: 15px;
+  font-weight: 620;
+  color: var(--lf-text);
+}
+
+.lf-panel-description {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--lf-text-muted);
+}
+
+.lf-panel-empty {
+  margin: 0;
+  padding: 22px 4px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--lf-text-muted);
+}
+
+.lf-modal-lead {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: var(--lf-text-secondary);
+}
+
+.lf-coverage-city {
+  display: inline-flex;
+  align-items: center;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--lf-text);
+}
+
+.lf-coverage-total {
+  font-size: 12px;
+  color: var(--lf-text-muted);
+  white-space: nowrap;
+}
+
+.lf-settings-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  border: 1px solid var(--lf-border-subtle);
+  border-radius: 11px;
+  overflow: hidden;
+}
+
+.lf-settings-list > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+}
+
+.lf-settings-list > div + div {
+  border-top: 1px solid var(--lf-border-subtle);
+}
+
+.lf-settings-list dt {
+  font-size: 12.5px;
+  color: var(--lf-text-secondary);
+}
+
+.lf-settings-list dd {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--lf-text);
+  text-align: end;
+  overflow-wrap: anywhere;
+}
+
+code {
+  font-family: var(--font-mono), ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.9em;
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--lf-track);
 }
