@@ -1,6 +1,7 @@
 import {
   ApiOutlined,
   DashboardOutlined,
+  GlobalOutlined,
   RadarChartOutlined,
   ShopOutlined,
 } from "@ant-design/icons";
@@ -21,13 +22,6 @@ export interface NavSection {
   items: NavItem[];
 }
 
-/**
- * The navigation lists routes that exist and work. Nothing else.
- *
- * Leads and the scraping screens return in the phases that build them. A link
- * to a page that 404s, or to one showing an empty shell, is worse than no
- * link: it teaches people the product is broken.
- */
 export const NAV_SECTIONS: NavSection[] = [
   {
     label: "Overview",
@@ -61,6 +55,14 @@ export const NAV_SECTIONS: NavSection[] = [
         title: "Businesses",
         subtitle: "Everything the scanner has discovered so far",
       },
+      {
+        key: "scraping",
+        href: "/scraping",
+        label: "Scraper",
+        icon: <GlobalOutlined />,
+        title: "Website Scraper",
+        subtitle: "Extract title, description, email addresses and social links",
+      },
     ],
   },
   {
@@ -82,11 +84,6 @@ export const NAV_ITEMS: NavItem[] = NAV_SECTIONS.flatMap(
   (section) => section.items,
 );
 
-/**
- * Longest-prefix match, so a nested route such as `/businesses/123` still
- * highlights its parent. `/` is excluded from the prefix test because every
- * path starts with it; it is the fallback instead.
- */
 export function activeNavItem(pathname: string): NavItem {
   const match = NAV_ITEMS.filter(
     (item) => item.href !== "/" && pathname.startsWith(item.href),

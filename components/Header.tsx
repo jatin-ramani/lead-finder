@@ -6,6 +6,7 @@ import {
   MenuOutlined,
   MenuUnfoldOutlined,
   MoonOutlined,
+  LogoutOutlined,
 } from "@ant-design/icons";
 import { Button, Layout, Tooltip } from "antd";
 import { usePathname } from "next/navigation";
@@ -13,6 +14,7 @@ import { useMemo } from "react";
 
 import { activeNavItem } from "@/lib/navigation";
 import { useThemeMode } from "@/providers/ThemeProvider";
+import { useAuth } from "@/features/auth/AuthContext";
 
 const { Header: AntHeader } = Layout;
 
@@ -42,6 +44,7 @@ export default function Header({
 }: HeaderProps) {
   const pathname = usePathname();
   const { mode, toggleMode } = useThemeMode();
+  const { logout } = useAuth();
 
   const page = useMemo(() => activeNavItem(pathname), [pathname]);
 
@@ -71,6 +74,16 @@ export default function Header({
         </div>
 
         <div className="lf-header-actions">
+          <Tooltip title="Sign out of admin session">
+            <Button
+              type="text"
+              shape="circle"
+              aria-label="Sign out"
+              icon={<LogoutOutlined />}
+              onClick={() => logout()}
+              className="lf-icon-btn text-slate-400 hover:text-red-400"
+            />
+          </Tooltip>
           <Tooltip title={mode === "dark" ? "Switch to light" : "Switch to dark"}>
             <Button
               type="text"

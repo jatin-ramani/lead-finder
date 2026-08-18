@@ -9,12 +9,14 @@ import BusinessDrawer from "@/features/businesses/components/BusinessDrawer";
 import BusinessFilterBar from "@/features/businesses/components/BusinessFilterBar";
 import BusinessTable from "@/features/businesses/components/BusinessTable";
 import BusinessesSkeleton from "@/features/businesses/components/BusinessesSkeleton";
+import ExportModal from "@/features/businesses/components/ExportModal";
 import { useBusinessList } from "@/features/businesses/hooks/useBusinessList";
 import {
   useDeleteBusiness,
   useDeleteBusinesses,
 } from "@/features/businesses/hooks/useBusinessMutations";
 import { useExportBusinesses } from "@/features/businesses/hooks/useExportBusinesses";
+import { useScrapeRunner } from "@/features/scraping/hooks/useScrapeRunner";
 import { useUrlFilters } from "@/hooks/useUrlFilters";
 import type { Business } from "@/types/api";
 
@@ -35,18 +37,25 @@ function BusinessesWorkspace() {
   const deleteMany = useDeleteBusinesses();
   const { exportFiltered, exportSelected, isExporting } = useExportBusinesses();
 
+  const { scrapeSelected, scrapeSingle, isPendingLauncher } = useScrapeRunner();
+
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [detail, setDetail] = useState<Business | null>(null);
+  const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [exportScope, setExportScope] = useState<"filtered" | "selected">("filtered");
 
   const clearSelection = useCallback(() => setSelectedIds([]), []);
 
-  /**
-   * Deleting one row.
-   *
-   * Confirmed through `Modal.confirm` rather than a `Popconfirm` on the button:
-   * the action is reachable from the row menu *and* from the drawer, and a
-   * dialog owned here works from both without duplicating the copy.
-   */
+  const openExportFiltered = useCallback(() => {
+    setExportScope("filtered");
+    setExportModalOpen(true);
+  }, []);
+
+  const openExportSelected = useCallback(() => {
+    setExportScope("selected");
+    setExportModalOpen(true);
+  }, []);
+
   const confirmDeleteOne = useCallback(
     (business: Business) => {
       modal.confirm({
@@ -77,8 +86,6 @@ function BusinessesWorkspace() {
       title: `Delete ${count} ${count === 1 ? "business" : "businesses"}?`,
       content:
         "They will be permanently removed, along with any website data scraped from them. This cannot be undone.",
-      // The count is in the button, not only the title: it is the last thing
-      // read before the click that cannot be taken back.
       okText: `Delete ${count}`,
       okButtonProps: { danger: true },
       cancelText: "Cancel",
@@ -89,9 +96,6 @@ function BusinessesWorkspace() {
     });
   }, [modal, deleteMany, selectedIds, clearSelection]);
 
-  // A failed first load has nothing to show behind it, so the error replaces
-  // the table. A failed *refetch* keeps the stale rows and is surfaced by the
-  // global handler instead — blanking data the user is reading would be worse.
   if (error && !isRefetching && businesses.length === 0) {
     return (
       <ErrorState
@@ -107,7 +111,7 @@ function BusinessesWorkspace() {
       <BusinessFilterBar
         filters={filters}
         totalItems={pagination?.totalItems}
-        onExport={() => exportFiltered(filters.query)}
+        onExport={openExportFiltered}
         isExporting={isExporting}
         disabled={isLoading}
       />
@@ -115,10 +119,12 @@ function BusinessesWorkspace() {
       <BusinessBulkBar
         count={selectedIds.length}
         onClear={clearSelection}
-        onExport={() => exportSelected(selectedIds)}
+        onExport={openExportSelected}
         onDelete={confirmDeleteSelected}
+        onScrapeSelected={() => scrapeSelected(selectedIds)}
         isExporting={isExporting}
         isDeleting={deleteMany.isPending}
+        isScrapingSelected={isPendingLauncher}
       />
 
       <BusinessTable
@@ -140,16 +146,24 @@ function BusinessesWorkspace() {
         onClose={() => setDetail(null)}
         onDelete={confirmDeleteOne}
         isDeleting={deleteOne.isPending}
+        onScrapeSingle={(id) => scrapeSingle(id)}
+      />
+
+      <ExportModal
+        open={exportModalOpen}
+        onClose={() => setExportModalOpen(false)}
+        query={filters.query}
+        matchingTotal={pagination?.totalItems}
+        selectedIds={selectedIds}
+        initialScope={exportScope}
+        onExportFiltered={exportFiltered}
+        onExportSelected={exportSelected}
+        isExporting={isExporting}
       />
     </div>
   );
 }
 
-/**
- * `useSearchParams` reads request-time information, so anything using it must
- * sit inside a Suspense boundary or the whole route opts out of static
- * rendering. The fallback mirrors the page frame so hydration does not jump.
- */
 export default function BusinessesPage() {
   return (
     <Suspense fallback={<BusinessesSkeleton />}>

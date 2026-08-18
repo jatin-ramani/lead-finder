@@ -10,17 +10,6 @@ import {
 } from "@/features/scanning/hooks/useScanJobs";
 import { useScanRunner } from "@/features/scanning/hooks/useScanRunner";
 
-/**
- * Scanner — discover businesses from Geoapify.
- *
- * Uses every scan endpoint: `POST /scan` to run one, `GET /scan/jobs/latest`
- * for live progress, `GET /scan/jobs` for history and totals.
- *
- * The form and the progress panel share one `scanning` flag, so the button is
- * disabled for as long as a scan is actually running — including a scan
- * started in another tab, because the flag is derived from the job's status
- * and not from local state.
- */
 export default function ScannerPage() {
   const { jobs, stats, isLoading: historyLoading, error: historyError, refetch } =
     useScanJobs();
@@ -33,7 +22,7 @@ export default function ScannerPage() {
     refetch: refetchLatest,
   } = useLatestScanJob();
 
-  const { start, retry, canRetry, scanning } = useScanRunner();
+  const { start, retry, canRetry, scanning, watching } = useScanRunner();
 
   return (
     <div className="flex flex-col gap-5">
@@ -50,6 +39,7 @@ export default function ScannerPage() {
           onRetry={() => void refetchLatest()}
           onRunAgain={retry}
           canRunAgain={canRetry}
+          watching={watching}
         />
       </div>
 

@@ -6,6 +6,10 @@ import type {
   Business,
   BusinessListResponse,
   BusinessQuery,
+  ContactQualification,
+  ExportPreviewRequest,
+  ExportPreviewResponse,
+  SelectedExportRequest,
   DeletedCountResponse,
   DetailResponse,
   JobStartedResponse,
@@ -54,10 +58,18 @@ export function exportBusinessesCsv(query: BusinessQuery) {
   return download("/businesses/export/csv", { params: query });
 }
 
-/** `POST /businesses/export/csv` — only the chosen rows. */
-export function exportSelectedBusinessesCsv(ids: number[]) {
-  const body: BulkBusinessRequest = { business_ids: ids };
+/** `POST /businesses/export/csv` — only the chosen rows, with optional contact restriction. */
+export function exportSelectedBusinessesCsv(
+  ids: number[],
+  qualification: ContactQualification = {},
+) {
+  const body: SelectedExportRequest = { business_ids: ids, ...qualification };
   return download("/businesses/export/csv", { method: "post", body });
+}
+
+/** `POST /businesses/export/preview` ? authoritative export count. */
+export function previewBusinessesExport(request: ExportPreviewRequest, signal?: AbortSignal) {
+  return post<ExportPreviewResponse>("/businesses/export/preview", request, { signal });
 }
 
 /** `GET /businesses/{id}/website` — 404s until the business has been scraped. */

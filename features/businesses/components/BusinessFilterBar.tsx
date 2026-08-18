@@ -6,7 +6,7 @@ import {
   FilterOutlined,
   SearchOutlined,
 } from "@ant-design/icons";
-import { Badge, Button, Input, Select, Tooltip } from "antd";
+import { Badge, Button, Checkbox, Input, Tooltip } from "antd";
 import { useEffect, useRef, useState } from "react";
 
 import type { UrlFilters } from "@/hooks/useUrlFilters";
@@ -116,8 +116,17 @@ export default function BusinessFilterBar({
   isExporting,
   disabled = false,
 }: BusinessFilterBarProps) {
-  const { search, city, category, status, activeCount, setFilter, resetFilters } =
-    filters;
+  const {
+    search,
+    city,
+    category,
+    hasWebsite,
+    hasEmail,
+    hasPhone,
+    activeCount,
+    setFilter,
+    resetFilters,
+  } = filters;
 
   return (
     <div className="lf-filter-card">
@@ -163,23 +172,31 @@ export default function BusinessFilterBar({
           className="lf-filter-control"
         />
 
-        {/*
-          Status is a Select because, unlike city, its values are a closed set
-          the scanner writes — so the options genuinely are exhaustive.
-        */}
-        <Select
-          allowClear
-          value={status || undefined}
-          onChange={(next) => setFilter("status", next)}
-          options={[
-            { label: "Has Website", value: "Has Website" },
-            { label: "No Website", value: "No Website" },
-          ]}
-          placeholder="Status"
-          disabled={disabled}
-          className="lf-filter-control"
-          aria-label="Filter by website status"
-        />
+        <div className="flex items-center gap-2" role="group" aria-label="Website availability">
+          <Checkbox
+            checked={hasWebsite === true}
+            disabled={disabled}
+            onChange={(event) => setFilter("has_website", event.target.checked ? true : undefined)}
+          >Has website</Checkbox>
+          <Checkbox
+            checked={hasWebsite === false}
+            disabled={disabled}
+            onChange={(event) => setFilter("has_website", event.target.checked ? false : undefined)}
+          >No website</Checkbox>
+        </div>
+
+        <div className="flex items-center gap-2" role="group" aria-label="Contact availability">
+          <Checkbox
+            checked={hasEmail}
+            disabled={disabled}
+            onChange={(event) => setFilter("has_email", event.target.checked ? true : undefined)}
+          >Has email</Checkbox>
+          <Checkbox
+            checked={hasPhone}
+            disabled={disabled}
+            onChange={(event) => setFilter("has_phone", event.target.checked ? true : undefined)}
+          >Has phone</Checkbox>
+        </div>
 
         <Tooltip title="Clear all filters">
           <Button

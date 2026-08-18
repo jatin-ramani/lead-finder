@@ -11,7 +11,7 @@
  * widened `string[]` would let a typo compile into a silent cache miss.
  */
 
-import type { BusinessQuery } from "@/types/api";
+import type { BusinessQuery, ExportPreviewRequest } from "@/types/api";
 
 export const queryKeys = {
   businesses: {
@@ -23,6 +23,8 @@ export const queryKeys = {
      */
     list: (query: BusinessQuery) =>
       [...queryKeys.businesses.lists(), query] as const,
+    exportPreview: (request: ExportPreviewRequest) =>
+      [...queryKeys.businesses.all, "export-preview", request] as const,
     detail: (id: number) => [...queryKeys.businesses.all, id] as const,
     website: (id: number) =>
       [...queryKeys.businesses.all, id, "website"] as const,
@@ -45,6 +47,10 @@ export const queryKeys = {
     all: ["dashboard"] as const,
   },
 
+  auth: {
+    all: ["auth"] as const,
+    me: () => [...queryKeys.auth.all, "me"] as const,
+  },
   system: {
     all: ["system"] as const,
     health: () => [...queryKeys.system.all, "health"] as const,

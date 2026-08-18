@@ -38,6 +38,7 @@ export const http = axios.create({
   baseURL: API_BASE_URL,
   timeout: DEFAULT_TIMEOUT_MS,
   headers: { "Content-Type": "application/json" },
+  withCredentials: true,
 });
 
 /**
@@ -74,7 +75,17 @@ http.interceptors.response.use(
   (error: unknown) => {
     if (axios.isCancel(error)) return Promise.reject(error);
 
-    return Promise.reject(normalizeError(error, API_BASE_URL));
+    const normalized = normalizeError(error, API_BASE_URL);
+
+    if (
+      normalized.status === 401 &&
+      typeof window !== "undefined" &&
+      !window.location.pathname.startsWith("/login")
+    ) {
+      window.location.href = "/login";
+    }
+
+    return Promise.reject(normalized);
   },
 );
 

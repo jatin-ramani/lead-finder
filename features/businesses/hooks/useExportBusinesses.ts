@@ -5,7 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 
 import { saveBlob } from "@/lib/download";
 import { businessesApi } from "@/services";
-import type { BusinessQuery } from "@/types/api";
+import type { BusinessQuery, ContactQualification } from "@/types/api";
 
 /**
  * CSV export, through the backend.
@@ -33,10 +33,15 @@ export function useExportBusinesses() {
     },
   });
 
-  /** Only the chosen rows. */
+  /** Only the chosen rows, with optional contact restriction. */
   const exportSelected = useMutation({
-    mutationFn: (ids: number[]) =>
-      businessesApi.exportSelectedBusinessesCsv(ids),
+    mutationFn: ({
+      ids,
+      qualification,
+    }: {
+      ids: number[];
+      qualification?: ContactQualification;
+    }) => businessesApi.exportSelectedBusinessesCsv(ids, qualification),
     onSuccess: ({ blob, filename }) => {
       saveBlob(blob, filename);
       message.success("Export downloaded");
@@ -45,7 +50,8 @@ export function useExportBusinesses() {
 
   return {
     exportFiltered: exportFiltered.mutate,
-    exportSelected: exportSelected.mutate,
+    exportSelected: (ids: number[], qualification?: ContactQualification) =>
+      exportSelected.mutate({ ids, qualification }),
     isExporting: exportFiltered.isPending || exportSelected.isPending,
   };
 }

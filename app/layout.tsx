@@ -4,6 +4,8 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import { themeBootstrapScript } from "@/lib/theme-script";
 import AntdRegistry from "@/providers/AntdRegistry";
 import ThemeProvider from "@/providers/ThemeProvider";
+import QueryProvider from "@/providers/QueryProvider";
+import { AuthProvider } from "@/features/auth/AuthContext";
 
 import "./globals.css";
 
@@ -48,7 +50,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body className="min-h-full">
         <AntdRegistry>
-          <ThemeProvider>{children}</ThemeProvider>
+          <ThemeProvider><QueryProvider><AuthProvider>{children}</AuthProvider></QueryProvider></ThemeProvider>
         </AntdRegistry>
       </body>
     </html>

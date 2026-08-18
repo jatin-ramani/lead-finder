@@ -3,10 +3,13 @@
 import {
   CheckCircleFilled,
   CloseCircleFilled,
+  CompassOutlined,
   LoadingOutlined,
   ReloadOutlined,
+  RightOutlined,
 } from "@ant-design/icons";
-import { Button, Progress, Skeleton } from "antd";
+import { Alert, Button, Skeleton, Tag } from "antd";
+import Link from "next/link";
 
 import EmptyState from "@/components/EmptyState";
 import ErrorState from "@/components/feedback/ErrorState";
@@ -23,46 +26,33 @@ interface ScanProgressProps {
   onRetry: () => void;
   onRunAgain: () => void;
   canRunAgain: boolean;
+  watching?: boolean;
 }
 
-function StatusLine({ job }: { job: LatestScanJob }) {
-  if (isRunning(job.status)) {
+function StatusTag({ status }: { status: string }) {
+  if (isRunning(status)) {
     return (
-      <span className="lf-scan-status lf-scan-status--running">
-        <LoadingOutlined aria-hidden />
-        {/*
-          Progress is 0 for the whole Geoapify call, which is the slow part,
-          then climbs quickly as results are stored. Saying "0%" during that
-          would read as stuck; naming what is happening does not.
-        */}
-        {job.progress > 0 ? "Storing results…" : "Contacting Geoapify…"}
-      </span>
+      <Tag color="processing" icon={<LoadingOutlined aria-hidden />} className="lf-tag">
+        Running
+      </Tag>
     );
   }
 
-  if (job.status === "Completed") {
+  if (status === "Completed") {
     return (
-      <span className="lf-scan-status lf-scan-status--ok">
-        <CheckCircleFilled aria-hidden />
+      <Tag color="success" icon={<CheckCircleFilled aria-hidden />} className="lf-tag">
         Completed
-      </span>
+      </Tag>
     );
   }
 
   return (
-    <span className="lf-scan-status lf-scan-status--bad">
-      <CloseCircleFilled aria-hidden />
+    <Tag color="error" icon={<CloseCircleFilled aria-hidden />} className="lf-tag">
       Failed
-    </span>
+    </Tag>
   );
 }
 
-/**
- * The most recent scan: what it was, how it is going, what it produced.
- *
- * While a scan is running this is a live view — the hook behind it polls, and
- * stops the moment the job is no longer running.
- */
 export default function ScanProgress({
   job,
   isNeverScanned,
@@ -71,11 +61,12 @@ export default function ScanProgress({
   onRetry,
   onRunAgain,
   canRunAgain,
+  watching = false,
 }: ScanProgressProps) {
   if (isLoading) {
     return (
       <Panel title="Latest scan" description="Live status of the most recent scan">
-        <Skeleton active title={false} paragraph={{ rows: 3, width: ["45%", "100%", "60%"] }} />
+        <Skeleton active title={false} paragraph={{ rows: 4, width: ["45%", "100%", "80%", "60%"] }} />
       </Panel>
     );
   }
@@ -99,7 +90,7 @@ export default function ScanProgress({
         <EmptyState
           compact
           title="No scans yet"
-          description="Start a scan and its progress will appear here."
+          description="Start a scan and its live progress will appear here."
         />
       </Panel>
     );
@@ -107,14 +98,14 @@ export default function ScanProgress({
 
   const running = isRunning(job.status);
   const failed = job.status === "Failed";
+  const completed = job.status === "Completed";
 
   return (
     <Panel
       title="Latest scan"
       description="Live status of the most recent scan"
       extra={
-        !running &&
-        canRunAgain && (
+        !running && canRunAgain ? (
           <Button
             size="small"
             icon={<ReloadOutlined aria-hidden />}
@@ -122,53 +113,120 @@ export default function ScanProgress({
           >
             {failed ? "Try again" : "Run again"}
           </Button>
-        )
+        ) : null
       }
     >
-      {/*
-        Polite, not assertive: the status changes on its own from a poll, and
-        an assertive region would interrupt whatever the user is reading.
-      */}
-      <div className="lf-scan-live" aria-live="polite">
-        <div className="lf-scan-head">
+      <div className="lf-scan-live flex flex-col gap-4">
+        {/* Header with City, Category, Job ID and Status */}
+        <div className="lf-scan-head flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="lf-scan-target">
-              <strong>{job.city ?? "Unknown city"}</strong>
-              <span className="lf-scan-sep" aria-hidden>
-                ·
+            <p className="lf-scan-target text-base font-semibold">
+              <span>{job.city ?? "Unknown city"}</span>
+              <span className="lf-scan-sep text-gray-400 mx-2" aria-hidden>
+                •
               </span>
-              {job.category ?? "—"}
+              <span className="capitalize text-gray-600 dark:text-gray-300">
+                {job.category ?? "—"}
+              </span>
             </p>
-            <p className="lf-scan-id">Job #{job.id}</p>
+            <p className="lf-scan-id text-xs text-gray-500 font-mono mt-0.5">Job #{job.id}</p>
           </div>
-          <StatusLine job={job} />
+          <StatusTag status={job.status} />
         </div>
 
-        <Progress
-          percent={failed ? 100 : job.progress}
-          status={failed ? "exception" : running ? "active" : "success"}
-          strokeColor={failed ? undefined : "var(--lf-accent)"}
-          // Indeterminate while the provider is being queried: there is no
-          // real percentage to show yet, and a stationary 0% looks broken.
-          showInfo={!running || job.progress > 0}
-          aria-label={`Scan progress: ${job.progress}%`}
-        />
+        {/* Timeout watching status notification banner */}
+        {watching && running && (
+          <Alert
+            type="info"
+            showIcon
+            message="Still scanning"
+            description="Scan is taking longer than usual. We are continuing to monitor progress in the background."
+            className="text-xs"
+          />
+        )}
 
-        <dl className="lf-scan-figures">
+        {/* Honest Progress / Loading Section */}
+        <div className="flex flex-col gap-2">
+          {running && (
+            <div className="flex items-center justify-between text-xs font-medium text-gray-600 dark:text-gray-300" aria-live="polite">
+              <span className="flex items-center gap-1.5">
+                <CompassOutlined className="animate-spin text-blue-500" aria-hidden />
+                {job.progress > 0 ? "Scanning and saving businesses..." : "Discovering businesses..."}
+              </span>
+              {job.progress > 0 && <span className="font-mono">{job.progress}%</span>}
+            </div>
+          )}
+
+          {/* Progress bar element */}
+          {running && job.progress === 0 ? (
+            /* Indeterminate shimmer track — NO fake aria-valuenow */
+            <div
+              className="w-full h-2 rounded bg-gray-200 dark:bg-gray-700 overflow-hidden relative"
+              aria-label="Scan in progress, discovering businesses"
+            >
+              <div className="absolute inset-0 bg-blue-500/60 animate-pulse rounded" />
+            </div>
+          ) : (
+            /* Determinate progress bar — ONLY when genuine percentage exists or terminal */
+            <div
+              role="progressbar"
+              aria-valuenow={failed ? 100 : job.progress}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label={`Scan progress: ${job.progress}%`}
+              className="w-full h-2 rounded bg-gray-200 dark:bg-gray-700 overflow-hidden"
+            >
+              <div
+                className={`h-full transition-all duration-300 rounded ${
+                  failed ? "bg-red-500" : completed ? "bg-emerald-500" : "bg-blue-500"
+                }`}
+                style={{ width: `${failed ? 100 : job.progress}%` }}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Live Metrics Grid */}
+        <dl className="grid grid-cols-2 gap-4 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800">
           <div>
-            <dt>Results returned</dt>
-            <dd>{job.totalBusinesses.toLocaleString()}</dd>
+            <dt className="text-xs text-gray-500 dark:text-gray-400 font-medium">Businesses discovered</dt>
+            <dd className="text-lg font-semibold font-mono text-gray-900 dark:text-gray-100 mt-0.5">
+              {job.totalBusinesses.toLocaleString()}
+            </dd>
           </div>
           <div>
-            <dt>New businesses</dt>
-            <dd>{job.newBusinesses.toLocaleString()}</dd>
+            <dt className="text-xs text-gray-500 dark:text-gray-400 font-medium">New businesses</dt>
+            <dd className="text-lg font-semibold font-mono text-blue-600 dark:text-blue-400 mt-0.5">
+              {job.newBusinesses.toLocaleString()}
+            </dd>
           </div>
         </dl>
 
-        {job.status === "Completed" && job.totalBusinesses > 0 && job.newBusinesses === 0 && (
-          <p className="lf-scan-note">
-            Every result was already in your workspace — nothing new was added.
-          </p>
+        {/* Success state footer action */}
+        {completed && (
+          <div className="flex items-center justify-between pt-1">
+            <p className="text-xs text-gray-500">
+              {job.newBusinesses > 0
+                ? `${job.newBusinesses.toLocaleString()} new businesses added to workspace.`
+                : "All returned results were already in your workspace."}
+            </p>
+            <Link href={job.city ? `/businesses?city=${encodeURIComponent(job.city)}` : "/businesses"}>
+              <Button type="primary" size="small" icon={<RightOutlined aria-hidden />}>
+                View businesses
+              </Button>
+            </Link>
+          </div>
+        )}
+
+        {/* Failure state footer message */}
+        {failed && (
+          <Alert
+            type="error"
+            showIcon
+            message="Scan failed"
+            description="The scan could not be completed. You can try running it again."
+            className="text-xs"
+          />
         )}
       </div>
     </Panel>

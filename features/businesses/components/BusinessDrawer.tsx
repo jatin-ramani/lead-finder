@@ -14,6 +14,7 @@ import {
 import { App, Avatar, Button, Drawer, Tag, Tooltip } from "antd";
 import type { ReactNode } from "react";
 
+import WebsiteDataCard from "@/features/scraping/components/WebsiteDataCard";
 import {
   avatarColor,
   copyText,
@@ -34,6 +35,8 @@ interface BusinessDrawerProps {
   onClose: () => void;
   onDelete: (business: Business) => void;
   isDeleting: boolean;
+  onScrapeSingle?: (businessId: number) => void;
+  isScrapingSingle?: boolean;
 }
 
 interface DetailRowProps {
@@ -95,22 +98,14 @@ function DetailRow({
   );
 }
 
-/**
- * Everything known about one business.
- *
- * The row already carries the full record, so this needs no request of its own
- * — `GET /businesses/{id}` exists for deep-linking and is not needed here.
- *
- * The previous version ended with a "Website analysis — Coming soon" panel
- * showing three em-dashes. That is gone rather than carried forward; the real
- * scraped data arrives with the scraping phase and will occupy the same space.
- */
 export default function BusinessDrawer({
   business,
   open,
   onClose,
   onDelete,
   isDeleting,
+  onScrapeSingle,
+  isScrapingSingle = false,
 }: BusinessDrawerProps) {
   const { message } = App.useApp();
 
@@ -131,7 +126,7 @@ export default function BusinessDrawer({
       open={open}
       onClose={onClose}
       placement="right"
-      width={460}
+      width={480}
       title="Business details"
       className="lf-drawer"
       destroyOnHidden
@@ -218,6 +213,16 @@ export default function BusinessDrawer({
                 onCopy={() => void copy("Website", websiteHref)}
               />
             </div>
+          </section>
+
+          {/* Website Scraping Data Card */}
+          <section>
+            <WebsiteDataCard
+              businessId={business.id}
+              websiteUrl={business.website}
+              onScrapeSingle={onScrapeSingle}
+              isScrapingSingle={isScrapingSingle}
+            />
           </section>
 
           <section>

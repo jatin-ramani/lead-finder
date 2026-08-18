@@ -106,11 +106,8 @@ export type SortOrder = "asc" | "desc";
 /**
  * Query parameters for `GET /businesses` and the CSV export.
  *
- * `city`, `category` and `status` are exact-match on the backend — there is no
- * partial matching and no endpoint listing distinct values, which is why the
- * city control is a search input rather than a dropdown pretending to be
- * exhaustive. `search` is the fuzzy one: it spans name, phone, email and
- * website.
+ * `city`, `category`, `status` and `contact` are exact-match on the backend.
+ * `search` is the fuzzy one: it spans name, phone, email and website.
  */
 export interface BusinessQuery {
   page?: number;
@@ -118,7 +115,9 @@ export interface BusinessQuery {
   search?: string;
   city?: string;
   category?: string;
-  status?: string;
+  has_website?: boolean;
+  has_email?: boolean;
+  has_phone?: boolean;
   sortBy?: BusinessSortField;
   sortOrder?: SortOrder;
 }
@@ -126,6 +125,27 @@ export interface BusinessQuery {
 /** Body for every endpoint that acts on a set of businesses. */
 export interface BulkBusinessRequest {
   business_ids: number[];
+}
+
+export interface ContactQualification {
+  has_email?: boolean;
+  has_phone?: boolean;
+}
+
+export interface SelectedExportRequest extends BulkBusinessRequest, ContactQualification {}
+
+export interface ExportPreviewRequest {
+  scope: "filtered" | "selected";
+  business_ids?: number[];
+  filters?: Pick<BusinessQuery, "search" | "city" | "category" | "has_website" | "has_email" | "has_phone">;
+  qualification?: ContactQualification;
+}
+
+export interface ExportPreviewResponse {
+  success: boolean;
+  total_selected: number;
+  matching_qualification: number;
+  export_count: number;
 }
 
 // ===========================================================================
@@ -243,6 +263,8 @@ export interface DashboardBusinessStats {
   withoutWebsite: number;
   withEmail: number;
   withoutEmail: number;
+  withPhone: number;
+  actionableLeads: number;
 }
 
 export interface DashboardWebsiteStats {
