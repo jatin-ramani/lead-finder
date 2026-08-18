@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { authenticatePlaywright } from "./support/auth";
 
 const businesses = [
   { id: 1, name: "Apex Dental Clinic", phone: "+91 98765 43210", email: "contact@apexdental.com", website: null, city: "Ahmedabad", category: "dental_clinic", address: "101 Ashram Road", status: "No Website" },
@@ -33,7 +34,7 @@ async function mockApi(page: Page) {
 
 test.describe("Lead qualification boolean filter contract", () => {
   test.beforeEach(async ({ context, page }) => {
-    await context.addCookies([{ name: "leadfinder_session", value: "leadfinder_admin_secret_2026_change_in_production", domain: "127.0.0.1", path: "/", httpOnly: true, sameSite: "Lax" }]);
+    await authenticatePlaywright(context);
     await mockApi(page);
     await page.goto("/businesses");
     await expect(page.getByText("Apex Dental Clinic")).toBeVisible();

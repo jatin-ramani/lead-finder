@@ -1,14 +1,9 @@
 import { expect, test } from "@playwright/test";
+import { authenticatePlaywright } from "./support/auth";
 
 test.describe("Phase 5 — Complete Website Scraping Experience E2E Suite", () => {
   test.beforeEach(async ({ context, page }) => {
-    await context.addCookies([
-      {
-        name: "leadfinder_session",
-        value: "leadfinder_admin_secret_2026_change_in_production",
-        url: "http://127.0.0.1:3000",
-      },
-    ]);
+    await authenticatePlaywright(context);
 
     await page.route("**/*", async (route) => {
       const url = route.request().url();

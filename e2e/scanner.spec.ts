@@ -1,14 +1,9 @@
 import { test, expect } from "@playwright/test";
+import { authenticatePlaywright } from "./support/auth";
 
 test.describe("Frontend Scanner Experience (Mocked Deterministic Suite)", () => {
   test.beforeEach(async ({ context }) => {
-    await context.addCookies([
-      {
-        name: "leadfinder_session",
-        value: "leadfinder_admin_secret_2026_change_in_production",
-        url: "http://127.0.0.1:3000",
-      },
-    ]);
+    await authenticatePlaywright(context);
   });
 
   test("full state transition: Running 0% -> 50% -> 80% -> Completed 100%", async ({ page }) => {

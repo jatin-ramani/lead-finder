@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { expect, test, type Page } from "@playwright/test";
+import { authenticatePlaywright } from "./support/auth";
 
 const businesses = [
   { id: 1, name: "Alpha Dental", phone: "111", email: "alpha@example.com", website: null, city: "Ahmedabad", category: "Dental", address: "A", status: "No Website" },
@@ -28,7 +29,7 @@ async function mockWorkspace(page: Page) {
 }
 
 test.describe("Businesses server contract", () => {
-  test.beforeEach(async ({ page }) => { await page.context().addCookies([{ name: "leadfinder_session", value: "leadfinder_admin_secret_2026_change_in_production", domain: "127.0.0.1", path: "/", httpOnly: true, sameSite: "Lax" }]); await mockWorkspace(page); await page.goto("/businesses"); await expect(page.getByText("Alpha Dental")).toBeVisible(); });
+  test.beforeEach(async ({ page }) => { await authenticatePlaywright(page.context()); await mockWorkspace(page); await page.goto("/businesses"); await expect(page.getByText("Alpha Dental")).toBeVisible(); });
 
   test("writes website, email and phone combinations to the URL and resets paging", async ({ page }) => {
     await page.goto("/businesses?page=2");

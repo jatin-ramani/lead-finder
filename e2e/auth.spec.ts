@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
+import { playwrightAdminSecret } from "./support/auth";
 
-const ADMIN_SECRET = process.env.ADMIN_SECRET_KEY || "leadfinder_admin_secret_2026_change_in_production";
+const ADMIN_SECRET = playwrightAdminSecret();
 
 test.describe("Phase 6A — Authentication & API Protection Real E2E Suite", () => {
   test("complete unauthenticated redirect, invalid login, valid login, navigation, logout flow", async ({ page, isMobile }) => {
@@ -8,7 +9,7 @@ test.describe("Phase 6A — Authentication & API Protection Real E2E Suite", () 
     await page.goto("/");
 
     // 2. Redirect to /login
-    await expect(page).toHaveURL(/.*\/login/);
+    await expect(page).toHaveURL(/.*\/login/, { timeout: 15000 });
     await expect(page.getByRole("heading", { name: "Lead Finder Admin" })).toBeVisible({ timeout: 15000 });
 
     // 3. Login with invalid credentials
