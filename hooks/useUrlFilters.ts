@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { BUSINESS_SORT_FIELDS, type BusinessQuery, type BusinessSortField, type SortOrder } from "@/types/api";
 
 export const DEFAULT_PAGE_SIZE = 20;
@@ -38,6 +38,8 @@ export interface UrlFilters {
 
 export function useUrlFilters(): UrlFilters {
   const router = useRouter(); const pathname = usePathname(); const params = useSearchParams();
+  const pendingParams = useRef(params.toString());
+  useEffect(() => { pendingParams.current = params.toString(); }, [params]);
   const search = params.get("search") ?? ""; const city = params.get("city") ?? ""; const category = params.get("category") ?? "";
   const hasWebsite = readBoolean(params.get("has_website"));
   const hasEmail = readBoolean(params.get("has_email")) === true;
@@ -46,17 +48,17 @@ export function useUrlFilters(): UrlFilters {
   const sortBy = readSortBy(params.get("sortBy")); const sortOrder: SortOrder = params.get("sortOrder") === "asc" ? "asc" : DEFAULT_SORT_ORDER;
 
   const apply = useCallback((changes: Record<string, string | number | boolean | undefined>, history: "push" | "replace" = "replace") => {
-    const next = new URLSearchParams(params.toString());
+    const next = new URLSearchParams(pendingParams.current);
     for (const [key, value] of Object.entries(changes)) {
       const remove = value === undefined || value === "" || (key === "page" && value === 1) ||
         (key === "pageSize" && value === DEFAULT_PAGE_SIZE) || (key === "sortBy" && value === DEFAULT_SORT_BY) ||
         (key === "sortOrder" && value === DEFAULT_SORT_ORDER);
       if (remove) next.delete(key); else next.set(key, String(value));
     }
-    const query = next.toString(); const href = query ? `${pathname}?${query}` : pathname;
+    const query = next.toString(); pendingParams.current = query; const href = query ? `${pathname}?${query}` : pathname;
     if (history === "push") router.push(href, { scroll: false });
     else router.replace(href, { scroll: false });
-  }, [params, pathname, router]);
+  }, [pathname, router]);
   const setFilter = useCallback((key: FilterParam, value: string | boolean | undefined) => {
     apply({ [key]: typeof value === "string" ? value.trim() || undefined : value, page: 1 }, key === "search" ? "replace" : "push");
   }, [apply]);
