@@ -9,9 +9,14 @@ export function playwrightAdminSecret(): string {
 }
 
 export async function authenticatePlaywright(context: BrowserContext): Promise<void> {
-  await context.addCookies([{
-    name: "leadfinder_session",
-    value: playwrightAdminSecret(),
-    url: "http://127.0.0.1:3000",
-  }]);
+  const apiBase = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000").replace(/\/+$/, "");
+  const response = await context.request.post(`${apiBase}/auth/login`, {
+    data: { secret: playwrightAdminSecret() },
+  });
+  if (!response.ok()) {
+    throw new Error(`Playwright authentication failed with HTTP ${response.status()}.`);
+  }
+  // BrowserContext.request shares the context cookie jar. The opaque HttpOnly
+  // cookie returned by the backend is therefore available to page requests;
+  // the administrator secret is never installed as a cookie or browser state.
 }
