@@ -12,7 +12,9 @@ async function mockWorkspace(page: Page) {
     const request = route.request(); const url = new URL(request.url());
     if (url.pathname === "/auth/me") return route.fulfill({ json: { authenticated: true } });
     if (url.pathname === "/businesses/export/preview") {
-      return route.fulfill({ json: { success: true, total_selected: 2, matching_qualification: 1, export_count: 1 } });
+      const payload = request.postDataJSON();
+      const total = payload.scope === "selected" ? payload.business_ids.length : 2;
+      return route.fulfill({ json: { success: true, total_selected: total, matching_qualification: 1, export_count: 1 } });
     }
     if (url.pathname === "/businesses/export/csv") {
       return route.fulfill({ status: 200, headers: { "content-type": "text/csv", "content-disposition": 'attachment; filename="businesses.csv"', "access-control-expose-headers": "Content-Disposition" }, body: "\uFEFFID,Name,Phone,Email,Website,City,Category,Address,Status\r\n1,'=SUM(1+1) Caf\u00e9,+91 98765 43210,alpha@example.com,,Ahmedabad,Dental,A,No Website\r\n" });
@@ -59,7 +61,7 @@ test.describe("Businesses server contract", () => {
     await expect(page.getByRole("checkbox", { name: "No website" })).toBeChecked();
     const previewPromise = page.waitForRequest((r) => r.url().endsWith("/businesses/export/preview"));
     await page.getByRole("button", { name: /Export CSV/ }).click();
-    await expect(page.getByText("1 businesses will be exported.")).toBeVisible();
+    await expect(page.getByText("1 businesses match your current filters.")).toBeVisible();
     const preview = await previewPromise;
     expect(preview.postDataJSON().filters.has_website).toBe(false);
     const downloadPromise = page.waitForEvent("download");
@@ -80,6 +82,7 @@ test.describe("Businesses server contract", () => {
     await page.getByRole("button", { name: "Export selected" }).click();
     const dialog = page.getByRole("dialog", { name: "Export businesses" });
     await dialog.getByRole("radio", { name: /Selected businesses/ }).check();
+    await expect(dialog.getByText("1 of 1 selected businesses match your criteria.")).toBeVisible();
     await dialog.getByRole("checkbox", { name: /Only export businesses/ }).check();
     await dialog.getByRole("checkbox", { name: "Has email" }).check();
     await dialog.getByRole("checkbox", { name: "Has phone" }).check();
@@ -87,4 +90,35 @@ test.describe("Businesses server contract", () => {
     await dialog.getByRole("button", { name: /Export$/ }).click();
     expect((await requestPromise).postDataJSON()).toEqual({ business_ids: [1], has_email: true, has_phone: true });
   });
+
+  test("shows a safe backend preview error without fabricating a count", async ({ page }) => {
+    await page.route("**/businesses/export/preview", (route) => route.fulfill({
+      status: 503,
+      json: { success: false, message: "Export preview is temporarily unavailable.", error: "SERVICE_UNAVAILABLE", timestamp: "2026-08-19T00:00:00Z", requestId: "preview-test" },
+    }));
+    await page.getByRole("button", { name: /Export CSV/ }).click();
+    const dialog = page.getByRole("dialog", { name: "Export businesses" });
+    await expect(dialog.getByText("Failed to calculate export count")).toBeVisible();
+    await expect(dialog.getByText("Export preview is temporarily unavailable.")).toBeVisible();
+    await expect(dialog.getByRole("button", { name: /Export$/ })).toBeDisabled();
+    await expect(dialog.getByText(/^\d+ businesses (match|will be exported)/)).not.toBeVisible();
+  });
+
+  test("does not present stale rows when a server-side filter request fails", async ({ page }) => {
+    await page.route("**/*", (route) => {
+      const url = new URL(route.request().url());
+      if (url.origin === "http://127.0.0.1:8000" && url.pathname === "/businesses" && url.searchParams.get("has_website") === "false") {
+        return route.fulfill({
+          status: 503,
+          json: { success: false, message: "Business filters are temporarily unavailable.", error: "SERVICE_UNAVAILABLE", timestamp: "2026-08-19T00:00:00Z", requestId: "filters-test" },
+        });
+      }
+      return route.fallback();
+    });
+    await page.getByRole("checkbox", { name: "No website" }).click();
+    await expect(page).toHaveURL(/has_website=false/);
+    await expect(page.getByText("Could not load businesses")).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText("Alpha Dental")).not.toBeVisible();
+  });
+
 });

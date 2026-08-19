@@ -22,8 +22,8 @@ export function useBusinessList(query: BusinessQuery) {
   });
 
   return {
-    businesses: result.data?.data ?? [],
-    pagination: result.data?.pagination,
+    businesses: result.isError ? [] : (result.data?.data ?? []),
+    pagination: result.isError ? undefined : result.data?.pagination,
 
     /** First load only — there is nothing on screen yet. */
     isLoading: result.isLoading,
