@@ -11,7 +11,7 @@ The workspace UI for the [Lead Finder API](https://github.com/jatin-ramani/lead-
 
 ```bash
 npm install
-cp .env.example .env.local     # point NEXT_PUBLIC_API_BASE_URL at your backend
+cp .env.example .env.local     # point NEXT_PUBLIC_API_URL at your backend
 npm run dev
 ```
 
@@ -38,7 +38,7 @@ uvicorn app:app --port 8000
 Runtime and test-only variables are documented in [`.env.example`](.env.example):
 
 ```ini
-NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
+NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
 PLAYWRIGHT_ADMIN_SECRET=
 VERIFY_API_ADMIN_SECRET=
 ```

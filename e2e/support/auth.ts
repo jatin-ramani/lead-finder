@@ -9,7 +9,7 @@ export function playwrightAdminSecret(): string {
 }
 
 export async function authenticatePlaywright(context: BrowserContext): Promise<void> {
-  const apiBase = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000").replace(/\/+$/, "");
+  const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000").replace(/\/+$/, "");
   const response = await context.request.post(`${apiBase}/auth/login`, {
     data: { secret: playwrightAdminSecret() },
   });

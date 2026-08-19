@@ -82,7 +82,7 @@ export default function ConnectionCard({
 
           <div>
             <dt>Base URL</dt>
-            {/* The configured host, so a wrong NEXT_PUBLIC_API_BASE_URL is
+            {/* The configured host, so a wrong NEXT_PUBLIC_API_URL is
                 visible rather than presenting as an outage. */}
             <dd className="lf-mono lf-truncate" title={API_BASE_URL}>
               {API_BASE_URL}
