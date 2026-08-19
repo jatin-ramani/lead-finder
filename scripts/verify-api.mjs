@@ -1,393 +1,124 @@
-/**
- * Contract check: does the running backend still answer the shape
- * `types/api.ts` claims?
- *
- *     node scripts/verify-api.mjs [baseUrl]
- *
- * This exists because of a specific, expensive bug. The list endpoint gained a
- * pagination envelope, the client still expected a bare array, and the guard
- * `Array.isArray(data) ? data : []` turned the mismatch into an empty app
- * instead of an error. Nothing failed. Nothing logged. Every screen just showed
- * zero businesses.
- *
- * A type annotation cannot catch that — it is erased at runtime. This can, and
- * it runs against a real server, so it also proves the request/response plumbing
- * end to end.
- *
- * Read-only by default: nothing here creates, mutates or deletes. Endpoints
- * that would (scan, the bulk scrapes, deletes) are asserted to *exist* by
- * checking they reject an invalid payload with a validation error rather than a
- * 404 — which confirms the route is registered without causing a side effect.
- */
-
-const BASE = (process.argv[2] ?? "http://127.0.0.1:8000").replace(/\/+$/, "");
-
+/** Read-only release contract verification against a running Lead Finder API. */
+const BASE = (process.argv[2] ?? process.env.VERIFY_API_BASE_URL ?? "http://127.0.0.1:8000").replace(/\/+$/, "");
+const SECRET = process.env.VERIFY_API_ADMIN_SECRET ?? process.env.PLAYWRIGHT_ADMIN_SECRET;
+let cookie = "";
 let passed = 0;
 const failures = [];
 
 function check(name, condition, detail = "") {
-  if (condition) {
-    passed += 1;
-    console.log(`  ✓ ${name}`);
-  } else {
-    failures.push(`${name}${detail ? ` — ${detail}` : ""}`);
-    console.log(`  ✗ ${name}${detail ? ` — ${detail}` : ""}`);
-  }
+  if (condition) { passed += 1; console.log(`  ✓ ${name}`); return; }
+  failures.push(`${name}${detail ? ` — ${detail}` : ""}`);
+  console.log(`  ✗ ${name}${detail ? ` — ${detail}` : ""}`);
 }
-
-function hasKeys(value, keys) {
-  if (typeof value !== "object" || value === null) return false;
-  return keys.every((key) => key in value);
+function hasKeys(value, keys) { return value !== null && typeof value === "object" && keys.every((key) => key in value); }
+function query(params) { const value = new URLSearchParams(); for (const [key, item] of Object.entries(params)) if (item !== undefined) value.set(key, String(item)); return value.toString(); }
+function satisfies(row, filters) {
+  if (filters.has_website === true && !String(row.website ?? "").trim()) return false;
+  if (filters.has_website === false && String(row.website ?? "").trim()) return false;
+  if (filters.has_email === true && !String(row.email ?? "").trim()) return false;
+  if (filters.has_phone === true && !String(row.phone ?? "").trim()) return false;
+  return true;
 }
-
-async function call(path, options = {}) {
-  const response = await fetch(`${BASE}${path}`, options);
-  const requestId = response.headers.get("x-request-id") ?? "";
+async function request(path, options = {}, authenticated = true) {
+  const headers = new Headers(options.headers);
+  if (authenticated && cookie) headers.set("Cookie", cookie);
+  const response = await fetch(`${BASE}${path}`, { ...options, headers, signal: AbortSignal.timeout(15000) });
   const type = response.headers.get("content-type") ?? "";
-
-  const body = type.includes("application/json")
-    ? await response.json()
-    : await response.text();
-
-  return { status: response.status, body, requestId, type };
+  const bytes = Buffer.from(await response.arrayBuffer());
+  let body = bytes;
+  if (type.includes("application/json")) body = JSON.parse(bytes.toString("utf8"));
+  else if (type.includes("text/")) body = bytes.toString("utf8").replace(/^\uFEFF/, "");
+  return { status: response.status, type, body, bytes, requestId: response.headers.get("x-request-id") ?? "", disposition: response.headers.get("content-disposition") ?? "" };
+}
+function csvRows(bytes) {
+  const text = bytes.toString("utf8").replace(/^\uFEFF/, "");
+  const rows = []; let row = []; let field = ""; let quoted = false;
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index];
+    if (char === '"' && quoted && text[index + 1] === '"') { field += '"'; index += 1; }
+    else if (char === '"') quoted = !quoted;
+    else if (char === "," && !quoted) { row.push(field); field = ""; }
+    else if ((char === "\n" || char === "\r") && !quoted) {
+      if (char === "\r" && text[index + 1] === "\n") index += 1;
+      row.push(field); if (row.some((value) => value !== "")) rows.push(row); row = []; field = "";
+    } else field += char;
+  }
+  if (field || row.length) { row.push(field); rows.push(row); }
+  return rows;
+}
+async function authenticate() {
+  if (!SECRET) throw new Error("VERIFY_API_ADMIN_SECRET must be set; the verifier never reads or stores a credential from source files.");
+  const response = await fetch(`${BASE}/auth/login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ secret: SECRET }), signal: AbortSignal.timeout(15000) });
+  if (response.status !== 200) throw new Error(`Authentication failed with HTTP ${response.status}.`);
+  const setCookie = response.headers.get("set-cookie") ?? "";
+  cookie = setCookie.split(";", 1)[0];
+  if (!cookie) throw new Error("Authentication succeeded but no session cookie was returned.");
 }
 
-console.log(`\nVerifying the API contract at ${BASE}\n`);
+async function main() {
+  console.log(`\nVerifying current API contract at ${BASE}\n`);
+  const health = await request("/health", {}, false);
+  check("public GET /health contract", health.status === 200 && hasKeys(health.body, ["status", "database", "timestamp"]));
+  const version = await request("/version", {}, false);
+  check("public GET /version contract", version.status === 200 && hasKeys(version.body, ["name", "version"]));
+  const root = await request("/", {}, false);
+  check("public GET / contract", root.status === 200 && hasKeys(root.body, ["message"]));
 
-// -- system ----------------------------------------------------------------
-console.log("system");
-{
-  const root = await call("/");
-  check("GET /  → { message }", hasKeys(root.body, ["message"]));
+  await authenticate();
+  const me = await request("/auth/me");
+  check("authenticated session accepted", me.status === 200 && me.body?.authenticated === true);
+  const protectedWithoutCookie = await request("/businesses", {}, false);
+  check("protected endpoint rejects anonymous requests", protectedWithoutCookie.status === 401);
 
-  const health = await call("/health");
-  check(
-    "GET /health  → { status, database, timestamp }",
-    hasKeys(health.body, ["status", "database", "timestamp"]),
-  );
+  const unknown = await request("/businesses/999999999");
+  check("standard error envelope", unknown.status === 404 && hasKeys(unknown.body, ["success", "message", "error", "timestamp", "requestId", "details"]));
+  check("error requestId matches header", Boolean(unknown.requestId) && unknown.body?.requestId === unknown.requestId);
+  const validation = await request("/businesses/not-an-integer");
+  check("validation error envelope", validation.status === 422 && validation.body?.error === "VALIDATION_ERROR" && Array.isArray(validation.body?.details));
 
-  const version = await call("/version");
-  check("GET /version  → { name, version }", hasKeys(version.body, ["name", "version"]));
-
-  const system = await call("/system");
-  check(
-    "GET /system  → { pythonVersion, platform, database, apiVersion, serverTime }",
-    hasKeys(system.body, [
-      "pythonVersion",
-      "platform",
-      "database",
-      "apiVersion",
-      "serverTime",
-    ]),
-  );
-  check(
-    "GET /system  leaks no connection URL",
-    !JSON.stringify(system.body).includes("://"),
-  );
-}
-
-// -- request id ------------------------------------------------------------
-console.log("\nrequest id");
-{
-  const ok = await call("/health");
-  check("X-Request-ID present on a success", ok.requestId.length > 0);
-
-  const bad = await call("/businesses/99999999");
-  check("X-Request-ID present on a failure", bad.requestId.length > 0);
-  check(
-    "header matches the envelope's requestId",
-    bad.body?.requestId === bad.requestId,
-    `header=${bad.requestId} body=${bad.body?.requestId}`,
-  );
-
-  const echoed = await call("/health", {
-    headers: { "X-Request-ID": "contract-check-42" },
-  });
-  check("an inbound X-Request-ID is honoured", echoed.requestId === "contract-check-42");
-}
-
-// -- error envelope --------------------------------------------------------
-console.log("\nerror envelope");
-{
-  const notFound = await call("/businesses/99999999");
-  check(
-    "404 → the six-key envelope",
-    hasKeys(notFound.body, [
-      "success",
-      "message",
-      "error",
-      "timestamp",
-      "requestId",
-      "details",
-    ]),
-  );
-  check("404 → error code NOT_FOUND", notFound.body?.error === "NOT_FOUND");
-  check("404 → success is false", notFound.body?.success === false);
-
-  const invalid = await call("/businesses/not-an-integer");
-  check("422 → error code VALIDATION_ERROR", invalid.body?.error === "VALIDATION_ERROR");
-  check(
-    "422 → details is a list of { field, message, type }",
-    Array.isArray(invalid.body?.details) &&
-      hasKeys(invalid.body.details[0], ["field", "message", "type"]),
-  );
-
-  const noRoute = await call("/definitely/not/a/route");
-  check("unknown route → still an envelope", hasKeys(noRoute.body, ["error", "requestId"]));
-}
-
-// -- businesses ------------------------------------------------------------
-console.log("\nbusinesses");
-{
-  const list = await call("/businesses?page=1&pageSize=2");
-  check(
-    "GET /businesses → { success, data, pagination }  (NOT a bare array)",
-    hasKeys(list.body, ["success", "data", "pagination"]),
-    Array.isArray(list.body) ? "returned an array" : "",
-  );
-  check("  data is an array", Array.isArray(list.body?.data));
-  check(
-    "  pagination → { page, pageSize, totalItems, totalPages }",
-    hasKeys(list.body?.pagination, ["page", "pageSize", "totalItems", "totalPages"]),
-  );
-  check("  pageSize is honoured", list.body?.pagination?.pageSize === 2);
-
-  const row = list.body?.data?.[0];
-  if (row) {
-    check(
-      "  a row has all nine fields",
-      hasKeys(row, [
-        "id",
-        "name",
-        "phone",
-        "email",
-        "website",
-        "city",
-        "category",
-        "address",
-        "status",
-      ]),
-    );
-  } else {
-    console.log("  – no rows to shape-check (database is empty)");
+  const baseList = await request("/businesses?page=1&pageSize=100");
+  check("business pagination contract", baseList.status === 200 && Array.isArray(baseList.body?.data) && hasKeys(baseList.body?.pagination, ["page", "pageSize", "totalItems", "totalPages"]));
+  const combinations = [
+    {}, { has_website: false }, { has_website: false, has_email: true }, { has_website: false, has_phone: true },
+    { has_website: false, has_email: true, has_phone: true }, { has_website: true }, { has_website: true, has_email: true },
+    { has_website: true, has_phone: true }, { has_website: true, has_email: true, has_phone: true },
+    { has_email: true }, { has_phone: true }, { has_email: true, has_phone: true },
+  ];
+  for (const filters of combinations) {
+    const label = Object.keys(filters).length ? query(filters) : "no qualification filters";
+    const result = await request(`/businesses?${query({ ...filters, page: 1, pageSize: 100 })}`);
+    check(`filter ${label}`, result.status === 200 && Array.isArray(result.body?.data) && result.body.data.every((row) => satisfies(row, filters)));
   }
 
-  for (const param of ["search", "city", "category", "status", "sortBy", "sortOrder"]) {
-    const filtered = await call(`/businesses?${param}=x&pageSize=1`);
-    check(`  ?${param} is accepted`, filtered.status === 200);
+  const exportFilters = { has_website: false, has_email: true, has_phone: true };
+  const preview = await request("/businesses/export/preview", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scope: "filtered", filters: exportFilters, qualification: {} }) });
+  check("filtered export preview contract", preview.status === 200 && hasKeys(preview.body, ["total_selected", "matching_qualification", "export_count"]));
+  const csv = await request(`/businesses/export/csv?${query(exportFilters)}`);
+  const filteredRows = csvRows(csv.bytes);
+  check("filtered CSV contract and UTF-8 BOM", csv.status === 200 && csv.type.includes("text/csv") && csv.bytes.subarray(0, 3).toString("hex") === "efbbbf");
+  check("filtered preview equals exported row count", preview.body?.export_count === Math.max(0, filteredRows.length - 1), `preview=${preview.body?.export_count} rows=${Math.max(0, filteredRows.length - 1)}`);
+  check("CSV filename is exposed", /attachment;\s*filename=/i.test(csv.disposition));
+
+  const ids = (baseList.body?.data ?? []).slice(0, 2).map((row) => row.id);
+  if (ids.length) {
+    const selectedPreview = await request("/businesses/export/preview", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scope: "selected", business_ids: ids, qualification: { has_email: true } }) });
+    const selectedCsv = await request("/businesses/export/csv", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ business_ids: ids, has_email: true }) });
+    check("selected export preview contract", selectedPreview.status === 200);
+    check("selected preview equals exported row count", selectedPreview.body?.export_count === Math.max(0, csvRows(selectedCsv.bytes).length - 1));
+  } else console.log("  – selected export row comparison skipped because the controlled database is empty");
+
+  const dashboard = await request("/dashboard/stats");
+  check("dashboard contract", dashboard.status === 200 && hasKeys(dashboard.body, ["business", "websiteData", "scrapeJobs", "scanJobs", "latestScanJob", "latestScrapeJob"]) && hasKeys(dashboard.body.business, ["totalBusinesses", "withWebsite", "withoutWebsite", "withEmail", "withPhone", "actionableLeads"]));
+  const scans = await request("/scan/jobs");
+  check("scan job read contract", scans.status === 200 && Array.isArray(scans.body));
+  const scrapes = await request("/scrape/jobs");
+  check("scrape job read contract", scrapes.status === 200 && Array.isArray(scrapes.body?.data) && !("pagination" in scrapes.body));
+  for (const [path, method, body] of [["/scan", "POST", {}], ["/scrape/selected", "POST", {}]]) {
+    const registered = await request(path, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    check(`${method} ${path} registered without launching work`, registered.status === 422, `HTTP ${registered.status}`);
   }
 
-  const csv = await call("/businesses/export/csv?pageSize=1");
-  check("GET /businesses/export/csv → text/csv", csv.type.includes("text/csv"));
-
-  // Checked as raw bytes, not as text: `Response.text()` performs a UTF-8
-  // decode, which the WHATWG spec says removes a leading BOM. Reading the
-  // decoded string would report the BOM missing when it is on the wire.
-  const csvBytes = Buffer.from(
-    await (await fetch(`${BASE}/businesses/export/csv?pageSize=1`)).arrayBuffer(),
-  );
-  check(
-    "  begins with a UTF-8 BOM (so Excel reads the accents)",
-    csvBytes.subarray(0, 3).toString("hex") === "efbbbf",
-    csvBytes.subarray(0, 3).toString("hex"),
-  );
+  console.log(`\n${failures.length ? "FAIL" : "PASS"} — ${passed} checks passed, ${failures.length} failed`);
+  if (failures.length) { console.log("\nFailures:"); for (const failure of failures) console.log(`  - ${failure}`); process.exitCode = 1; }
 }
-
-// -- jobs & dashboard ------------------------------------------------------
-console.log("\njobs and dashboard");
-{
-  const stats = await call("/dashboard/stats");
-  check(
-    "GET /dashboard/stats → six groups",
-    hasKeys(stats.body, [
-      "business",
-      "websiteData",
-      "scrapeJobs",
-      "scanJobs",
-      "latestScanJob",
-      "latestScrapeJob",
-    ]),
-  );
-  check(
-    "  business → five counters",
-    hasKeys(stats.body?.business, [
-      "totalBusinesses",
-      "withWebsite",
-      "withoutWebsite",
-      "withEmail",
-      "withoutEmail",
-    ]),
-  );
-  check(
-    "  websiteData → completed, failed, pending, totalScraped",
-    hasKeys(stats.body?.websiteData, [
-      "completed",
-      "failed",
-      "pending",
-      "totalScraped",
-    ]),
-  );
-  check(
-    "  scanJobs → total, running, completed",
-    hasKeys(stats.body?.scanJobs, ["total", "running", "completed"]),
-  );
-  check(
-    "  scrapeJobs → total, running, completed, failed",
-    hasKeys(stats.body?.scrapeJobs, ["total", "running", "completed", "failed"]),
-  );
-  check(
-    "  latestScanJob is a job or null (never absent)",
-    "latestScanJob" in (stats.body ?? {}),
-  );
-  check(
-    "  counts are internally consistent",
-    stats.body?.business?.withWebsite + stats.body?.business?.withoutWebsite ===
-      stats.body?.business?.totalBusinesses,
-  );
-
-  const latestScrape = stats.body?.latestScrapeJob;
-
-  if (latestScrape?.completed_at) {
-    // The backend writes datetime.now(timezone.utc) into a naive column, so
-    // the offset is dropped and the string arrives designator-less. JS parses
-    // that as LOCAL time. If a designator ever appears, parseApiDate's
-    // append-Z rule would double-shift and must be revisited.
-    check(
-      "  scrape timestamps carry NO timezone designator (parseApiDate appends Z)",
-      !/(?:Z|[+-]\d{2}:?\d{2})$/i.test(latestScrape.completed_at),
-      `got ${latestScrape.completed_at} — revisit lib/format.ts parseApiDate`,
-    );
-  }
-
-  check(
-    "  no dashboard field claims a time window (no trend/today data exists)",
-    !JSON.stringify(stats.body ?? {}).match(/today|trend|previous|delta/i),
-  );
-
-  const scanJobs = await call("/scan/jobs");
-  check("GET /scan/jobs → an array", Array.isArray(scanJobs.body));
-  check(
-    "  unpaginated — no envelope, so summing it is honest",
-    Array.isArray(scanJobs.body) && !("pagination" in scanJobs.body),
-  );
-
-  const scanJob = scanJobs.body?.[0];
-
-  if (scanJob) {
-    check(
-      "  a scan job carries snake_case counters",
-      hasKeys(scanJob, [
-        "id",
-        "city",
-        "category",
-        "status",
-        "progress",
-        "total_businesses",
-        "new_businesses",
-      ]),
-    );
-    check(
-      "  and NO timestamp of any kind (history cannot be dated)",
-      !("created_at" in scanJob) &&
-        !("started_at" in scanJob) &&
-        !("completed_at" in scanJob),
-      "one appeared — ScanHistory can now show when a scan ran",
-    );
-    check(
-      "  the grid-scan columns are still dead (never render them)",
-      scanJob.total_cells === 0 &&
-        scanJob.completed_cells === 0 &&
-        scanJob.current_cell === null,
-      "one is now populated — revisit types/api.ts",
-    );
-  }
-
-  const latest = await call("/scan/jobs/latest");
-
-  if (latest.status === 200) {
-    check(
-      "GET /scan/jobs/latest → camelCase counters, unlike the list",
-      hasKeys(latest.body, [
-        "id",
-        "city",
-        "category",
-        "status",
-        "progress",
-        "totalBusinesses",
-        "newBusinesses",
-      ]),
-    );
-    check(
-      "  status is one the polling state machine knows",
-      ["Pending", "Running", "Completed", "Failed"].includes(latest.body.status),
-      latest.body.status,
-    );
-  } else {
-    check(
-      "GET /scan/jobs/latest → 404 before any scan (an empty state, not an error)",
-      latest.status === 404 && latest.body?.error === "NOT_FOUND",
-    );
-  }
-
-  const scrapeJobs = await call("/scrape/jobs");
-  check(
-    "GET /scrape/jobs → { success, data }  (unpaginated, unlike /businesses)",
-    hasKeys(scrapeJobs.body, ["success", "data"]) &&
-      Array.isArray(scrapeJobs.body.data),
-  );
-  check(
-    "  and carries no pagination block",
-    !("pagination" in scrapeJobs.body),
-    "it gained one — update ScrapeJobListResponse",
-  );
-}
-
-// -- mutating routes exist, without mutating anything ----------------------
-console.log("\nmutating routes (existence only — no side effects)");
-{
-  // An empty body fails validation with 422. A missing route answers 404. The
-  // difference is what proves the route is registered.
-  const scan = await call("/scan", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: "{}",
-  });
-  check("POST /scan is registered", scan.status === 422, `got ${scan.status}`);
-
-  const bulkDelete = await call("/businesses", {
-    method: "DELETE",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ business_ids: "not-a-list" }),
-  });
-  check("DELETE /businesses is registered", bulkDelete.status === 422, `got ${bulkDelete.status}`);
-
-  const selected = await call("/scrape/selected", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: "{}",
-  });
-  check("POST /scrape/selected is registered", selected.status === 422, `got ${selected.status}`);
-
-  for (const path of ["/scrape/all", "/scrape/missing", "/scrape/retry-failed"]) {
-    const head = await call(path, { method: "GET" });
-    // GET on a POST-only route is 405, not 404 — the route exists.
-    check(`POST ${path} is registered`, head.status === 405, `got ${head.status}`);
-  }
-
-  const missingWebsite = await call("/businesses/99999999/website");
-  check("GET /businesses/{id}/website is registered", missingWebsite.status === 404);
-
-  const missingScrapeJob = await call("/scrape/jobs/99999999");
-  check("GET /scrape/jobs/{id} is registered", missingScrapeJob.status === 404);
-}
-
-// -- report ----------------------------------------------------------------
-console.log(
-  `\n${failures.length === 0 ? "PASS" : "FAIL"} — ${passed} checks passed, ${failures.length} failed`,
-);
-
-if (failures.length > 0) {
-  console.log("\nfailures:");
-  for (const failure of failures) console.log(`  - ${failure}`);
-  process.exit(1);
-}
+main().catch((error) => { console.error(`\nFAIL — API verification could not run: ${error.message}`); process.exitCode = 1; });

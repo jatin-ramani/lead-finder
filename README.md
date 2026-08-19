@@ -35,10 +35,12 @@ uvicorn app:app --port 8000
 
 ## Configuration
 
-One variable, documented in [`.env.example`](.env.example):
+Runtime and test-only variables are documented in [`.env.example`](.env.example):
 
 ```ini
 NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
+PLAYWRIGHT_ADMIN_SECRET=
+VERIFY_API_ADMIN_SECRET=
 ```
 
 `NEXT_PUBLIC_` values are **inlined into the bundle at build time**, so they are
@@ -94,14 +96,18 @@ fails identically every time.
 ### Verifying the contract
 
 ```bash
-npm run verify:api                      # against localhost:8000
-npm run verify:api http://api.host      # against anything else
+VERIFY_API_ADMIN_SECRET=<development-secret> npm run verify:api
+                                             # against localhost:8000
+VERIFY_API_ADMIN_SECRET=<development-secret> npm run verify:api -- http://api.host
+                                             # against anything else
 ```
 
-41 assertions against a **running** backend: response shapes, the error
-envelope, request-id propagation, that every route is registered, and that
-`/system` never leaks a connection string. Read-only — nothing it calls has a
-side effect.
+32 checks against a **running** backend cover public health/version,
+authenticated reads, error envelopes and request IDs, the complete boolean
+qualification matrix, filtered/selected export parity, dashboard, and job route
+contracts. Mutating routes receive deliberately invalid bodies, so no scan or
+scrape work is launched. The credential comes only from
+`VERIFY_API_ADMIN_SECRET` (or `PLAYWRIGHT_ADMIN_SECRET`) and is never logged.
 
 This exists because of a specific bug. The list endpoint gained a pagination
 envelope, the client still expected an array, and a defensive

@@ -106,7 +106,8 @@ export type SortOrder = "asc" | "desc";
 /**
  * Query parameters for `GET /businesses` and the CSV export.
  *
- * `city`, `category`, `status` and `contact` are exact-match on the backend.
+ * `city` and `category` are exact-match on the backend; qualification uses the
+ * composable `has_website`, `has_email`, and `has_phone` booleans.
  * `search` is the fuzzy one: it spans name, phone, email and website.
  */
 export interface BusinessQuery {
