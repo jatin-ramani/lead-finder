@@ -49,9 +49,9 @@ export default function GlobalError({
         <title>Something went wrong · Lead Finder</title>
 
         <style>{`
-          :root { color-scheme: light dark; --bg:#ffffff; --fg:#0b0e14; --muted:#5b6270; --line:#e5e7eb; --accent:#E5B93C; }
+          :root { color-scheme: light dark; --bg:#F6F7F9; --fg:#17202B; --muted:#758293; --line:#DDE2E8; --accent:#2563EB; }
           @media (prefers-color-scheme: dark) {
-            :root { --bg:#0b0e14; --fg:#f5f6f8; --muted:#9aa1ae; --line:#232936; }
+            :root { --bg:#0D1117; --fg:#F3F6F9; --muted:#8491A1; --line:#303A46; }
           }
           body { background: var(--bg); color: var(--fg); }
           .ge-card { max-width: 30rem; text-align: center; }
@@ -61,7 +61,7 @@ export default function GlobalError({
           .ge-ref code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
           .ge-btn {
             font: inherit; font-weight: 600; cursor: pointer;
-            background: var(--accent); color: #0b0b0b; border: 0;
+            background: var(--accent); color: #FFFFFF; border: 0;
             border-radius: 8px; padding: .625rem 1.25rem;
             transition: filter 150ms ease;
           }

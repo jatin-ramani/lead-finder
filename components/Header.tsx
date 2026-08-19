@@ -81,7 +81,7 @@ export default function Header({
               aria-label="Sign out"
               icon={<LogoutOutlined />}
               onClick={() => logout()}
-              className="lf-icon-btn text-slate-400 hover:text-red-400"
+              className="lf-icon-btn lf-icon-btn--danger"
             />
           </Tooltip>
           <Tooltip title={mode === "dark" ? "Switch to light" : "Switch to dark"}>

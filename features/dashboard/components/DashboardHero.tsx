@@ -80,7 +80,7 @@ export default function DashboardHero({
           Every one of these is a business you could build a site for.
         </p>
 
-        <Link href="/businesses?status=No+Website" className="lf-hero-cta">
+        <Link href="/businesses?has_website=false" className="lf-hero-cta">
           <Button type="primary" icon={<ArrowRightOutlined aria-hidden />}>
             Review them
           </Button>

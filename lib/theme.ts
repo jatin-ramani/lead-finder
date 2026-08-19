@@ -2,182 +2,70 @@ import { theme, type ThemeConfig } from "antd";
 
 export type ThemeMode = "light" | "dark";
 
-/**
- * UI accent. Governed by text/icon contrast (9.9:1 on the dark card), not by the
- * chart lightness band — chart marks use the stepped values in CHART_COLORS.
- */
-export const PRIMARY_COLOR = "#E5B93C";
-export const PRIMARY_HOVER = "#F0C95E";
-export const PRIMARY_ACTIVE = "#C99F2A";
-
-/** Surfaces the palette validator was run against. */
-export const SURFACE = {
-  dark: {
-    page: "#0A0A0B",
-    card: "#141416",
-    elevated: "#1C1C21",
-    sidebar: "#0E0E10",
-    border: "#26262C",
-    borderSubtle: "#1E1E23",
-  },
+export const PALETTE = {
   light: {
-    page: "#F7F7F5",
-    card: "#FFFFFF",
-    elevated: "#FFFFFF",
-    sidebar: "#0E0E10",
-    border: "#E3E3DE",
-    borderSubtle: "#EDEDE8",
+    page: "#F6F7F9", surface: "#FFFFFF", elevated: "#FFFFFF", border: "#DDE2E8",
+    text: "#17202B", textSecondary: "#4B5968", textMuted: "#758293",
+    brand: "#2563EB", brandHover: "#1D4ED8", brandActive: "#1E40AF",
+    success: "#16803C", warning: "#B45309", error: "#C9362B", info: "#0369A1", focus: "#2563EB",
+    subtle: "#F0F3F7", hover: "#F8FAFC",
+  },
+  dark: {
+    page: "#0D1117", surface: "#151B23", elevated: "#1B2430", border: "#303A46",
+    text: "#F3F6F9", textSecondary: "#B7C0CB", textMuted: "#8491A1",
+    brand: "#60A5FA", brandHover: "#7CB7FC", brandActive: "#3B82F6",
+    success: "#4ADE80", warning: "#FBBF24", error: "#F87171", info: "#38BDF8", focus: "#93C5FD",
+    subtle: "#202936", hover: "#1B2430",
   },
 } as const;
 
-/**
- * Chart series colours — validated with the dataviz palette checker against the
- * dark card surface (#141416): lightness band, chroma floor, all-pairs CVD
- * separation (ΔE 27.3 deutan), normal-vision floor (27.7) and 3:1 contrast.
- * Do not brighten these to match the UI accent; they would leave the band.
- */
-export const CHART_COLORS = {
-  /** Slot 1 — the emphasis hue: businesses worth contacting. */
-  series1: "#B48C23",
-  /** Slot 2 — no website but unreachable. */
-  series2: "#9078E8",
-  /** De-emphasis: already has a website, i.e. context, not a lead. */
-  neutral: "#6B6B76",
-  grid: "#26262C",
-  gridLight: "#E3E3DE",
-  axis: "#71717A",
+export const PRIMARY_COLOR = PALETTE.light.brand;
+export const PRIMARY_HOVER = PALETTE.light.brandHover;
+export const PRIMARY_ACTIVE = PALETTE.light.brandActive;
+export const SURFACE = {
+  light: { page: PALETTE.light.page, card: PALETTE.light.surface, elevated: PALETTE.light.elevated, sidebar: PALETTE.light.surface, border: PALETTE.light.border, borderSubtle: PALETTE.light.border },
+  dark: { page: PALETTE.dark.page, card: PALETTE.dark.surface, elevated: PALETTE.dark.elevated, sidebar: PALETTE.dark.surface, border: PALETTE.dark.border, borderSubtle: PALETTE.dark.border },
 } as const;
+export const CHART_COLORS = { series1: PALETTE.light.brand, series2: PALETTE.light.info, neutral: PALETTE.light.textMuted, grid: PALETTE.dark.border, gridLight: PALETTE.light.border, axis: PALETTE.light.textMuted } as const;
+export const DELTA_UP = PALETTE.light.success;
+export const DELTA_DOWN = PALETTE.light.error;
 
-export const DELTA_UP = "#4ADE80";
-export const DELTA_DOWN = "#F87171";
+const FONT_FAMILY = "var(--font-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 
-const FONT_FAMILY =
-  "var(--font-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
-
-const sharedToken: ThemeConfig["token"] = {
-  colorPrimary: PRIMARY_COLOR,
-  colorInfo: PRIMARY_COLOR,
-  colorSuccess: "#22C55E",
-  colorError: "#EF4444",
-  colorWarning: "#F59E0B",
-  colorLink: PRIMARY_COLOR,
-  colorLinkHover: PRIMARY_HOVER,
-  fontFamily: FONT_FAMILY,
-  fontSize: 14,
-  borderRadius: 10,
-  borderRadiusLG: 14,
-  borderRadiusSM: 8,
-  controlHeight: 38,
-  wireframe: false,
-};
-
-const darkTheme: ThemeConfig = {
-  algorithm: theme.darkAlgorithm,
-  token: {
-    ...sharedToken,
-    colorBgLayout: SURFACE.dark.page,
-    colorBgContainer: SURFACE.dark.card,
-    colorBgElevated: SURFACE.dark.elevated,
-    colorBorder: SURFACE.dark.border,
-    colorBorderSecondary: SURFACE.dark.borderSubtle,
-    colorTextHeading: "#F4F4F5",
-    colorText: "#E4E4E7",
-    colorTextSecondary: "#A1A1AA",
-    colorTextTertiary: "#71717A",
-    colorTextQuaternary: "#52525B",
-  },
-  components: {
-    Layout: {
-      headerBg: SURFACE.dark.page,
-      headerHeight: 76,
-      headerPadding: "0 28px",
-      bodyBg: SURFACE.dark.page,
+function config(mode: ThemeMode): ThemeConfig {
+  const p = PALETTE[mode];
+  const dark = mode === "dark";
+  return {
+    algorithm: dark ? theme.darkAlgorithm : theme.defaultAlgorithm,
+    token: {
+      colorPrimary: p.brand, colorInfo: p.info, colorSuccess: p.success,
+      colorWarning: p.warning, colorError: p.error, colorLink: p.brand,
+      colorLinkHover: p.brandHover, colorBgLayout: p.page,
+      colorBgContainer: p.surface, colorBgElevated: p.elevated,
+      colorBorder: p.border, colorBorderSecondary: p.border,
+      colorTextHeading: p.text, colorText: p.text, colorTextSecondary: p.textSecondary,
+      colorTextTertiary: p.textMuted, fontFamily: FONT_FAMILY, fontSize: 14,
+      borderRadius: 6, borderRadiusSM: 4, borderRadiusLG: 8, controlHeight: 38,
+      boxShadow: "0 1px 2px rgba(15,23,42,.06)", boxShadowSecondary: "0 12px 32px rgba(15,23,42,.14)",
+      wireframe: false,
     },
-    Table: {
-      headerBg: "transparent",
-      headerColor: "#71717A",
-      headerSplitColor: "transparent",
-      rowHoverBg: "#1A1A1E",
-      borderColor: SURFACE.dark.borderSubtle,
-      cellPaddingBlock: 15,
-      footerBg: "transparent",
+    components: {
+      Layout: { headerBg: p.surface, headerHeight: 64, headerPadding: "0 32px", bodyBg: p.page, siderBg: p.surface },
+      Button: { controlHeight: 38, controlHeightSM: 32, borderRadius: 6, fontWeight: 600 },
+      Input: { controlHeight: 38, borderRadius: 6 },
+      Select: { controlHeight: 38, borderRadius: 6, optionSelectedBg: p.subtle },
+      Table: { headerBg: p.subtle, headerColor: p.textSecondary, headerSplitColor: "transparent", rowHoverBg: p.hover, borderColor: p.border, cellPaddingBlock: 16, cellPaddingInline: 16, fontSize: 13 },
+      Card: { headerBg: "transparent", borderRadiusLG: 8 },
+      Modal: { contentBg: p.elevated, headerBg: p.elevated, borderRadiusLG: 12, paddingContentHorizontalLG: 24 },
+      Drawer: { colorBgElevated: p.elevated },
+      Menu: { itemHeight: 40, itemBorderRadius: 6, itemSelectedBg: dark ? "rgba(96,165,250,.14)" : "#EFF6FF", itemSelectedColor: p.brand, itemHoverBg: p.subtle, itemColor: p.textSecondary },
+      Tooltip: { colorBgSpotlight: p.text, colorTextLightSolid: p.surface },
+      Progress: { defaultColor: p.brand, remainingColor: p.subtle },
     },
-    Card: { headerBg: "transparent" },
-    Segmented: {
-      itemSelectedBg: "#2A2A31",
-      itemSelectedColor: "#F4F4F5",
-      trackBg: "#161619",
-    },
-    Select: { optionSelectedBg: "#2A2A31" },
-    Modal: { contentBg: SURFACE.dark.elevated, headerBg: SURFACE.dark.elevated },
-    Drawer: { colorBgElevated: SURFACE.dark.card },
-    Tooltip: { colorBgSpotlight: "#2A2A31", colorTextLightSolid: "#F4F4F5" },
-  },
-};
-
-const lightTheme: ThemeConfig = {
-  algorithm: theme.defaultAlgorithm,
-  token: {
-    ...sharedToken,
-    colorBgLayout: SURFACE.light.page,
-    colorBgContainer: SURFACE.light.card,
-    colorBorder: SURFACE.light.border,
-    colorBorderSecondary: SURFACE.light.borderSubtle,
-    colorTextHeading: "#0B0B0B",
-    colorText: "#27272A",
-    colorTextSecondary: "#52514E",
-    colorTextTertiary: "#898781",
-  },
-  components: {
-    Layout: {
-      headerBg: SURFACE.light.page,
-      headerHeight: 76,
-      headerPadding: "0 28px",
-      bodyBg: SURFACE.light.page,
-    },
-    Table: {
-      headerBg: "transparent",
-      headerColor: "#898781",
-      headerSplitColor: "transparent",
-      rowHoverBg: "#FAFAF8",
-      borderColor: SURFACE.light.borderSubtle,
-      cellPaddingBlock: 15,
-    },
-    Card: { headerBg: "transparent" },
-  },
-};
-
-export function getAntdTheme(mode: ThemeMode): ThemeConfig {
-  return mode === "dark" ? darkTheme : lightTheme;
+  };
 }
 
-/** The sidebar is dark in both modes, so it carries its own nested theme. */
-export const sidebarTheme: ThemeConfig = {
-  algorithm: theme.darkAlgorithm,
-  token: {
-    ...sharedToken,
-    colorBgContainer: "transparent",
-    colorText: "#A1A1AA",
-    colorTextSecondary: "#71717A",
-  },
-  components: {
-    Menu: {
-      darkItemBg: "transparent",
-      darkSubMenuItemBg: "transparent",
-      darkItemSelectedBg: "rgba(229, 185, 60, 0.10)",
-      darkItemSelectedColor: PRIMARY_COLOR,
-      darkItemHoverBg: "rgba(255, 255, 255, 0.04)",
-      darkItemHoverColor: "#F4F4F5",
-      darkItemColor: "#8E8E99",
-      itemHeight: 40,
-      itemMarginInline: 0,
-      itemMarginBlock: 2,
-      itemBorderRadius: 9,
-      iconSize: 17,
-      collapsedIconSize: 19,
-    },
-  },
-};
-
-export const SIDEBAR_BG = SURFACE.dark.sidebar;
-export const SIDEBAR_BORDER = "rgba(255, 255, 255, 0.06)";
+export function getAntdTheme(mode: ThemeMode): ThemeConfig { return config(mode); }
+export const sidebarTheme = config("light");
+export const SIDEBAR_BG = PALETTE.light.surface;
+export const SIDEBAR_BORDER = PALETTE.light.border;

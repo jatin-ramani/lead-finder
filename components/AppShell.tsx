@@ -9,7 +9,7 @@ import Sidebar, {
   SIDEBAR_WIDTH,
 } from "@/components/Sidebar";
 import { usePersistentValue } from "@/hooks/usePersistentState";
-import { SIDEBAR_BG } from "@/lib/theme";
+
 
 const { Content } = Layout;
 
@@ -53,7 +53,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
         width={SIDEBAR_WIDTH}
         closable={false}
         rootClassName="lf-mobile-nav"
-        styles={{ body: { padding: 0, background: SIDEBAR_BG } }}
+        styles={{ body: { padding: 0 } }}
       >
         {/* Every link calls onNavigate, so the drawer closes on navigation. */}
         <Sidebar collapsed={false} inDrawer onNavigate={closeMobileNav} />

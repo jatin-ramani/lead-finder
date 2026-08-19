@@ -150,7 +150,7 @@ export default function ScanProgress({
           {running && (
             <div className="flex items-center justify-between text-xs font-medium text-gray-600 dark:text-gray-300" aria-live="polite">
               <span className="flex items-center gap-1.5">
-                <CompassOutlined className="animate-spin text-blue-500" aria-hidden />
+                <CompassOutlined className="animate-spin text-[var(--lf-brand)]" aria-hidden />
                 {job.progress > 0 ? "Scanning and saving businesses..." : "Discovering businesses..."}
               </span>
               {job.progress > 0 && <span className="font-mono">{job.progress}%</span>}
@@ -164,7 +164,7 @@ export default function ScanProgress({
               className="w-full h-2 rounded bg-gray-200 dark:bg-gray-700 overflow-hidden relative"
               aria-label="Scan in progress, discovering businesses"
             >
-              <div className="absolute inset-0 bg-blue-500/60 animate-pulse rounded" />
+              <div className="absolute inset-0 bg-[var(--lf-brand)]/60 animate-pulse rounded" />
             </div>
           ) : (
             /* Determinate progress bar — ONLY when genuine percentage exists or terminal */
@@ -178,7 +178,7 @@ export default function ScanProgress({
             >
               <div
                 className={`h-full transition-all duration-300 rounded ${
-                  failed ? "bg-red-500" : completed ? "bg-emerald-500" : "bg-blue-500"
+                  failed ? "bg-[var(--lf-error)]" : completed ? "bg-[var(--lf-success)]" : "bg-[var(--lf-brand)]"
                 }`}
                 style={{ width: `${failed ? 100 : job.progress}%` }}
               />
@@ -196,7 +196,7 @@ export default function ScanProgress({
           </div>
           <div>
             <dt className="text-xs text-gray-500 dark:text-gray-400 font-medium">New businesses</dt>
-            <dd className="text-lg font-semibold font-mono text-blue-600 dark:text-blue-400 mt-0.5">
+            <dd className="text-lg font-semibold font-mono text-[var(--lf-brand)] mt-0.5">
               {job.newBusinesses.toLocaleString()}
             </dd>
           </div>

@@ -29,15 +29,15 @@ export function useThemeMode(): ThemeContextValue {
   return context;
 }
 
-/** Dark is the default; only an explicit stored choice switches it. */
+/** Light is the product default; an explicit stored choice may switch it. */
 function decodeMode(raw: string | null): ThemeMode {
-  return raw === "light" ? "light" : "dark";
+  return raw === "dark" ? "dark" : "light";
 }
 
 export default function ThemeProvider({ children }: { children: ReactNode }) {
   const [mode, persistMode] = usePersistentValue<ThemeMode>(
     THEME_STORAGE_KEY,
-    "dark",
+    "light",
     decodeMode,
   );
 

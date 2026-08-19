@@ -63,13 +63,9 @@ export function initials(name: string): string {
  * All steps are light enough to carry the dark ink the avatar chips use.
  */
 const AVATAR_COLORS = [
-  "#E5B93C",
-  "#7DD3FC",
-  "#C4B5FD",
-  "#F9A8D4",
-  "#FDBA74",
-  "#5EEAD4",
-  "#A5B4FC",
+  "var(--lf-brand)",
+  "var(--lf-info)",
+  "var(--lf-success)",
 ];
 
 export function avatarColor(seed: string): string {

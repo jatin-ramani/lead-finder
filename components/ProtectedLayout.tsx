@@ -17,7 +17,7 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
 
   if (isLoading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-slate-900">
+      <div className="lf-boundary">
         <Spin size="large" tip="Verifying administrative session..." />
       </div>
     );

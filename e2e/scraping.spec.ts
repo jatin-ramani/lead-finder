@@ -348,7 +348,7 @@ test.describe("Phase 5 — Complete Website Scraping Experience E2E Suite", () =
     await page.goto("/businesses");
 
     // Click on Asopalav business row
-    await page.getByText("Asopalav").first().click();
+    await page.getByText("Asopalav").filter({ visible: true }).first().click();
 
     // Verify Business drawer opens
     await expect(page.getByText("Business details").first()).toBeVisible();
@@ -356,9 +356,9 @@ test.describe("Phase 5 — Complete Website Scraping Experience E2E Suite", () =
     // Verify WebsiteDataCard details inside drawer
     await expect(page.getByText("Extracted website data").first()).toBeVisible();
     await expect(page.getByText("Asopalav Ethnic Wear").first()).toBeVisible();
-    await expect(page.getByText("info@asopalav.com").first()).toBeVisible();
-    await expect(page.getByText("Facebook").first()).toBeVisible();
-    await expect(page.getByText("Instagram").first()).toBeVisible();
-    await expect(page.getByText("WhatsApp").first()).toBeVisible();
+    await expect(page.getByText("info@asopalav.com").filter({ visible: true }).first()).toBeVisible();
+    await expect(page.getByText("Facebook").filter({ visible: true }).first()).toBeVisible();
+    await expect(page.getByText("Instagram").filter({ visible: true }).first()).toBeVisible();
+    await expect(page.getByText("WhatsApp").filter({ visible: true }).first()).toBeVisible();
   });
 });

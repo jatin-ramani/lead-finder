@@ -81,7 +81,7 @@ export default function ScrapeJobHistory({
         const running = isScrapeRunning(record.status);
         if (running && progress === 0) {
           return (
-            <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+            <span className="text-xs text-[var(--lf-brand)] font-medium">
               Processing...
             </span>
           );
@@ -90,7 +90,7 @@ export default function ScrapeJobHistory({
           <div className="w-full bg-gray-200 dark:bg-gray-700 h-2 rounded-full overflow-hidden">
             <div
               className={`h-full ${
-                record.status === "Completed" ? "bg-emerald-500" : "bg-blue-600"
+                record.status === "Completed" ? "bg-[var(--lf-success)]" : "bg-[var(--lf-brand)]"
               }`}
               style={{ width: `${Math.min(100, Math.max(0, progress ?? 0))}%` }}
             />
@@ -115,7 +115,7 @@ export default function ScrapeJobHistory({
       width: 100,
       align: "right",
       render: (val: number) => (
-        <span className="font-mono text-xs text-blue-600 dark:text-blue-400 font-semibold">
+        <span className="font-mono text-xs text-[var(--lf-brand)] font-semibold">
           {(val ?? 0).toLocaleString()}
         </span>
       ),
@@ -127,7 +127,7 @@ export default function ScrapeJobHistory({
       width: 90,
       align: "right",
       render: (val: number) => (
-        <span className="font-mono text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
+        <span className="font-mono text-xs text-[var(--lf-success)] font-semibold">
           {(val ?? 0).toLocaleString()}
         </span>
       ),
@@ -139,7 +139,7 @@ export default function ScrapeJobHistory({
       width: 80,
       align: "right",
       render: (val: number) => (
-        <span className="font-mono text-xs text-red-600 dark:text-red-400 font-semibold">
+        <span className="font-mono text-xs text-[var(--lf-error)] font-semibold">
           {(val ?? 0).toLocaleString()}
         </span>
       ),

@@ -153,7 +153,7 @@ export default function BusinessDrawer({
               shape="square"
               style={{
                 background: avatarColor(business.name),
-                color: "#0b0b0b",
+                color: "var(--lf-surface)",
                 fontSize: 18,
                 fontWeight: 650,
                 flexShrink: 0,

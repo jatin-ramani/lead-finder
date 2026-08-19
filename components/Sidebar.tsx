@@ -1,6 +1,6 @@
 "use client";
 
-import { ConfigProvider, Layout, Tooltip } from "antd";
+import { Layout, Tooltip } from "antd";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
@@ -8,7 +8,7 @@ import { useMemo } from "react";
 import { useApiHealth } from "@/features/system/hooks/useApiHealth";
 import { activeNavItem, NAV_SECTIONS } from "@/lib/navigation";
 import { API_BASE_URL } from "@/services";
-import { SIDEBAR_BG, SIDEBAR_BORDER, sidebarTheme } from "@/lib/theme";
+
 
 const { Sider } = Layout;
 
@@ -49,12 +49,12 @@ export default function Sidebar({
   const health = useApiHealth();
 
   const content = (
-    <div className="lf-sidebar" style={{ background: SIDEBAR_BG }}>
+    <div className="lf-sidebar">
       <Link
         href="/"
         onClick={onNavigate}
         className="lf-brand"
-        style={{ borderBottom: `1px solid ${SIDEBAR_BORDER}` }}
+
       >
         <LogoMark />
         {!isCollapsed && (
@@ -110,7 +110,7 @@ export default function Sidebar({
 
       <div
         className="lf-sidebar-footer"
-        style={{ borderTop: `1px solid ${SIDEBAR_BORDER}` }}
+
       >
         {/*
           This used to be a hardcoded green dot and the word "Connected",
@@ -158,11 +158,11 @@ export default function Sidebar({
   );
 
   if (inDrawer) {
-    return <ConfigProvider theme={sidebarTheme}>{content}</ConfigProvider>;
+    return content;
   }
 
   return (
-    <ConfigProvider theme={sidebarTheme}>
+    <>
       <Sider
         collapsible
         collapsed={collapsed}
@@ -172,8 +172,8 @@ export default function Sidebar({
         theme="dark"
         className="lf-sider"
         style={{
-          background: SIDEBAR_BG,
-          borderInlineEnd: `1px solid ${SIDEBAR_BORDER}`,
+          background: "var(--lf-surface)",
+          borderInlineEnd: "1px solid var(--lf-border)",
           position: "fixed",
           insetInlineStart: 0,
           top: 0,
@@ -184,6 +184,6 @@ export default function Sidebar({
       >
         {content}
       </Sider>
-    </ConfigProvider>
+    </>
   );
 }

@@ -19,6 +19,11 @@ function matches(url: URL) {
   });
 }
 
+async function openMobileFilters(page: Page) {
+  const trigger = page.getByRole("button", { name: /^Filters/ });
+  if (await trigger.isVisible()) await trigger.click();
+}
+
 async function mockApi(page: Page) {
   await page.route("**/*", async (route) => {
     const request = route.request();
@@ -37,10 +42,11 @@ test.describe("Lead qualification boolean filter contract", () => {
     await authenticatePlaywright(context);
     await mockApi(page);
     await page.goto("/businesses");
-    await expect(page.getByText("Apex Dental Clinic")).toBeVisible();
+    await expect(page.getByText("Apex Dental Clinic").filter({ visible: true })).toBeVisible({ timeout: 15000 });
   });
 
   test("shows the four approved boolean controls", async ({ page }) => {
+    await openMobileFilters(page);
     await expect(page.getByRole("checkbox", { name: "Has website", exact: true })).toBeVisible();
     await expect(page.getByRole("checkbox", { name: "No website" })).toBeVisible();
     await expect(page.getByRole("checkbox", { name: "Has email" })).toBeVisible();
@@ -54,12 +60,14 @@ test.describe("Lead qualification boolean filter contract", () => {
   ]) {
     test(`requests the backend for ${scenario.name}`, async ({ page }) => {
       const requests: URL[] = [];
+      await openMobileFilters(page);
       page.on("request", (request) => { if (request.url().startsWith("http://127.0.0.1:8000/businesses?")) requests.push(new URL(request.url())); });
       for (const control of scenario.controls) await page.getByRole("checkbox", { name: control, exact: true }).click();
       for (const part of scenario.query) await expect(page).toHaveURL(new RegExp(part));
       await expect.poll(() => requests.some((url) => scenario.query.every((part) => url.search.includes(part)))).toBe(true);
-      for (const name of scenario.visible) await expect(page.getByText(name)).toBeVisible();
+      for (const name of scenario.visible) await expect(page.getByText(name).filter({ visible: true })).toBeVisible({ timeout: 15000 });
       await page.reload();
+      await openMobileFilters(page);
       for (const control of scenario.controls) await expect(page.getByRole("checkbox", { name: control, exact: true })).toBeChecked();
     });
   }

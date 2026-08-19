@@ -6,7 +6,7 @@ import {
   FilterOutlined,
   SearchOutlined,
 } from "@ant-design/icons";
-import { Badge, Button, Checkbox, Input, Tooltip } from "antd";
+import { Badge, Button, Checkbox, Drawer, Input, Tooltip } from "antd";
 import { useEffect, useRef, useState } from "react";
 
 import type { UrlFilters } from "@/hooks/useUrlFilters";
@@ -127,10 +127,11 @@ export default function BusinessFilterBar({
     setFilter,
     resetFilters,
   } = filters;
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   return (
     <div className="lf-filter-card">
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="lf-filter-desktop flex flex-wrap items-center gap-3">
         <span className="lf-filter-legend">
           <FilterOutlined aria-hidden />
           Filters
@@ -138,7 +139,7 @@ export default function BusinessFilterBar({
             <Badge
               count={activeCount}
               color="var(--lf-accent)"
-              style={{ boxShadow: "none", color: "#0b0b0b" }}
+              style={{ boxShadow: "none", color: "var(--lf-surface)" }}
               aria-label={`${activeCount} active filters`}
             />
           )}
@@ -228,6 +229,21 @@ export default function BusinessFilterBar({
         </Tooltip>
       </div>
 
+      <div className="lf-filter-mobile">
+        <DebouncedInput value={search} onCommit={(next) => setFilter("search", next)} placeholder="Search businesses" ariaLabel="Search businesses" prefix={<SearchOutlined aria-hidden />} disabled={disabled} className="lf-filter-search" />
+        <Button icon={<FilterOutlined aria-hidden />} onClick={() => setMobileFiltersOpen(true)} disabled={disabled}>Filters{activeCount > 0 ? ` (${activeCount})` : ""}</Button>
+        <Button type="primary" icon={<DownloadOutlined aria-hidden />} onClick={onExport} loading={isExporting} disabled={disabled || isExporting || totalItems === 0} aria-label="Export businesses"><span className="lf-mobile-export-label">Export</span></Button>
+      </div>
+
+      {mobileFiltersOpen && <Drawer title="Filter businesses" placement="right" open onClose={() => setMobileFiltersOpen(false)} destroyOnHidden className="lf-filter-drawer">
+        <div className="lf-filter-drawer-fields">
+          <DebouncedInput value={city} onCommit={(next) => setFilter("city", next)} placeholder="City" ariaLabel="Filter by city (exact match)" disabled={disabled} />
+          <DebouncedInput value={category} onCommit={(next) => setFilter("category", next)} placeholder="Category" ariaLabel="Filter by category (exact match)" disabled={disabled} />
+          <fieldset><legend>Website</legend><Checkbox checked={hasWebsite === true} disabled={disabled} onChange={(event) => setFilter("has_website", event.target.checked ? true : undefined)}>Has website</Checkbox><Checkbox checked={hasWebsite === false} disabled={disabled} onChange={(event) => setFilter("has_website", event.target.checked ? false : undefined)}>No website</Checkbox></fieldset>
+          <fieldset><legend>Contact</legend><Checkbox checked={hasEmail} disabled={disabled} onChange={(event) => setFilter("has_email", event.target.checked ? true : undefined)}>Has email</Checkbox><Checkbox checked={hasPhone} disabled={disabled} onChange={(event) => setFilter("has_phone", event.target.checked ? true : undefined)}>Has phone</Checkbox></fieldset>
+          <div className="lf-filter-drawer-actions"><Button icon={<ClearOutlined aria-hidden />} onClick={resetFilters} disabled={disabled || activeCount === 0}>Reset</Button><Button type="primary" onClick={() => setMobileFiltersOpen(false)}>Show results</Button></div>
+        </div>
+      </Drawer>}
       {activeCount > 0 && totalItems !== undefined && (
         // Polite: the count changes as a result of a request completing, not
         // of the keystroke itself.

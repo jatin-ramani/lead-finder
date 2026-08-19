@@ -31,7 +31,7 @@ export default function ScrapeActionsPanel({
         <div className="p-4 bg-gray-50 dark:bg-gray-800/40 border border-gray-200 dark:border-gray-800 rounded-lg flex flex-col justify-between">
           <div>
             <div className="flex items-center gap-2 font-medium text-gray-900 dark:text-white mb-1">
-              <GlobalOutlined className="text-blue-500" />
+              <GlobalOutlined className="text-[var(--lf-brand)]" />
               <span>Scrape missing</span>
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
@@ -52,7 +52,7 @@ export default function ScrapeActionsPanel({
         <div className="p-4 bg-gray-50 dark:bg-gray-800/40 border border-gray-200 dark:border-gray-800 rounded-lg flex flex-col justify-between">
           <div>
             <div className="flex items-center gap-2 font-medium text-gray-900 dark:text-white mb-1">
-              <RedoOutlined className="text-amber-500" />
+              <RedoOutlined className="text-[var(--lf-warning)]" />
               <span>Retry failed</span>
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">

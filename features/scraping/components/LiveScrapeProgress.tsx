@@ -89,7 +89,7 @@ export default function LiveScrapeProgress({ jobId }: LiveScrapeProgressProps) {
               {showIndeterminate ? "Processing websites..." : `${percent}% completed`}
             </span>
             {job.current_business_id !== null && running && (
-              <span className="text-blue-600 dark:text-blue-400 font-mono">
+              <span className="text-[var(--lf-brand)] font-mono">
                 Current business #{job.current_business_id}
               </span>
             )}
@@ -97,11 +97,11 @@ export default function LiveScrapeProgress({ jobId }: LiveScrapeProgressProps) {
 
           {showIndeterminate ? (
             <div
-              className="h-3 w-full bg-blue-100 dark:bg-blue-950/60 rounded-full overflow-hidden relative"
+              className="h-3 w-full bg-[var(--lf-accent-soft)] rounded-full overflow-hidden relative"
               aria-label="Processing websites"
             >
-              <div className="absolute inset-0 bg-blue-500/30 dark:bg-blue-400/30 animate-pulse" />
-              <div className="h-full bg-blue-600 dark:bg-blue-400 rounded-full animate-indeterminate w-1/3" />
+              <div className="absolute inset-0 bg-[color:color-mix(in_srgb,var(--lf-brand)_30%,transparent)] animate-pulse" />
+              <div className="h-full bg-[var(--lf-brand)] rounded-full animate-indeterminate w-1/3" />
             </div>
           ) : (
             <div
@@ -114,10 +114,10 @@ export default function LiveScrapeProgress({ jobId }: LiveScrapeProgressProps) {
               <div
                 className={`h-full transition-all duration-300 rounded-full ${
                   job.status === "Failed"
-                    ? "bg-red-500"
+                    ? "bg-[var(--lf-error)]"
                     : job.status === "Completed"
-                      ? "bg-emerald-500"
-                      : "bg-blue-600 dark:bg-blue-400"
+                      ? "bg-[var(--lf-success)]"
+                      : "bg-[var(--lf-brand)]"
                 }`}
                 style={{ width: `${Math.min(100, Math.max(0, percent))}%` }}
               />
@@ -136,21 +136,21 @@ export default function LiveScrapeProgress({ jobId }: LiveScrapeProgressProps) {
 
           <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-800">
             <dt className="text-xs text-gray-500 dark:text-gray-400">Processed</dt>
-            <dd className="text-lg font-semibold font-mono text-blue-600 dark:text-blue-400 mt-0.5">
+            <dd className="text-lg font-semibold font-mono text-[var(--lf-brand)] mt-0.5">
               {(job.completed ?? 0).toLocaleString()}
             </dd>
           </div>
 
           <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-800">
             <dt className="text-xs text-gray-500 dark:text-gray-400">Success</dt>
-            <dd className="text-lg font-semibold font-mono text-emerald-600 dark:text-emerald-400 mt-0.5">
+            <dd className="text-lg font-semibold font-mono text-[var(--lf-success)] mt-0.5">
               {(job.success ?? 0).toLocaleString()}
             </dd>
           </div>
 
           <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-800">
             <dt className="text-xs text-gray-500 dark:text-gray-400">Failed</dt>
-            <dd className="text-lg font-semibold font-mono text-red-600 dark:text-red-400 mt-0.5">
+            <dd className="text-lg font-semibold font-mono text-[var(--lf-error)] mt-0.5">
               {(job.failed ?? 0).toLocaleString()}
             </dd>
           </div>

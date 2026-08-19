@@ -15,7 +15,9 @@ import {
   App,
   Avatar,
   Button,
+  Checkbox,
   Dropdown,
+  Pagination,
   Skeleton,
   Table,
   Tag,
@@ -125,7 +127,7 @@ export default function BusinessTable({
               shape="square"
               style={{
                 background: avatarColor(record.name),
-                color: "#0b0b0b",
+                color: "var(--lf-surface)",
                 fontSize: 13,
                 fontWeight: 650,
                 flexShrink: 0,
@@ -152,7 +154,7 @@ export default function BusinessTable({
           if (numbers.length === 0) return <Text type="secondary">—</Text>;
 
           return (
-            <Tooltip title={numbers.length > 1 ? numbers.join(" · ") : undefined}>
+            <Tooltip title={numbers.length > 1 ? numbers.join(" Â· ") : undefined}>
               <a href={toTelHref(value as string)} className="lf-cell-contact">
                 <PhoneOutlined className="lf-cell-contact-icon" aria-hidden />
                 <span className="truncate">{numbers[0]}</span>
@@ -393,6 +395,25 @@ export default function BusinessTable({
       className={`lf-table-card ${isRefetching ? "is-refetching" : ""}`}
       aria-busy={isRefetching || isLoading}
     >
+      <div className="lf-mobile-business-list" aria-label="Businesses">
+        {businesses.map((business) => (
+          <article key={business.id} className="lf-mobile-business-card">
+            <div className="lf-mobile-business-head">
+              <Checkbox checked={selectedIds.includes(business.id)} aria-label={`Select ${business.name}`} onChange={(event) => onSelectionChange(event.target.checked ? [...selectedIds, business.id] : selectedIds.filter((id) => id !== business.id))} />
+              <button type="button" className="lf-mobile-business-name" onClick={() => onView(business)}>{business.name}</button>
+              <Button type="text" icon={<EyeOutlined />} aria-label={`View ${business.name}`} onClick={() => onView(business)} />
+            </div>
+            <p className="lf-mobile-business-meta">{[business.city, business.category].filter(Boolean).join(" Â· ") || "Location not available"}</p>
+            <div className="lf-mobile-business-contact">
+              <span className={isPresent(business.website) ? "is-available" : ""}>Website {isPresent(business.website) ? "available" : "missing"}</span>
+              <span className={isPresent(business.email) ? "is-available" : ""}>Email {isPresent(business.email) ? "available" : "missing"}</span>
+              <span className={isPresent(business.phone) ? "is-available" : ""}>Phone {isPresent(business.phone) ? "available" : "missing"}</span>
+            </div>
+          </article>
+        ))}
+        {pagination && <Pagination current={pagination.page} pageSize={pagination.pageSize} total={pagination.totalItems} showSizeChanger={false} onChange={(page) => filters.setPage(page)} />}
+      </div>
+
       <Table<Business>
         rowKey="id"
         columns={showSkeleton ? skeletonColumns : columns}

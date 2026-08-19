@@ -44,7 +44,7 @@ export function useScrapeRunner() {
           btn: jobId ? (
             <button
               type="button"
-              className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded cursor-pointer transition-colors"
+              className="px-3 py-1 bg-[var(--lf-brand)] hover:bg-[var(--lf-brand-hover)] text-white text-xs font-medium rounded cursor-pointer transition-colors"
               onClick={() => {
                 setSelectedJobId(jobId);
                 notification.destroy();

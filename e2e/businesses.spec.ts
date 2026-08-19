@@ -30,11 +30,27 @@ async function mockWorkspace(page: Page) {
   });
 }
 
+async function openMobileFilters(page: Page) {
+  const trigger = page.getByRole("button", { name: /^Filters/ });
+  if (await trigger.isVisible()) await trigger.click();
+}
+
+async function closeMobileFilters(page: Page) {
+  const apply = page.getByRole("button", { name: "Show results" });
+  if (await apply.isVisible()) await apply.click();
+}
+
+async function selectAlpha(page: Page) {
+  const mobileCard = page.locator(".lf-mobile-business-card").filter({ hasText: "Alpha Dental" });
+  if (await mobileCard.isVisible()) await mobileCard.getByRole("checkbox").check();
+  else await page.getByRole("row", { name: /Alpha Dental/ }).getByRole("checkbox").check();
+}
 test.describe("Businesses server contract", () => {
-  test.beforeEach(async ({ page }) => { await authenticatePlaywright(page.context()); await mockWorkspace(page); await page.goto("/businesses"); await expect(page.getByText("Alpha Dental")).toBeVisible(); });
+  test.beforeEach(async ({ page }) => { await authenticatePlaywright(page.context()); await mockWorkspace(page); await page.goto("/businesses"); await expect(page.getByText("Alpha Dental").filter({ visible: true })).toBeVisible({ timeout: 15000 }); });
 
   test("writes website, email and phone combinations to the URL and resets paging", async ({ page }) => {
     await page.goto("/businesses?page=2");
+    await openMobileFilters(page);
     await expect(page.getByRole("checkbox", { name: "No website" })).toBeEnabled();
     await page.getByRole("checkbox", { name: "No website" }).click();
     await expect(page).toHaveURL(/has_website=false/); await expect(page).not.toHaveURL(/page=2/);
@@ -46,6 +62,7 @@ test.describe("Businesses server contract", () => {
   });
 
   test("restores checkbox state with browser history", async ({ page }) => {
+    await openMobileFilters(page);
     await page.getByRole("checkbox", { name: "Has email" }).click();
     await expect(page).toHaveURL(/has_email=true/);
     await page.getByRole("checkbox", { name: "Has phone" }).click();
@@ -56,11 +73,13 @@ test.describe("Businesses server contract", () => {
   });
 
   test("uses preview and filtered export contracts", async ({ page }) => {
+    await openMobileFilters(page);
     await expect(page.getByRole("checkbox", { name: "No website" })).toBeEnabled();
     await page.getByRole("checkbox", { name: "No website" }).click();
     await expect(page.getByRole("checkbox", { name: "No website" })).toBeChecked();
+    await closeMobileFilters(page);
     const previewPromise = page.waitForRequest((r) => r.url().endsWith("/businesses/export/preview"));
-    await page.getByRole("button", { name: /Export CSV/ }).click();
+    await page.getByRole("button", { name: /Export CSV|Export businesses/ }).click();
     await expect(page.getByText("1 businesses match your current filters.")).toBeVisible();
     const preview = await previewPromise;
     expect(preview.postDataJSON().filters.has_website).toBe(false);
@@ -78,7 +97,7 @@ test.describe("Businesses server contract", () => {
   });
 
   test("selected export sends ids and explicit email/phone qualification", async ({ page }) => {
-    await page.getByRole("row", { name: /Alpha Dental/ }).getByRole("checkbox").check();
+    await selectAlpha(page);
     await page.getByRole("button", { name: "Export selected" }).click();
     const dialog = page.getByRole("dialog", { name: "Export businesses" });
     await dialog.getByRole("radio", { name: /Selected businesses/ }).check();
@@ -96,7 +115,7 @@ test.describe("Businesses server contract", () => {
       status: 503,
       json: { success: false, message: "Export preview is temporarily unavailable.", error: "SERVICE_UNAVAILABLE", timestamp: "2026-08-19T00:00:00Z", requestId: "preview-test" },
     }));
-    await page.getByRole("button", { name: /Export CSV/ }).click();
+    await page.getByRole("button", { name: /Export CSV|Export businesses/ }).click();
     const dialog = page.getByRole("dialog", { name: "Export businesses" });
     await expect(dialog.getByText("Failed to calculate export count")).toBeVisible();
     await expect(dialog.getByText("Export preview is temporarily unavailable.")).toBeVisible();
@@ -115,10 +134,11 @@ test.describe("Businesses server contract", () => {
       }
       return route.fallback();
     });
+    await openMobileFilters(page);
     await page.getByRole("checkbox", { name: "No website" }).click();
     await expect(page).toHaveURL(/has_website=false/);
     await expect(page.getByText("Could not load businesses")).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText("Alpha Dental")).not.toBeVisible();
+    await expect(page.getByText("Alpha Dental").filter({ visible: true })).not.toBeVisible();
   });
 
 });

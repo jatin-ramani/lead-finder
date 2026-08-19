@@ -20,13 +20,16 @@ function filtersOf(query: BusinessQuery) {
 function Body({ query, selectedIds, initialScope, onExportFiltered, onExportSelected, onClose, isExporting }: Omit<Props, "open" | "matchingTotal">) {
   const [scope, setScope] = useState<Scope>(() => initialScope === "selected" && selectedIds.length ? "selected" : "filtered");
   const [qualify, setQualify] = useState(false);
+  const [websiteRequirement, setWebsiteRequirement] = useState<boolean | undefined>();
   const [hasEmail, setHasEmail] = useState(false);
   const [hasPhone, setHasPhone] = useState(false);
   const qualification = useMemo(() => qualify ? { has_email: hasEmail, has_phone: hasPhone } : {}, [qualify, hasEmail, hasPhone]);
-  const request: ExportPreviewRequest = useMemo(() => ({ scope, ...(scope === "selected" ? { business_ids: selectedIds } : { filters: filtersOf(query) }), qualification }), [scope, selectedIds, query, qualification]);
+  const filteredQuery = useMemo(() => ({ ...filtersOf(query), ...(websiteRequirement !== undefined ? { has_website: websiteRequirement } : {}) }), [query, websiteRequirement]);
+  const request: ExportPreviewRequest = useMemo(() => ({ scope, ...(scope === "selected" ? { business_ids: selectedIds } : { filters: filteredQuery }), qualification }), [scope, selectedIds, filteredQuery, qualification]);
   const preview = useQuery({ queryKey: queryKeys.businesses.exportPreview(request), queryFn: ({ signal }) => businessesApi.previewBusinessesExport(request, signal) });
   const count = preview.data?.export_count;
-  const summary = [query.has_website === true ? "Has website" : query.has_website === false ? "No website" : null, query.has_email || hasEmail ? "Has email" : null, query.has_phone || hasPhone ? "Has phone" : null].filter(Boolean).join(" + ") || "All businesses";
+  const effectiveWebsite = scope === "filtered" ? websiteRequirement ?? query.has_website : undefined;
+  const summary = [effectiveWebsite === true ? "Has website" : effectiveWebsite === false ? "No website" : null, query.has_email || hasEmail ? "Has email" : null, query.has_phone || hasPhone ? "Has phone" : null].filter(Boolean).join(" + ") || "All businesses";
   const errorMessage = preview.error && isApiError(preview.error)
     ? preview.error.message
     : "Could not calculate the export count. Please try again.";
@@ -37,11 +40,12 @@ function Body({ query, selectedIds, initialScope, onExportFiltered, onExportSele
       : qualify
         ? `${count.toLocaleString()} businesses will be exported.`
         : `${count.toLocaleString()} businesses match your current filters.`;
-  const submit = () => { if (scope === "selected") onExportSelected(selectedIds, qualification); else onExportFiltered({ ...query, ...(qualify && hasEmail ? { has_email: true } : {}), ...(qualify && hasPhone ? { has_phone: true } : {}) }); onClose(); };
+  const submit = () => { if (scope === "selected") onExportSelected(selectedIds, qualification); else onExportFiltered({ ...query, ...(websiteRequirement !== undefined ? { has_website: websiteRequirement } : {}), ...(qualify && hasEmail ? { has_email: true } : {}), ...(qualify && hasPhone ? { has_phone: true } : {}) }); onClose(); };
 
   return <div className="flex flex-col gap-4 py-2">
     <Text strong>Export scope</Text>
     <Radio.Group value={scope} onChange={(e) => setScope(e.target.value)} className="flex flex-col gap-2"><Radio value="filtered">Current filtered results</Radio><Radio value="selected" disabled={!selectedIds.length}>Selected businesses ({selectedIds.length})</Radio></Radio.Group>
+    {scope === "filtered" && <div className="lf-export-requirement" role="group" aria-label="Website requirement"><Text strong>Website requirement</Text><div className="flex gap-3"><Checkbox checked={websiteRequirement === true} onChange={(e) => setWebsiteRequirement(e.target.checked ? true : undefined)}>Has website</Checkbox><Checkbox checked={websiteRequirement === false} onChange={(e) => setWebsiteRequirement(e.target.checked ? false : undefined)}>No website</Checkbox></div></div>}
     <Checkbox checked={qualify} onChange={(e) => setQualify(e.target.checked)}>Only export businesses with contact information</Checkbox>
     {qualify && <div className="flex gap-3" role="group" aria-label="Contact requirements"><Checkbox checked={hasEmail} onChange={(e) => setHasEmail(e.target.checked)}>Has email</Checkbox><Checkbox checked={hasPhone} onChange={(e) => setHasPhone(e.target.checked)}>Has phone</Checkbox></div>}
     <Text type="secondary">Exporting businesses matching: {summary}</Text>
