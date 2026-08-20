@@ -521,7 +521,7 @@ a {
 .lf-nav {
   flex: 1;
   overflow-y: auto;
-  padding: var(--lf-space-12) var(--lf-space-8);
+  padding: var(--lf-space-12) 0;
 }
 
 .lf-nav-list {
@@ -529,50 +529,53 @@ a {
   margin: 0;
   padding: 0;
   display: grid;
-  gap: var(--lf-space-8);
+  gap: var(--lf-space-6);
 }
 
 .lf-nav-item {
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  min-height: 56px;
-  padding: 8px 4px;
-  border-radius: var(--lf-radius-md);
+  gap: 5px;
+  min-height: 58px;
+  padding: 8px 0;
+  background: transparent !important;
   color: var(--lf-text-secondary);
   text-decoration: none;
-  transition: background 0.14s ease, color 0.14s ease;
+  transition: color 0.12s ease;
   position: relative;
 }
 
 .lf-nav-item:hover {
-  background: var(--lf-subtle);
+  background: transparent !important;
   color: var(--lf-text);
 }
 
 .lf-nav-item.is-active {
-  background: var(--lf-accent-soft);
-  color: var(--lf-brand);
+  background: transparent !important;
+  color: var(--lf-brand) !important;
   font-weight: 600;
 }
 
 .lf-nav-item.is-active::before {
   content: "";
   position: absolute;
-  left: -8px;
-  top: 8px;
-  bottom: 8px;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
   width: 3.5px;
   background: var(--lf-brand);
-  border-radius: 0 4px 4px 0;
+  border-radius: 0 2px 2px 0;
 }
 
 .lf-nav-icon {
   display: grid;
   place-items: center;
   font-size: 20px;
+  line-height: 1;
+  color: inherit;
 }
 
 .lf-nav-label {
@@ -582,6 +585,7 @@ a {
   line-height: 1.15;
   white-space: nowrap;
   letter-spacing: -0.01em;
+  color: inherit;
 }
 
 .lf-sidebar-footer {
