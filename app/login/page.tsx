@@ -35,7 +35,7 @@ export default function LoginPage() {
           <span className="lf-login-mark"><SafetyCertificateOutlined aria-hidden /></span>
           <h1>Lead Finder Admin</h1>
           <p>Sign in to your secure operations workspace.</p>
-          {authError && <Alert type="error" message="Could not sign in" description={authError} showIcon className="mb-6" />}
+          {authError && <Alert type="error" title="Could not sign in" description={authError} showIcon className="mb-6" />}
           <Form layout="vertical" onFinish={handleSubmit} requiredMark={false}>
             <Form.Item label="Admin secret key" name="secret" rules={[{ required: true, message: 'Enter your admin secret key' }]}>
               <Input.Password prefix={<LockOutlined aria-hidden />} placeholder="Enter secret key..." value={secret} onChange={(e) => setSecret(e.target.value)} autoFocus autoComplete="current-password" />

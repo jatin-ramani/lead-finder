@@ -18,10 +18,43 @@ import { normalizeError } from "./errors";
  * Resolved once, at module load. `NEXT_PUBLIC_` variables are inlined at build
  * time, so this is a constant in the bundle rather than a runtime lookup.
  */
+const SESSION_TOKEN_KEY = "lf_session_token";
+
+export function getStoredSessionToken(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return sessionStorage.getItem(SESSION_TOKEN_KEY) || localStorage.getItem(SESSION_TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function setStoredSessionToken(token: string | null): void {
+  if (typeof window === "undefined") return;
+  try {
+    if (token) {
+      sessionStorage.setItem(SESSION_TOKEN_KEY, token);
+      localStorage.setItem(SESSION_TOKEN_KEY, token);
+    } else {
+      sessionStorage.removeItem(SESSION_TOKEN_KEY);
+      localStorage.removeItem(SESSION_TOKEN_KEY);
+    }
+  } catch {
+    // Ignore storage errors in restricted private browsing
+  }
+}
+
+/**
+ * Resolved once, at module load. In browser, defaults to same-origin `/api`
+ * reverse proxy so cookies and credentials work reliably without third-party
+ * cookie blocking on mobile browsers.
+ */
 const DEFAULT_API_BASE_URL =
-  process.env.NODE_ENV === "production"
-    ? "https://lead-find-api.onrender.com"
-    : ["http://127.0.0.1", "8000"].join(":");
+  typeof window !== "undefined"
+    ? "/api"
+    : process.env.NODE_ENV === "production"
+      ? "https://lead-find-api.onrender.com"
+      : "http://127.0.0.1:8000";
 
 export const API_BASE_URL = (
   process.env.NEXT_PUBLIC_API_URL?.trim() ||
@@ -49,11 +82,14 @@ export const http = axios.create({
 });
 
 /**
- * Query parameters are built by callers as plain objects; anything undefined,
- * null or blank is dropped here rather than sent as `?city=`, which the
- * backend would treat as an exact match on the empty string and return nothing.
+ * Attaches active session token if present, and cleans up blank params.
  */
 http.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+  const token = getStoredSessionToken();
+  if (token && !config.headers.get("x-session-token") && !config.headers.get("Authorization")) {
+    config.headers.set("x-session-token", token);
+  }
+
   if (config.params && typeof config.params === "object") {
     const cleaned: Record<string, unknown> = {};
 
@@ -84,12 +120,8 @@ http.interceptors.response.use(
 
     const normalized = normalizeError(error, API_BASE_URL);
 
-    if (
-      normalized.status === 401 &&
-      typeof window !== "undefined" &&
-      !window.location.pathname.startsWith("/login")
-    ) {
-      window.location.href = "/login";
+    if (normalized.status === 401) {
+      setStoredSessionToken(null);
     }
 
     return Promise.reject(normalized);

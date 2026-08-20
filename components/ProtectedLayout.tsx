@@ -11,14 +11,14 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.push('/login');
+      router.replace('/login');
     }
   }, [isLoading, isAuthenticated, router]);
 
   if (isLoading) {
     return (
       <div className="lf-boundary">
-        <Spin size="large" tip="Verifying administrative session..." />
+        <Spin size="large" description="Verifying administrative session..." />
       </div>
     );
   }

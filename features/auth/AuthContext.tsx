@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { getAuthMe, login as loginApi, logout as logoutApi } from '@/services/auth';
+import { setStoredSessionToken } from '@/services/http';
 import { queryKeys } from '@/services/query-keys';
 import { ApiError } from '@/services/errors';
 
@@ -22,6 +23,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
   const router = useRouter();
   const [authError, setAuthError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: queryKeys.auth.me(),
@@ -32,35 +34,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const isAuthenticated = Boolean(data?.authenticated) && !isError;
 
-  const loginMutation = useMutation({
-    mutationFn: (secret: string) => loginApi(secret),
-    onSuccess: () => {
-      setAuthError(null);
-      queryClient.setQueryData(queryKeys.auth.me(), { authenticated: true });
-      queryClient.invalidateQueries({ queryKey: queryKeys.auth.all });
-      router.push('/');
-    },
-    onError: (err: ApiError) => {
-      setAuthError(err?.message || 'Invalid authentication credentials. Please try again.');
-    },
-  });
-
-  const logoutMutation = useMutation({
-    mutationFn: () => logoutApi(),
-    onSuccess: () => {
-      setAuthError(null);
-      queryClient.clear();
-      router.push('/login');
-    },
-  });
-
   const handleLogin = async (secret: string) => {
+    setIsSubmitting(true);
     setAuthError(null);
-    await loginMutation.mutateAsync(secret);
+    try {
+      // 1. Post login secret
+      const res = await loginApi(secret);
+      if (res.token) {
+        setStoredSessionToken(res.token);
+      }
+
+      // 2. Authoritative verification via /auth/me before assuming authentication
+      const me = await getAuthMe();
+      if (me?.authenticated) {
+        setAuthError(null);
+        queryClient.setQueryData(queryKeys.auth.me(), { authenticated: true });
+        router.push('/');
+      } else {
+        setStoredSessionToken(null);
+        queryClient.setQueryData(queryKeys.auth.me(), { authenticated: false });
+        setAuthError("Session could not be verified. Please ensure cookies are allowed.");
+      }
+    } catch (err: unknown) {
+      setStoredSessionToken(null);
+      queryClient.setQueryData(queryKeys.auth.me(), { authenticated: false });
+      const apiErr = err as ApiError;
+      setAuthError(apiErr?.message || "Invalid authentication credentials. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleLogout = async () => {
-    await logoutMutation.mutateAsync();
+    try {
+      await logoutApi();
+    } catch {
+      // Continue cleanup even if server unreachable
+    } finally {
+      setStoredSessionToken(null);
+      setAuthError(null);
+      queryClient.clear();
+      queryClient.setQueryData(queryKeys.auth.me(), { authenticated: false });
+      router.push('/login');
+    }
   };
 
   return (
@@ -71,7 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login: handleLogin,
         logout: handleLogout,
         authError,
-        isSubmitting: loginMutation.isPending,
+        isSubmitting,
       }}
     >
       {children}
