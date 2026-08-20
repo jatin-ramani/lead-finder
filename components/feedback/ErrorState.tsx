@@ -59,7 +59,11 @@ export default function ErrorState({
 
       <div className="lf-error-state-body">
         <h3 className="lf-error-state-title">{heading}</h3>
-        <p className="lf-error-state-message">{apiError.message}</p>
+        <p className="lf-error-state-message">
+          {apiError.message === "Request validation failed."
+            ? "We were unable to complete this request due to invalid or unrecognised parameters."
+            : apiError.message}
+        </p>
 
         {apiError.validationDetails.length > 0 && (
           <ul className="lf-error-state-details">

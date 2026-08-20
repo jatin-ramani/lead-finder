@@ -11,11 +11,11 @@ export const PALETTE = {
     subtle: "#F0F3F7", hover: "#F8FAFC",
   },
   dark: {
-    page: "#09090B", surface: "#121214", elevated: "#18181B", border: "#232328",
-    text: "#F4F4F6", textSecondary: "#A1A1AA", textMuted: "#71717A",
+    page: "#09090B", surface: "#121214", elevated: "#18181B", border: "#27272A",
+    text: "#F9FAFB", textSecondary: "#D1D5DB", textMuted: "#9CA3AF",
     brand: "#E5A93C", brandHover: "#F59E0B", brandActive: "#D97706",
-    success: "#22C55E", warning: "#E5A93C", error: "#EF4444", info: "#38BDF8", focus: "#E5A93C",
-    subtle: "#18181B", hover: "#1F1F24",
+    success: "#22C55E", warning: "#F59E0B", error: "#EF4444", info: "#38BDF8", focus: "#E5A93C",
+    subtle: "#18181B", hover: "#202025",
   },
 } as const;
 
@@ -26,9 +26,9 @@ export const SURFACE = {
   light: { page: PALETTE.light.page, card: PALETTE.light.surface, elevated: PALETTE.light.elevated, sidebar: PALETTE.light.surface, border: PALETTE.light.border, borderSubtle: PALETTE.light.border },
   dark: { page: PALETTE.dark.page, card: PALETTE.dark.surface, elevated: PALETTE.dark.elevated, sidebar: PALETTE.dark.surface, border: PALETTE.dark.border, borderSubtle: PALETTE.dark.border },
 } as const;
-export const CHART_COLORS = { series1: PALETTE.light.brand, series2: PALETTE.light.info, neutral: PALETTE.light.textMuted, grid: PALETTE.dark.border, gridLight: PALETTE.light.border, axis: PALETTE.light.textMuted } as const;
-export const DELTA_UP = PALETTE.light.success;
-export const DELTA_DOWN = PALETTE.light.error;
+export const CHART_COLORS = { series1: "var(--lf-brand)", series2: "var(--lf-info)", neutral: "var(--lf-text-muted)", grid: "var(--lf-border)", gridLight: "var(--lf-border-subtle)", axis: "var(--lf-text-muted)" } as const;
+export const DELTA_UP = "var(--lf-success)";
+export const DELTA_DOWN = "var(--lf-error)";
 
 const FONT_FAMILY = "var(--font-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 
