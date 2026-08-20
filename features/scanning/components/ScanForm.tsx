@@ -167,6 +167,9 @@ export default function ScanForm({ onSubmit, scanning }: ScanFormProps) {
               aria-label="City to scan"
               allowClear
               autoComplete="off"
+              data-form-type="other"
+              data-lpignore="true"
+              aria-autocomplete="none"
               spellCheck={false}
             />
           </AutoComplete>
@@ -196,6 +199,9 @@ export default function ScanForm({ onSubmit, scanning }: ScanFormProps) {
               aria-label="Category to scan"
               allowClear
               autoComplete="off"
+              data-form-type="other"
+              data-lpignore="true"
+              aria-autocomplete="none"
               spellCheck={false}
             />
           </AutoComplete>
