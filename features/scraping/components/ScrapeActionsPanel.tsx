@@ -28,13 +28,13 @@ export default function ScrapeActionsPanel({
     >
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Scrape Missing */}
-        <div className="p-4 bg-gray-50 dark:bg-gray-800/40 border border-gray-200 dark:border-gray-800 rounded-lg flex flex-col justify-between">
+        <div className="p-4 bg-[var(--lf-subtle)] border border-[var(--lf-border-subtle)] rounded-lg flex flex-col justify-between">
           <div>
-            <div className="flex items-center gap-2 font-medium text-gray-900 dark:text-white mb-1">
+            <div className="flex items-center gap-2 font-semibold text-[var(--lf-text)] mb-1">
               <GlobalOutlined className="text-[var(--lf-brand)]" />
               <span>Scrape missing</span>
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+            <p className="text-xs text-[var(--lf-text-muted)] mb-4">
               Scrape businesses that have a website URL but have never been scraped yet.
             </p>
           </div>
@@ -49,13 +49,13 @@ export default function ScrapeActionsPanel({
         </div>
 
         {/* Retry Failed */}
-        <div className="p-4 bg-gray-50 dark:bg-gray-800/40 border border-gray-200 dark:border-gray-800 rounded-lg flex flex-col justify-between">
+        <div className="p-4 bg-[var(--lf-subtle)] border border-[var(--lf-border-subtle)] rounded-lg flex flex-col justify-between">
           <div>
-            <div className="flex items-center gap-2 font-medium text-gray-900 dark:text-white mb-1">
+            <div className="flex items-center gap-2 font-semibold text-[var(--lf-text)] mb-1">
               <RedoOutlined className="text-[var(--lf-warning)]" />
               <span>Retry failed</span>
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+            <p className="text-xs text-[var(--lf-text-muted)] mb-4">
               Re-scrape businesses whose most recent scrape attempt ended in failure.
             </p>
           </div>
@@ -69,13 +69,13 @@ export default function ScrapeActionsPanel({
         </div>
 
         {/* Scrape All */}
-        <div className="p-4 bg-gray-50 dark:bg-gray-800/40 border border-gray-200 dark:border-gray-800 rounded-lg flex flex-col justify-between">
+        <div className="p-4 bg-[var(--lf-subtle)] border border-[var(--lf-border-subtle)] rounded-lg flex flex-col justify-between">
           <div>
-            <div className="flex items-center gap-2 font-medium text-gray-900 dark:text-white mb-1">
-              <AlertOutlined className="text-purple-500" />
+            <div className="flex items-center gap-2 font-semibold text-[var(--lf-text)] mb-1">
+              <AlertOutlined className="text-[var(--lf-brand)]" />
               <span>Scrape all</span>
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+            <p className="text-xs text-[var(--lf-text-muted)] mb-4">
               Re-scrape every business website stored in the database.
             </p>
           </div>
@@ -102,7 +102,7 @@ export default function ScrapeActionsPanel({
         okText="Yes, scrape all"
         okButtonProps={{ danger: true }}
       >
-        <p className="text-sm text-gray-600 dark:text-gray-300 py-2">
+        <p className="text-sm text-[var(--lf-text-secondary)] py-2">
           All eligible businesses with a website URL will be queued for processing in a background job.
         </p>
       </Modal>

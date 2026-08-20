@@ -179,6 +179,54 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Universal Typography System */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--lf-text);
+  font-weight: 700;
+}
+
+p, span, label, dt, dd, li {
+  color: inherit;
+}
+
+/* Universal Form & Input dark/light tokens */
+.ant-input,
+.ant-input-affix-wrapper,
+.ant-input-password,
+input,
+textarea {
+  background-color: var(--lf-surface) !important;
+  color: var(--lf-text) !important;
+  border-color: var(--lf-border) !important;
+}
+
+.ant-input-affix-wrapper > input.ant-input {
+  background-color: transparent !important;
+  color: var(--lf-text) !important;
+}
+
+.ant-input::placeholder,
+input::placeholder,
+textarea::placeholder {
+  color: var(--lf-text-muted) !important;
+}
+
+.ant-input-password-icon,
+.ant-input-prefix,
+.ant-input-suffix {
+  color: var(--lf-text-muted) !important;
+}
+
+.ant-form-item-label > label {
+  color: var(--lf-text) !important;
+  font-size: var(--lf-font-sm) !important;
+  font-weight: 600 !important;
+}
+
+.ant-typography {
+  color: var(--lf-text) !important;
+}
+
 ::selection {
   background: var(--lf-accent-ring);
   color: var(--lf-text);
@@ -1581,10 +1629,11 @@ a {
   font-size: var(--lf-font-xl);
   line-height: 32px;
   font-weight: 700;
+  color: var(--lf-text) !important;
 }
 .lf-login-card > p {
   margin: var(--lf-space-8) 0 var(--lf-space-24);
-  color: var(--lf-text-secondary);
+  color: var(--lf-text-secondary) !important;
 }
 .lf-login-mark {
   display: grid;
