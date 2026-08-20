@@ -1262,6 +1262,55 @@ a {
 .lf-status-pill--warning { color: var(--lf-warning); background: var(--lf-warning-soft); }
 .lf-status-pill--info { color: var(--lf-info); background: var(--lf-info-soft); }
 
+/* Lead Grade Badges */
+.lf-grade-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: var(--lf-radius-sm);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.lf-grade-badge--A {
+  background: color-mix(in srgb, #10B981 18%, transparent);
+  color: #10B981;
+  border: 1px solid color-mix(in srgb, #10B981 35%, transparent);
+}
+.lf-grade-badge--B {
+  background: color-mix(in srgb, #3B82F6 18%, transparent);
+  color: #3B82F6;
+  border: 1px solid color-mix(in srgb, #3B82F6 35%, transparent);
+}
+.lf-grade-badge--C {
+  background: color-mix(in srgb, #F59E0B 18%, transparent);
+  color: #F59E0B;
+  border: 1px solid color-mix(in srgb, #F59E0B 35%, transparent);
+}
+.lf-grade-badge--D {
+  background: color-mix(in srgb, #64748B 18%, transparent);
+  color: #94A3B8;
+  border: 1px solid color-mix(in srgb, #64748B 35%, transparent);
+}
+
+.lf-score-card {
+  padding: var(--lf-space-16);
+  border-radius: var(--lf-radius-md);
+  background: var(--lf-subtle);
+  border: 1px solid var(--lf-border-subtle);
+}
+.lf-score-reasons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lf-space-8);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
 .lf-pagination {
   padding: var(--lf-space-12) var(--lf-space-16);
   border-top: 1px solid var(--lf-border);

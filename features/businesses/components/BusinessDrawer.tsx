@@ -11,14 +11,13 @@ import {
   MailOutlined,
   PhoneOutlined,
 } from "@ant-design/icons";
-import { App, Avatar, Button, Drawer, Tag, Tooltip } from "antd";
+import { App, Avatar, Button, Drawer, Progress, Tag, Tooltip } from "antd";
 import type { ReactNode } from "react";
 
 import WebsiteDataCard from "@/features/scraping/components/WebsiteDataCard";
 import {
   avatarColor,
   copyText,
-  hasWebsite,
   initials,
   isPresent,
   splitPhones,
@@ -118,14 +117,16 @@ export default function BusinessDrawer({
   };
 
   const websiteHref = toAbsoluteUrl(business?.website);
-  const online = business ? hasWebsite(business) : false;
+  const online = Boolean(websiteHref);
   const phoneNumbers = splitPhones(business?.phone);
+
+  const leadScore = business?.lead_score ?? 0;
+  const leadGrade = business?.lead_grade || "D";
 
   return (
     <Drawer
       open={open}
       onClose={onClose}
-      placement="right"
       size={480}
       title="Business details"
       className="lf-drawer"
@@ -179,6 +180,55 @@ export default function BusinessDrawer({
               </div>
             </div>
           </header>
+
+          {/* Lead Score & Opportunity Breakdown */}
+          <section className="lf-score-card">
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <div className="flex items-center gap-2">
+                <span className={`lf-grade-badge lf-grade-badge--${leadGrade}`}>
+                  Grade {leadGrade}
+                </span>
+                <span className="text-sm font-bold text-[var(--lf-text)]">Lead Score</span>
+              </div>
+              <div className="text-right">
+                <span className="lf-num text-lg font-bold text-[var(--lf-text)]">
+                  {leadScore}
+                </span>
+                <span className="text-xs text-[var(--lf-text-muted)] font-medium"> / 100</span>
+              </div>
+            </div>
+
+            <Progress
+              percent={leadScore}
+              showInfo={false}
+              strokeColor={
+                leadScore >= 80
+                  ? "#10B981"
+                  : leadScore >= 60
+                  ? "#3B82F6"
+                  : leadScore >= 40
+                  ? "#F59E0B"
+                  : "#64748B"
+              }
+              size={["100%", 6]}
+            />
+
+            {business.lead_score_reasons && business.lead_score_reasons.length > 0 && (
+              <div className="mt-3.5 pt-3 border-t border-[var(--lf-border-subtle)]">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--lf-text-muted)] mb-2">
+                  Why this lead is valuable:
+                </p>
+                <ul className="lf-score-reasons">
+                  {business.lead_score_reasons.map((reason, idx) => (
+                    <li key={idx} className="flex items-center gap-1.5 text-xs text-[var(--lf-text-secondary)]">
+                      <span className="text-[var(--lf-success)] font-semibold text-[11px]">✓</span>
+                      <span>{reason}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </section>
 
           <section>
             <h3 className="lf-drawer-section-title">Contact</h3>

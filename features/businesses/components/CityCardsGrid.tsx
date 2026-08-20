@@ -196,7 +196,9 @@ export default function CityCardsGrid({
 
               <div className="lf-city-footer">
                 <span>
-                  {cityData.actionableLeads > 0
+                  {cityData.highQualityLeads && cityData.highQualityLeads > 0
+                    ? `${cityData.highQualityLeads.toLocaleString()} Grade-A leads (${cityData.averageLeadScore ? `Avg ${cityData.averageLeadScore}` : "High value"})`
+                    : cityData.actionableLeads > 0
                     ? `${cityData.actionableLeads.toLocaleString()} actionable targets`
                     : "Explore city leads"}
                 </span>

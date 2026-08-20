@@ -210,7 +210,7 @@ export default function BusinessTable({
         title: "Status",
         dataIndex: "status",
         key: "status",
-        width: 150,
+        width: 140,
         sorter: true,
         sortOrder:
           filters.sortBy === "status"
@@ -228,6 +228,34 @@ export default function BusinessTable({
               No Website
             </Tag>
           ),
+      },
+      {
+        title: "Lead Score",
+        dataIndex: "lead_score",
+        key: "lead_score",
+        width: 145,
+        sorter: true,
+        sortOrder:
+          filters.sortBy === "lead_score"
+            ? filters.sortOrder === "asc"
+              ? "ascend"
+              : "descend"
+            : null,
+        render: (_value, record) => {
+          const score = record.lead_score ?? 0;
+          const grade = record.lead_grade || "D";
+          return (
+            <div className="flex items-center gap-2">
+              <span className={`lf-grade-badge lf-grade-badge--${grade}`}>
+                {grade}
+              </span>
+              <span className="lf-num text-xs font-semibold text-[var(--lf-text)]">
+                {score}
+                <span className="text-[var(--lf-text-muted)] font-normal text-[10px]">/100</span>
+              </span>
+            </div>
+          );
+        },
       },
       {
         title: "City",

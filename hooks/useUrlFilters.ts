@@ -8,7 +8,7 @@ export const DEFAULT_PAGE_SIZE = 20;
 export const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 const DEFAULT_SORT_BY: BusinessSortField = "id";
 const DEFAULT_SORT_ORDER: SortOrder = "desc";
-const FILTER_PARAMS = ["search", "city", "category", "has_website", "has_email", "has_phone", "view"] as const;
+const FILTER_PARAMS = ["search", "city", "category", "has_website", "has_email", "has_phone", "lead_grade", "min_lead_score", "view"] as const;
 type FilterParam = (typeof FILTER_PARAMS)[number];
 
 function readInt(value: string | null, fallback: number) {
@@ -28,9 +28,10 @@ export interface UrlFilters {
   query: BusinessQuery & Required<Pick<BusinessQuery, "page" | "pageSize" | "sortBy" | "sortOrder">>;
   search: string; city: string; category: string; view: string;
   hasWebsite: boolean | undefined; hasEmail: boolean; hasPhone: boolean;
+  leadGrade: string; minLeadScore: number | undefined;
   page: number; pageSize: number; sortBy: BusinessSortField; sortOrder: SortOrder;
   activeCount: number; hasActiveFilters: boolean;
-  setFilter: (key: FilterParam, value: string | boolean | undefined) => void;
+  setFilter: (key: FilterParam, value: string | boolean | number | undefined) => void;
   setPage: (page: number, pageSize?: number) => void;
   setSort: (sortBy: BusinessSortField, sortOrder: SortOrder) => void;
   resetFilters: () => void;
@@ -53,6 +54,9 @@ export function useUrlFilters(): UrlFilters {
   const hasWebsite = readBoolean(params.get("has_website"));
   const hasEmail = readBoolean(params.get("has_email")) === true;
   const hasPhone = readBoolean(params.get("has_phone")) === true;
+  const leadGrade = params.get("lead_grade") ?? "";
+  const rawMinScore = params.get("min_lead_score");
+  const minLeadScore = rawMinScore ? readInt(rawMinScore, 0) : undefined;
   const page = readInt(params.get("page"), 1);
   const pageSize = readInt(params.get("pageSize"), DEFAULT_PAGE_SIZE);
   const sortBy = readSortBy(params.get("sortBy"));
@@ -77,7 +81,7 @@ export function useUrlFilters(): UrlFilters {
     }
   }, [pathname, router]);
 
-  const setFilter = useCallback((key: FilterParam, value: string | boolean | undefined) => {
+  const setFilter = useCallback((key: FilterParam, value: string | boolean | number | undefined) => {
     apply({ [key]: typeof value === "string" ? value.trim() || undefined : value, page: 1 }, key === "search" ? "replace" : "push");
   }, [apply]);
 
@@ -90,7 +94,7 @@ export function useUrlFilters(): UrlFilters {
   }, [apply]);
 
   const resetFilters = useCallback(() => {
-    apply({ search: undefined, city: undefined, category: undefined, has_website: undefined, has_email: undefined, has_phone: undefined, view: undefined, page: 1 }, "push");
+    apply({ search: undefined, city: undefined, category: undefined, has_website: undefined, has_email: undefined, has_phone: undefined, lead_grade: undefined, min_lead_score: undefined, view: undefined, page: 1 }, "push");
   }, [apply]);
 
   const activeCount = FILTER_PARAMS.filter((key) => key !== "view" && params.has(key)).length;
@@ -106,7 +110,9 @@ export function useUrlFilters(): UrlFilters {
     ...(hasWebsite !== undefined && { has_website: hasWebsite }),
     ...(hasEmail && { has_email: true }),
     ...(hasPhone && { has_phone: true }),
-  }), [page, pageSize, sortBy, sortOrder, search, city, category, hasWebsite, hasEmail, hasPhone]);
+    ...(leadGrade && { lead_grade: leadGrade }),
+    ...(minLeadScore !== undefined && { min_lead_score: minLeadScore }),
+  }), [page, pageSize, sortBy, sortOrder, search, city, category, hasWebsite, hasEmail, hasPhone, leadGrade, minLeadScore]);
 
   return {
     query,
@@ -117,6 +123,8 @@ export function useUrlFilters(): UrlFilters {
     hasWebsite,
     hasEmail,
     hasPhone,
+    leadGrade,
+    minLeadScore,
     page,
     pageSize,
     sortBy,

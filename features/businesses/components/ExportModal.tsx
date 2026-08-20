@@ -13,8 +13,8 @@ type Scope = "filtered" | "selected";
 interface Props { open: boolean; onClose: () => void; query: BusinessQuery; matchingTotal?: number; selectedIds: number[]; initialScope?: Scope; onExportFiltered: (query: BusinessQuery) => void; onExportSelected: (ids: number[], qualification?: ContactQualification) => void; isExporting: boolean; }
 
 function filtersOf(query: BusinessQuery) {
-  const { search, city, category, has_website, has_email, has_phone } = query;
-  return { search, city, category, has_website, has_email, has_phone };
+  const { search, city, category, has_website, has_email, has_phone, lead_grade, min_lead_score, max_lead_score } = query;
+  return { search, city, category, has_website, has_email, has_phone, lead_grade, min_lead_score, max_lead_score };
 }
 
 function Body({ query, selectedIds, initialScope, onExportFiltered, onExportSelected, onClose, isExporting }: Omit<Props, "open" | "matchingTotal">) {

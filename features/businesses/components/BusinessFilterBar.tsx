@@ -6,7 +6,7 @@ import {
   FilterOutlined,
   SearchOutlined,
 } from "@ant-design/icons";
-import { Badge, Button, Checkbox, Drawer, Input, Tooltip } from "antd";
+import { Badge, Button, Checkbox, Drawer, Input, Select, Tooltip } from "antd";
 import { useEffect, useRef, useState } from "react";
 
 import type { UrlFilters } from "@/hooks/useUrlFilters";
@@ -99,16 +99,8 @@ function DebouncedInput({
 /**
  * Filters for the business list.
  *
- * Everything here writes to the URL, so the view is shareable and the back
- * button works. Nothing filters in the browser — the backend does the work and
- * the totals are honest across every page, not just the visible one.
- *
- * **City and category are search inputs, not dropdowns.** The backend matches
- * them exactly and exposes no endpoint listing distinct values, so a dropdown
- * could only ever be populated from the current page — presenting a partial
- * list as though it were the complete set of cities. A user who did not see
- * "Rajkot" would reasonably conclude no Rajkot businesses existed. An input
- * that matches exactly is honest about what it does.
+ * All state lives in the URL. A user who filters by city, shares the link, and
+ * opens it on another machine sees the exact same result set.
  */
 export default function BusinessFilterBar({
   filters,
@@ -124,6 +116,7 @@ export default function BusinessFilterBar({
     hasWebsite,
     hasEmail,
     hasPhone,
+    leadGrade,
     activeCount,
     setFilter,
     resetFilters,
@@ -172,6 +165,21 @@ export default function BusinessFilterBar({
           ariaLabel="Filter by category (exact match)"
           disabled={disabled}
           className="lf-filter-control"
+        />
+
+        <Select
+          value={leadGrade || undefined}
+          placeholder="Grade"
+          allowClear
+          onChange={(val) => setFilter("lead_grade", val)}
+          disabled={disabled}
+          className="w-28"
+          options={[
+            { label: "Grade A (80+)", value: "A" },
+            { label: "Grade B (60-79)", value: "B" },
+            { label: "Grade C (40-59)", value: "C" },
+            { label: "Grade D (0-39)", value: "D" },
+          ]}
         />
 
         <div className="flex items-center gap-2" role="group" aria-label="Website availability">
@@ -240,6 +248,20 @@ export default function BusinessFilterBar({
         <div className="lf-filter-drawer-fields">
           <DebouncedInput value={city} onCommit={(next) => setFilter("city", next)} placeholder="City" ariaLabel="Filter by city (exact match)" disabled={disabled} />
           <DebouncedInput value={category} onCommit={(next) => setFilter("category", next)} placeholder="Category" ariaLabel="Filter by category (exact match)" disabled={disabled} />
+          <Select
+            value={leadGrade || undefined}
+            placeholder="Grade"
+            allowClear
+            onChange={(val) => setFilter("lead_grade", val)}
+            disabled={disabled}
+            className="w-full"
+            options={[
+              { label: "Grade A (80+)", value: "A" },
+              { label: "Grade B (60-79)", value: "B" },
+              { label: "Grade C (40-59)", value: "C" },
+              { label: "Grade D (0-39)", value: "D" },
+            ]}
+          />
           <fieldset><legend>Website</legend><Checkbox checked={hasWebsite === true} disabled={disabled} onChange={(event) => setFilter("has_website", event.target.checked ? true : undefined)}>Has website</Checkbox><Checkbox checked={hasWebsite === false} disabled={disabled} onChange={(event) => setFilter("has_website", event.target.checked ? false : undefined)}>No website</Checkbox></fieldset>
           <fieldset><legend>Contact</legend><Checkbox checked={hasEmail} disabled={disabled} onChange={(event) => setFilter("has_email", event.target.checked ? true : undefined)}>Has email</Checkbox><Checkbox checked={hasPhone} disabled={disabled} onChange={(event) => setFilter("has_phone", event.target.checked ? true : undefined)}>Has phone</Checkbox></fieldset>
           <div className="lf-filter-drawer-actions"><Button icon={<ClearOutlined aria-hidden />} onClick={resetFilters} disabled={disabled || activeCount === 0}>Reset</Button><Button type="primary" onClick={() => setMobileFiltersOpen(false)}>Show results</Button></div>

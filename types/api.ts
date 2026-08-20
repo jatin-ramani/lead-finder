@@ -86,6 +86,9 @@ export interface Business {
   category: string | null;
   address: string | null;
   status: string | null;
+  lead_score?: number | null;
+  lead_grade?: string | null;
+  lead_score_reasons?: string[] | null;
 }
 
 export type BusinessListResponse = PaginatedResponse<Business>;
@@ -97,6 +100,8 @@ export const BUSINESS_SORT_FIELDS = [
   "city",
   "category",
   "status",
+  "lead_score",
+  "lead_grade",
 ] as const;
 
 export type BusinessSortField = (typeof BUSINESS_SORT_FIELDS)[number];
@@ -119,6 +124,9 @@ export interface BusinessQuery {
   has_website?: boolean;
   has_email?: boolean;
   has_phone?: boolean;
+  lead_grade?: string;
+  min_lead_score?: number;
+  max_lead_score?: number;
   sortBy?: BusinessSortField;
   sortOrder?: SortOrder;
 }
@@ -138,7 +146,7 @@ export interface SelectedExportRequest extends BulkBusinessRequest, ContactQuali
 export interface ExportPreviewRequest {
   scope: "filtered" | "selected";
   business_ids?: number[];
-  filters?: Pick<BusinessQuery, "search" | "city" | "category" | "has_website" | "has_email" | "has_phone">;
+  filters?: Pick<BusinessQuery, "search" | "city" | "category" | "has_website" | "has_email" | "has_phone" | "lead_grade" | "min_lead_score" | "max_lead_score">;
   qualification?: ContactQualification;
 }
 
@@ -152,6 +160,8 @@ export interface CitySummary {
   withPhone: number;
   withoutPhone: number;
   actionableLeads: number;
+  averageLeadScore?: number;
+  highQualityLeads?: number;
 }
 
 export type CitySummariesResponse = ListResponse<CitySummary>;
