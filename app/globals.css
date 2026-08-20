@@ -110,41 +110,44 @@
   color-scheme: light;
 }
 
-[data-theme="dark"] {
+html[data-theme="dark"],
+[data-theme="dark"],
+html.dark,
+.dark {
   --lf-page: #09090B;
   --lf-surface: #121214;
   --lf-card: #121214;
   --lf-elevated: #18181B;
   --lf-subtle: #18181B;
   --lf-raised: #202024;
-  --lf-hover: #1A1A1E;
+  --lf-hover: #222228;
   --lf-track: #27272A;
 
   --lf-border: #27272A;
   --lf-border-subtle: #1F1F23;
-  --lf-border-focus: #E5A93C;
+  --lf-border-focus: #3B82F6;
 
-  --lf-text: #F9FAFB;
-  --lf-text-secondary: #D1D5DB;
-  --lf-text-muted: #9CA3AF;
-  --lf-text-disabled: #6B7280;
+  --lf-text: #FFFFFF;
+  --lf-text-secondary: #E2E8F0;
+  --lf-text-muted: #CBD5E1;
+  --lf-text-disabled: #94A3B8;
 
-  --lf-brand: #E5A93C;
-  --lf-brand-hover: #F59E0B;
-  --lf-brand-active: #D97706;
-  --lf-accent: #E5A93C;
-  --lf-accent-hover: #F59E0B;
-  --lf-accent-soft: rgba(229, 169, 60, 0.14);
-  --lf-accent-ring: rgba(229, 169, 60, 0.32);
+  --lf-brand: #2563EB;
+  --lf-brand-hover: #3B82F6;
+  --lf-brand-active: #1D4ED8;
+  --lf-accent: #2563EB;
+  --lf-accent-hover: #3B82F6;
+  --lf-accent-soft: rgba(37, 99, 235, 0.18);
+  --lf-accent-ring: rgba(37, 99, 235, 0.4);
 
   --lf-success: #22C55E;
-  --lf-success-soft: rgba(34, 197, 94, 0.14);
+  --lf-success-soft: rgba(34, 197, 94, 0.18);
   --lf-warning: #F59E0B;
-  --lf-warning-soft: rgba(245, 158, 11, 0.14);
+  --lf-warning-soft: rgba(245, 158, 11, 0.18);
   --lf-error: #EF4444;
-  --lf-error-soft: rgba(239, 68, 68, 0.14);
+  --lf-error-soft: rgba(239, 68, 68, 0.18);
   --lf-info: #38BDF8;
-  --lf-info-soft: rgba(56, 189, 248, 0.14);
+  --lf-info-soft: rgba(56, 189, 248, 0.18);
 
   --lf-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.5);
   --lf-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
@@ -225,6 +228,75 @@ textarea::placeholder {
 
 .ant-typography {
   color: var(--lf-text) !important;
+}
+
+/* Universal Button Contrast */
+.ant-btn-primary {
+  background-color: var(--lf-brand) !important;
+  color: #FFFFFF !important;
+  border-color: var(--lf-brand) !important;
+  font-weight: 600 !important;
+}
+.ant-btn-primary:hover,
+.ant-btn-primary:focus {
+  background-color: var(--lf-brand-hover) !important;
+  border-color: var(--lf-brand-hover) !important;
+  color: #FFFFFF !important;
+}
+.ant-btn-primary span,
+.ant-btn-primary .ant-btn-icon {
+  color: #FFFFFF !important;
+}
+
+[data-theme="dark"] .ant-btn-default,
+.dark .ant-btn-default {
+  background-color: var(--lf-subtle) !important;
+  color: #FFFFFF !important;
+  border-color: var(--lf-border) !important;
+}
+[data-theme="dark"] .ant-btn-default:hover,
+.dark .ant-btn-default:hover {
+  background-color: var(--lf-hover) !important;
+  color: #FFFFFF !important;
+  border-color: var(--lf-border-focus) !important;
+}
+[data-theme="dark"] .ant-btn-default span,
+.dark .ant-btn-default span {
+  color: #FFFFFF !important;
+}
+
+[data-theme="dark"] .ant-btn-dangerous,
+.dark .ant-btn-dangerous,
+[data-theme="dark"] .ant-btn-danger,
+.dark .ant-btn-danger,
+[data-theme="dark"] .ant-btn-dangerous.ant-btn-default,
+.dark .ant-btn-dangerous.ant-btn-default {
+  background-color: rgba(239, 68, 68, 0.15) !important;
+  color: #F87171 !important;
+  border-color: rgba(239, 68, 68, 0.45) !important;
+}
+[data-theme="dark"] .ant-btn-dangerous:hover,
+.dark .ant-btn-dangerous:hover,
+[data-theme="dark"] .ant-btn-danger:hover,
+.dark .ant-btn-danger:hover {
+  background-color: #EF4444 !important;
+  color: #FFFFFF !important;
+  border-color: #EF4444 !important;
+}
+[data-theme="dark"] .ant-btn-dangerous span,
+.dark .ant-btn-dangerous span {
+  color: inherit !important;
+}
+
+[data-theme="dark"] .ant-btn:disabled,
+.dark .ant-btn:disabled {
+  background-color: var(--lf-subtle) !important;
+  color: #64748B !important;
+  border-color: var(--lf-border-subtle) !important;
+}
+[data-theme="dark"] .ant-btn:disabled span,
+.dark .ant-btn:disabled span {
+  color: #64748B !important;
 }
 
 ::selection {
@@ -608,7 +680,7 @@ a {
 .lf-card-desc,
 .lf-panel-note {
   margin: var(--lf-space-2) 0 0;
-  color: var(--lf-text-muted);
+  color: var(--lf-text-secondary);
   font-size: var(--lf-font-sm);
   line-height: 16px;
 }

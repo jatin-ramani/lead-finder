@@ -5,6 +5,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   type ReactNode,
 } from "react";
@@ -44,11 +45,26 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
   const setMode = useCallback(
     (next: ThemeMode) => {
       document.documentElement.setAttribute("data-theme", next);
+      if (next === "dark") {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
       document.documentElement.style.colorScheme = next;
       persistMode(next);
     },
     [persistMode],
   );
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", mode);
+    if (mode === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+    document.documentElement.style.colorScheme = mode;
+  }, [mode]);
 
   const toggleMode = useCallback(
     () => setMode(mode === "dark" ? "light" : "dark"),

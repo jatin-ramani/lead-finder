@@ -15,6 +15,11 @@ export const themeBootstrapScript = `
     if (stored === 'light' || stored === 'dark') mode = stored;
   } catch (e) {}
   document.documentElement.setAttribute('data-theme', mode);
+  if (mode === 'dark') {
+    document.documentElement.classList.add('dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+  }
   document.documentElement.style.colorScheme = mode;
 })();
 `;

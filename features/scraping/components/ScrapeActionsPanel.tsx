@@ -34,7 +34,7 @@ export default function ScrapeActionsPanel({
               <GlobalOutlined className="text-[var(--lf-brand)]" />
               <span>Scrape missing</span>
             </div>
-            <p className="text-xs text-[var(--lf-text-muted)] mb-4">
+            <p className="text-xs text-[var(--lf-text-secondary)] mb-4">
               Scrape businesses that have a website URL but have never been scraped yet.
             </p>
           </div>
@@ -55,7 +55,7 @@ export default function ScrapeActionsPanel({
               <RedoOutlined className="text-[var(--lf-warning)]" />
               <span>Retry failed</span>
             </div>
-            <p className="text-xs text-[var(--lf-text-muted)] mb-4">
+            <p className="text-xs text-[var(--lf-text-secondary)] mb-4">
               Re-scrape businesses whose most recent scrape attempt ended in failure.
             </p>
           </div>
@@ -75,7 +75,7 @@ export default function ScrapeActionsPanel({
               <AlertOutlined className="text-[var(--lf-brand)]" />
               <span>Scrape all</span>
             </div>
-            <p className="text-xs text-[var(--lf-text-muted)] mb-4">
+            <p className="text-xs text-[var(--lf-text-secondary)] mb-4">
               Re-scrape every business website stored in the database.
             </p>
           </div>
