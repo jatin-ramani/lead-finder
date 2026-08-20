@@ -472,7 +472,7 @@ export default function ScrapeJobDetails({
         title="Scraped Website Details"
         open={selectedResult !== null}
         onClose={() => setSelectedResult(null)}
-        width={520}
+        size={520}
         className="lf-drawer"
       >
         {selectedResult && (

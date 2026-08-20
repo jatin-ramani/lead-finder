@@ -126,7 +126,7 @@ export default function BusinessDrawer({
       open={open}
       onClose={onClose}
       placement="right"
-      width={480}
+      size={480}
       title="Business details"
       className="lf-drawer"
       destroyOnHidden

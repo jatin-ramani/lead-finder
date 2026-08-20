@@ -4,6 +4,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback } from "react";
 import { Skeleton } from "antd";
 
+import PageContainer from "@/components/ui/PageContainer";
 import LiveScrapeProgress from "@/features/scraping/components/LiveScrapeProgress";
 import ScrapeActionsPanel from "@/features/scraping/components/ScrapeActionsPanel";
 import ScrapeJobDetails from "@/features/scraping/components/ScrapeJobDetails";
@@ -47,17 +48,19 @@ function ScrapingWorkspace() {
   // If a specific job is selected in URL, render the comprehensive ScrapeJobDetails view
   if (validJobId) {
     return (
-      <ScrapeJobDetails
-        jobId={validJobId}
-        onBack={handleBackToHistory}
-        onRetryFailed={retryFailed}
-        isRetrying={isPendingLauncher}
-      />
+      <PageContainer>
+        <ScrapeJobDetails
+          jobId={validJobId}
+          onBack={handleBackToHistory}
+          onRetryFailed={retryFailed}
+          isRetrying={isPendingLauncher}
+        />
+      </PageContainer>
     );
   }
 
   return (
-    <div className="flex flex-col gap-5">
+    <PageContainer>
       {/* Live Progress View */}
       <LiveScrapeProgress jobId={activeJobId} />
 
@@ -75,7 +78,7 @@ function ScrapingWorkspace() {
         onSelectJob={handleSelectJob}
         onDeleteJob={deleteJob}
       />
-    </div>
+    </PageContainer>
   );
 }
 
@@ -83,14 +86,14 @@ export default function ScrapingPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex flex-col gap-5">
+        <PageContainer>
           <div className="lf-panel">
             <Skeleton active paragraph={{ rows: 3 }} />
           </div>
           <div className="lf-panel">
             <Skeleton active paragraph={{ rows: 5 }} />
           </div>
-        </div>
+        </PageContainer>
       }
     >
       <ScrapingWorkspace />

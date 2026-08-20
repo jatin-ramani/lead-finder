@@ -203,6 +203,7 @@ export default function ScrapeJobHistory({
     <Panel
       title="Scrape job history"
       description="Every bulk scrape job run on this workspace, newest first."
+      flush
     >
       <Table
         rowKey="id"

@@ -13,6 +13,7 @@ import { App, Button, Skeleton } from "antd";
 import { Suspense, useCallback, useMemo, useState } from "react";
 
 import ErrorState from "@/components/feedback/ErrorState";
+import PageContainer from "@/components/ui/PageContainer";
 import BusinessBulkBar from "@/features/businesses/components/BusinessBulkBar";
 import BusinessDrawer from "@/features/businesses/components/BusinessDrawer";
 import BusinessFilterBar from "@/features/businesses/components/BusinessFilterBar";
@@ -145,12 +146,14 @@ function BusinessesWorkspace() {
     }
 
     return (
-      <CityCardsGrid
-        cities={cities}
-        isLoading={isCitiesLoading}
-        onSelectCity={(cityName) => filters.setFilter("city", cityName)}
-        onViewAll={() => filters.setFilter("view", "all")}
-      />
+      <PageContainer>
+        <CityCardsGrid
+          cities={cities}
+          isLoading={isCitiesLoading}
+          onSelectCity={(cityName) => filters.setFilter("city", cityName)}
+          onViewAll={() => filters.setFilter("view", "all")}
+        />
+      </PageContainer>
     );
   }
 
@@ -166,7 +169,7 @@ function BusinessesWorkspace() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <PageContainer>
       {/* Navigation Breadcrumb Strip */}
       <div className="lf-nav-header">
         <div className="flex items-center gap-3">
@@ -279,7 +282,7 @@ function BusinessesWorkspace() {
         onExportSelected={exportSelected}
         isExporting={isExporting}
       />
-    </div>
+    </PageContainer>
   );
 }
 

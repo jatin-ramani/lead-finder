@@ -50,7 +50,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
         open={mobileNavOpen}
         onClose={closeMobileNav}
         placement="left"
-        width={SIDEBAR_WIDTH}
+        size={SIDEBAR_WIDTH}
         closable={false}
         rootClassName="lf-mobile-nav"
         styles={{ body: { padding: 0 } }}

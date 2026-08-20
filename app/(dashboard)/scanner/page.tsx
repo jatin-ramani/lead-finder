@@ -1,5 +1,6 @@
 "use client";
 
+import PageContainer from "@/components/ui/PageContainer";
 import ScanForm from "@/features/scanning/components/ScanForm";
 import ScanHistory from "@/features/scanning/components/ScanHistory";
 import ScanProgress from "@/features/scanning/components/ScanProgress";
@@ -25,7 +26,7 @@ export default function ScannerPage() {
   const { start, retry, canRetry, scanning, watching } = useScanRunner();
 
   return (
-    <div className="flex flex-col gap-5">
+    <PageContainer>
       <ScanStats stats={stats} isLoading={historyLoading} />
 
       <div className="lf-grid-2">
@@ -49,6 +50,6 @@ export default function ScannerPage() {
         error={historyError}
         onRetry={() => void refetch()}
       />
-    </div>
+    </PageContainer>
   );
 }
