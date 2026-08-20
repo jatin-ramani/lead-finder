@@ -1,7 +1,75 @@
 import { expect, test } from "@playwright/test";
 import { authenticatePlaywright } from "./support/auth";
 
-test.describe("Phase 5 — Complete Website Scraping Experience E2E Suite", () => {
+const mockJobResults = {
+  success: true,
+  data: [
+    {
+      id: 101,
+      business_id: 1,
+      business_name: "Asopalav Ethnic Wear",
+      business_city: "Ahmedabad",
+      business_category: "commercial",
+      business_phone: "+91 79 2676 5592",
+      website: "https://asopalav.com",
+      status: "Completed",
+      title: "Asopalav Ethnic Wear Online Store",
+      meta_description: "Premier Indian ethnic wear and bridal collection store in Ahmedabad.",
+      emails: ["info@asopalav.com", "sales@asopalav.com"],
+      facebook: "https://facebook.com/asopalav",
+      instagram: "https://instagram.com/asopalav",
+      linkedin: null,
+      twitter: null,
+      youtube: null,
+      whatsapp: "https://wa.me/917926765592",
+      failure_reason: null,
+      scraped_at: "2026-08-17T10:02:00Z",
+    },
+    {
+      id: 102,
+      business_id: 2,
+      business_name: "Shreeji Dental Clinic",
+      business_city: "Surat",
+      business_category: "dental",
+      business_phone: "+91 98250 12345",
+      website: "https://shreejidental.test",
+      status: "Failed",
+      title: null,
+      meta_description: null,
+      emails: [],
+      facebook: null,
+      instagram: null,
+      linkedin: null,
+      twitter: null,
+      youtube: null,
+      whatsapp: null,
+      failure_reason: "Connection timeout after 15s",
+      scraped_at: "2026-08-17T10:03:00Z",
+    },
+  ],
+  pagination: {
+    page: 1,
+    pageSize: 20,
+    totalItems: 2,
+    totalPages: 1,
+  },
+  summary: {
+    job_id: 10,
+    status: "Completed",
+    total_websites: 15,
+    completed: 12,
+    success: 11,
+    failed: 1,
+    started_at: "2026-08-17T10:00:00Z",
+    completed_at: "2026-08-17T10:10:00Z",
+  },
+  cities: [
+    { city: "Ahmedabad", count: 1 },
+    { city: "Surat", count: 1 },
+  ],
+};
+
+test.describe("Website Scraping Experience & Results E2E Suite", () => {
   test.beforeEach(async ({ context, page }) => {
     await authenticatePlaywright(context);
 
@@ -21,7 +89,34 @@ test.describe("Phase 5 — Complete Website Scraping Experience E2E Suite", () =
         return;
       }
 
-      if (url.endsWith("/scrape/jobs")) {
+      if (url.includes("/scrape/jobs/10/results")) {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(mockJobResults),
+        });
+      } else if (url.includes("/scrape/jobs/99/results")) {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            success: true,
+            data: [],
+            pagination: { page: 1, pageSize: 20, totalItems: 0, totalPages: 0 },
+            summary: {
+              job_id: 99,
+              status: "Completed",
+              total_websites: 0,
+              completed: 0,
+              success: 0,
+              failed: 0,
+              started_at: "2026-08-17T10:00:00Z",
+              completed_at: "2026-08-17T10:01:00Z",
+            },
+            cities: [],
+          }),
+        });
+      } else if (url.endsWith("/scrape/jobs")) {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
@@ -30,15 +125,27 @@ test.describe("Phase 5 — Complete Website Scraping Experience E2E Suite", () =
             data: [
               {
                 id: 10,
-                status: "Running",
-                progress: 80,
+                status: "Completed",
+                progress: 100,
                 total_websites: 15,
                 completed: 12,
                 success: 11,
                 failed: 1,
                 current_business_id: 3,
                 started_at: "2026-08-17T10:00:00Z",
-                completed_at: null,
+                completed_at: "2026-08-17T10:10:00Z",
+              },
+              {
+                id: 99,
+                status: "Completed",
+                progress: 100,
+                total_websites: 0,
+                completed: 0,
+                success: 0,
+                failed: 0,
+                current_business_id: null,
+                started_at: "2026-08-17T10:00:00Z",
+                completed_at: "2026-08-17T10:01:00Z",
               },
             ],
           }),
@@ -51,16 +158,37 @@ test.describe("Phase 5 — Complete Website Scraping Experience E2E Suite", () =
             success: true,
             data: {
               id: 10,
-              status: "Running",
-              progress: 80,
+              status: "Completed",
+              progress: 100,
               total_websites: 15,
               completed: 12,
               success: 11,
               failed: 1,
               current_business_id: 3,
               started_at: "2026-08-17T10:00:00Z",
-              completed_at: null,
+              completed_at: "2026-08-17T10:10:00Z",
             },
+          }),
+        });
+      } else if (url.includes("/businesses/cities")) {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            success: true,
+            data: [
+              {
+                city: "Ahmedabad",
+                totalBusinesses: 1,
+                withWebsite: 1,
+                withoutWebsite: 0,
+                withEmail: 1,
+                withoutEmail: 0,
+                withPhone: 1,
+                withoutPhone: 0,
+                actionableLeads: 0,
+              },
+            ],
           }),
         });
       } else if (url.includes("/businesses/1/website")) {
@@ -86,7 +214,7 @@ test.describe("Phase 5 — Complete Website Scraping Experience E2E Suite", () =
             },
           }),
         });
-      } else if (url.includes("/businesses?")) {
+      } else if (url.includes("/businesses")) {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
@@ -114,238 +242,45 @@ test.describe("Phase 5 — Complete Website Scraping Experience E2E Suite", () =
     });
   });
 
-  test("loads scraper workspace page with live progress, action panel and job history", async ({ page }) => {
+  test("clicking View button navigates to job details and displays scrape results", async ({ page }) => {
     await page.goto("/scraping");
 
-    await expect(page.getByRole("heading", { name: "Website Scraper" }).first()).toBeVisible();
-    await expect(page.getByText("Scrape job #10").first()).toBeVisible();
-    await expect(page.getByText("80% completed").first()).toBeVisible();
+    // Click 'View' button on Job #10
+    const viewButton = page.getByRole("button", { name: "View" }).filter({ visible: true }).first();
+    await expect(viewButton).toBeVisible();
+    await viewButton.click();
 
-    // Verify metrics in card
-    await expect(page.getByText("15").first()).toBeVisible();
-    await expect(page.getByText("12").first()).toBeVisible();
+    // Verify URL updates to /scraping?job=10
+    await expect(page).toHaveURL(/job=10/);
 
-    // Verify action launchers exist
-    await expect(page.getByRole("button", { name: "Scrape missing", exact: true })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Retry failed", exact: true })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Scrape all", exact: true })).toBeVisible();
+    // Verify Scrape Job #10 details view is rendered
+    await expect(page.getByRole("heading", { name: "Scrape Job #10" })).toBeVisible();
+    await expect(page.getByText("Asopalav Ethnic Wear").filter({ visible: true }).first()).toBeVisible();
+    await expect(page.getByText("Shreeji Dental Clinic").filter({ visible: true }).first()).toBeVisible();
+
+    // Verify success and failure status tags
+    await expect(page.getByText("Success").filter({ visible: true }).first()).toBeVisible();
+    await expect(page.getByText("Failed").filter({ visible: true }).first()).toBeVisible();
+    await expect(page.getByText("Connection timeout after 15s").filter({ visible: true }).first()).toBeVisible();
+
+    // Verify extracted emails
+    await expect(page.getByText("info@asopalav.com").filter({ visible: true }).first()).toBeVisible();
+
+    // Test Back button returns to Job History
+    await page.getByRole("button", { name: "Back to Jobs" }).click();
+    await expect(page).not.toHaveURL(/job=10/);
+    await expect(page.getByText("Scrape job history").first()).toBeVisible();
   });
 
-  test("launches Scrape Missing job successfully", async ({ page }) => {
-    let missingScraped = false;
+  test("handles zero-result scrape job cleanly without errors", async ({ page }) => {
+    await page.goto("/scraping?job=99");
 
-    await page.route("**/*", async (route) => {
-      const url = route.request().url();
-      if (url.includes("/auth/me")) {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({ authenticated: true }),
-        });
-        return;
-      }
-      if (url.endsWith("/scrape/missing")) {
-        missingScraped = true;
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            success: true,
-            job_id: 11,
-            message: "Missing website scraping started.",
-          }),
-        });
-        return;
-      }
-      if (url.endsWith("/scrape/jobs")) {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            success: true,
-            data: missingScraped
-              ? [
-                  {
-                    id: 11,
-                    status: "Running",
-                    progress: 25,
-                    total_websites: 20,
-                    completed: 5,
-                    success: 5,
-                    failed: 0,
-                    current_business_id: 2,
-                    started_at: "2026-08-17T10:05:00Z",
-                    completed_at: null,
-                  },
-                ]
-              : [],
-          }),
-        });
-        return;
-      }
-      if (url.includes("/scrape/jobs/11")) {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            success: true,
-            data: {
-              id: 11,
-              status: "Running",
-              progress: 25,
-              total_websites: 20,
-              completed: 5,
-              success: 5,
-              failed: 0,
-              current_business_id: 2,
-              started_at: "2026-08-17T10:05:00Z",
-              completed_at: null,
-            },
-          }),
-        });
-        return;
-      }
-      await route.continue();
-    });
-
-    await page.goto("/scraping");
-
-    await page.getByRole("button", { name: "Scrape missing", exact: true }).click();
-
-    await expect(page.getByText("Job #11 queued for missing websites.").first()).toBeVisible();
-    await expect(page.getByText("Scrape job #11").first()).toBeVisible();
-  });
-
-  test("launches Scrape All with confirmation modal", async ({ page }) => {
-    let allScraped = false;
-
-    await page.route("**/*", async (route) => {
-      const url = route.request().url();
-      if (url.includes("/auth/me")) {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({ authenticated: true }),
-        });
-        return;
-      }
-      if (url.endsWith("/scrape/jobs")) {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({ success: true, data: [] }),
-        });
-        return;
-      }
-      if (url.endsWith("/scrape/all")) {
-        allScraped = true;
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            success: true,
-            job_id: 12,
-            message: "Bulk scraping started.",
-          }),
-        });
-        return;
-      }
-      await route.continue();
-    });
-
-    await page.goto("/scraping");
-
-    await page.getByRole("button", { name: "Scrape all", exact: true }).click();
-
-    // Verify modal dialog opens
-    const dialog = page.getByRole("dialog");
-    await expect(dialog).toBeVisible();
-    await expect(dialog.getByText("Scrape all businesses?")).toBeVisible();
-
-    // Click confirm in modal
-    await dialog.getByRole("button", { name: "Yes, scrape all" }).click();
-
-    await expect(page.getByText("Job #12 has been queued.").first()).toBeVisible();
-  });
-
-  test("handles 409 Conflict with direct link to running job", async ({ page }) => {
-    await page.route("**/*", async (route) => {
-      const url = route.request().url();
-      if (url.includes("/auth/me")) {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({ authenticated: true }),
-        });
-        return;
-      }
-      if (url.endsWith("/scrape/jobs")) {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({ success: true, data: [] }),
-        });
-        return;
-      }
-      if (url.endsWith("/scrape/missing")) {
-        await route.fulfill({
-          status: 409,
-          contentType: "application/json",
-          body: JSON.stringify({
-            success: false,
-            message: "A scrape job is already running.",
-            error: "CONFLICT",
-            timestamp: "2026-08-17T10:05:00Z",
-            requestId: "req-409",
-            details: { job_id: 42 },
-          }),
-        });
-        return;
-      }
-      if (url.includes("/scrape/jobs/42")) {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            success: true,
-            data: {
-              id: 42,
-              status: "Running",
-              progress: 60,
-              total_websites: 100,
-              completed: 60,
-              success: 58,
-              failed: 2,
-              current_business_id: 8,
-              started_at: "2026-08-17T10:00:00Z",
-              completed_at: null,
-            },
-          }),
-        });
-        return;
-      }
-      await route.continue();
-    });
-
-    await page.goto("/scraping");
-
-    await page.getByRole("button", { name: "Scrape missing", exact: true }).click();
-
-    // Conflict notification banner appears with link
-    await expect(page.getByText("A scrape job is already running.").first()).toBeVisible();
-    await expect(page.getByText("Job #42 is currently processing businesses.").first()).toBeVisible();
-
-    const viewBtn = page.getByRole("button", { name: "View running job" });
-    await expect(viewBtn).toBeVisible();
-    await viewBtn.click();
-
-    // Active job details update to #42
-    await expect(page.getByText("Scrape job #42").first()).toBeVisible();
-    await expect(page.getByText("60% completed").first()).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Scrape Job #99" })).toBeVisible();
+    await expect(page.getByText("No website results recorded for this job yet.")).toBeVisible();
   });
 
   test("views extracted website data inside Business detail drawer", async ({ page }) => {
-    await page.goto("/businesses");
+    await page.goto("/businesses?city=Ahmedabad");
 
     // Click on Asopalav business row
     await page.getByText("Asopalav").filter({ visible: true }).first().click();

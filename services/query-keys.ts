@@ -16,6 +16,7 @@ import type { BusinessQuery, ExportPreviewRequest } from "@/types/api";
 export const queryKeys = {
   businesses: {
     all: ["businesses"] as const,
+    cities: () => [...queryKeys.businesses.all, "cities"] as const,
     lists: () => [...queryKeys.businesses.all, "list"] as const,
     /**
      * The full query object is part of the key, so every distinct filter and
@@ -41,6 +42,8 @@ export const queryKeys = {
     /** Unpaginated — the endpoint takes no parameters, so neither does the key. */
     list: () => [...queryKeys.scrapeJobs.all, "list"] as const,
     detail: (id: number) => [...queryKeys.scrapeJobs.all, id] as const,
+    results: (id: number, query?: Record<string, unknown>) =>
+      [...queryKeys.scrapeJobs.all, id, "results", query] as const,
   },
 
   dashboard: {

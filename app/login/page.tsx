@@ -17,9 +17,10 @@ export default function LoginPage() {
     return <div className="lf-boundary"><Spin size="large" description="Verifying administrative session…" /></div>;
   }
 
-  const handleSubmit = async () => {
-    if (!secret.trim()) return;
-    try { await login(secret.trim()); } catch { /* AuthContext owns the safe error. */ }
+  const handleSubmit = async (values?: { secret?: string }) => {
+    const val = values?.secret || secret;
+    if (!val || !val.trim()) return;
+    try { await login(val.trim()); } catch { /* AuthContext owns the safe error. */ }
   };
 
   return (
@@ -34,12 +35,12 @@ export default function LoginPage() {
           <span className="lf-login-mark"><SafetyCertificateOutlined aria-hidden /></span>
           <h1>Lead Finder Admin</h1>
           <p>Sign in to your secure operations workspace.</p>
-          {authError && <Alert type="error" title="Could not sign in" description={authError} showIcon className="mb-6" />}
+          {authError && <Alert type="error" message="Could not sign in" description={authError} showIcon className="mb-6" />}
           <Form layout="vertical" onFinish={handleSubmit} requiredMark={false}>
             <Form.Item label="Admin secret key" name="secret" rules={[{ required: true, message: 'Enter your admin secret key' }]}>
               <Input.Password prefix={<LockOutlined aria-hidden />} placeholder="Enter secret key..." value={secret} onChange={(e) => setSecret(e.target.value)} autoFocus autoComplete="current-password" />
             </Form.Item>
-            <Button type="primary" htmlType="submit" loading={isSubmitting} disabled={isSubmitting || !secret.trim()} block>
+            <Button type="primary" htmlType="submit" loading={isSubmitting} disabled={isSubmitting} block>
               {isSubmitting ? 'Signing in…' : 'Sign in'}
             </Button>
           </Form>

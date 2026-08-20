@@ -127,29 +127,29 @@ export default function LiveScrapeProgress({ jobId }: LiveScrapeProgressProps) {
 
         {/* Real Metrics Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-800">
-            <dt className="text-xs text-gray-500 dark:text-gray-400">Total Targets</dt>
-            <dd className="text-lg font-semibold font-mono text-gray-900 dark:text-white mt-0.5">
+          <div className="p-3 bg-[var(--lf-subtle)] rounded-lg border border-[var(--lf-border)]">
+            <dt className="text-xs text-[var(--lf-text-muted)] font-semibold">Total Targets</dt>
+            <dd className="text-lg font-semibold font-mono text-[var(--lf-text)] mt-0.5">
               {(job.total_websites ?? 0).toLocaleString()}
             </dd>
           </div>
 
-          <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-800">
-            <dt className="text-xs text-gray-500 dark:text-gray-400">Processed</dt>
+          <div className="p-3 bg-[var(--lf-subtle)] rounded-lg border border-[var(--lf-border)]">
+            <dt className="text-xs text-[var(--lf-text-muted)] font-semibold">Processed</dt>
             <dd className="text-lg font-semibold font-mono text-[var(--lf-brand)] mt-0.5">
               {(job.completed ?? 0).toLocaleString()}
             </dd>
           </div>
 
-          <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-800">
-            <dt className="text-xs text-gray-500 dark:text-gray-400">Success</dt>
+          <div className="p-3 bg-[var(--lf-subtle)] rounded-lg border border-[var(--lf-border)]">
+            <dt className="text-xs text-[var(--lf-text-muted)] font-semibold">Success</dt>
             <dd className="text-lg font-semibold font-mono text-[var(--lf-success)] mt-0.5">
               {(job.success ?? 0).toLocaleString()}
             </dd>
           </div>
 
-          <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-800">
-            <dt className="text-xs text-gray-500 dark:text-gray-400">Failed</dt>
+          <div className="p-3 bg-[var(--lf-subtle)] rounded-lg border border-[var(--lf-border)]">
+            <dt className="text-xs text-[var(--lf-text-muted)] font-semibold">Failed</dt>
             <dd className="text-lg font-semibold font-mono text-[var(--lf-error)] mt-0.5">
               {(job.failed ?? 0).toLocaleString()}
             </dd>
@@ -157,7 +157,7 @@ export default function LiveScrapeProgress({ jobId }: LiveScrapeProgressProps) {
         </div>
 
         {/* Timestamps */}
-        <div className="text-xs text-gray-500 dark:text-gray-400 flex flex-wrap gap-4 pt-1">
+        <div className="text-xs text-[var(--lf-text-muted)] flex flex-wrap gap-4 pt-1">
           {job.started_at && (
             <div>
               Started: <span className="font-mono">{new Date(job.started_at).toLocaleString()}</span>

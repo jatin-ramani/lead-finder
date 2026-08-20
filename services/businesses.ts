@@ -6,6 +6,8 @@ import type {
   Business,
   BusinessListResponse,
   BusinessQuery,
+  CitySummary,
+  CitySummariesResponse,
   ContactQualification,
   ExportPreviewRequest,
   ExportPreviewResponse,
@@ -24,6 +26,15 @@ export function listBusinesses(
   signal?: AbortSignal,
 ): Promise<BusinessListResponse> {
   return get<BusinessListResponse>("/businesses", { params: query, signal });
+}
+
+/** `GET /businesses/cities` — aggregated counts and stats per discovered city. */
+export function getCitySummaries(
+  signal?: AbortSignal,
+): Promise<CitySummary[]> {
+  return get<CitySummariesResponse>("/businesses/cities", { signal }).then(
+    (response) => response.data,
+  );
 }
 
 /** `GET /businesses/{id}` — 404s when the id is unknown. */

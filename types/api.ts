@@ -142,6 +142,20 @@ export interface ExportPreviewRequest {
   qualification?: ContactQualification;
 }
 
+export interface CitySummary {
+  city: string;
+  totalBusinesses: number;
+  withWebsite: number;
+  withoutWebsite: number;
+  withEmail: number;
+  withoutEmail: number;
+  withPhone: number;
+  withoutPhone: number;
+  actionableLeads: number;
+}
+
+export type CitySummariesResponse = ListResponse<CitySummary>;
+
 export interface ExportPreviewResponse {
   success: boolean;
   total_selected: number;
@@ -244,6 +258,63 @@ export interface ListResponse<T> {
 
 export type ScrapeJobListResponse = ListResponse<ScrapeJob>;
 export type ScrapeJobResponse = DetailResponse<ScrapeJob>;
+
+export interface ScrapeJobResultItem {
+  id: number;
+  business_id: number;
+  business_name: string;
+  business_city: string;
+  business_category: string;
+  business_phone: string | null;
+  website: string | null;
+  status: string;
+  title: string | null;
+  meta_description: string | null;
+  emails: string[];
+  facebook: string | null;
+  instagram: string | null;
+  linkedin: string | null;
+  youtube: string | null;
+  twitter: string | null;
+  whatsapp: string | null;
+  scraped_at: string | null;
+  failure_reason?: string | null;
+}
+
+export interface ScrapeJobCityItem {
+  city: string;
+  count: number;
+  success: number;
+  failed: number;
+}
+
+export interface ScrapeJobResultsSummary {
+  id: number;
+  status: string;
+  progress: number;
+  total_websites: number;
+  completed: number;
+  success: number;
+  failed: number;
+  started_at: string | null;
+  completed_at: string | null;
+}
+
+export interface ScrapeJobResultsResponse {
+  success: boolean;
+  data: ScrapeJobResultItem[];
+  pagination: PaginationResponse;
+  summary: ScrapeJobResultsSummary;
+  cities: ScrapeJobCityItem[];
+}
+
+export interface ScrapeJobResultsQuery {
+  page?: number;
+  pageSize?: number;
+  status?: string;
+  city?: string;
+  search?: string;
+}
 
 // ===========================================================================
 // SCANNING

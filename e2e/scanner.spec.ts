@@ -143,6 +143,7 @@ test.describe("Frontend Scanner Experience (Mocked Deterministic Suite)", () => 
 
     await cityInput.fill("Ahmedabad");
     await categoryInput.fill("catering");
+    await page.keyboard.press("Escape");
 
     const submitBtn = page.getByRole("button", { name: /start scan/i });
     await expect(submitBtn).toBeEnabled();
@@ -237,6 +238,7 @@ test.describe("Frontend Scanner Experience (Mocked Deterministic Suite)", () => 
 
     await page.locator("#city").fill("Mumbai");
     await page.locator("#category").fill("commercial");
+    await page.keyboard.press("Escape");
 
     await page.getByRole("button", { name: /start scan/i }).click();
 
@@ -317,6 +319,7 @@ test.describe("Frontend Scanner Experience (Mocked Deterministic Suite)", () => 
 
     await page.locator("#city").fill("Delhi");
     await page.locator("#category").fill("healthcare");
+    await page.keyboard.press("Escape");
 
     await page.getByRole("button", { name: /start scan/i }).click();
 

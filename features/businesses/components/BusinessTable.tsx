@@ -403,7 +403,7 @@ export default function BusinessTable({
               <button type="button" className="lf-mobile-business-name" onClick={() => onView(business)}>{business.name}</button>
               <Button type="text" icon={<EyeOutlined />} aria-label={`View ${business.name}`} onClick={() => onView(business)} />
             </div>
-            <p className="lf-mobile-business-meta">{[business.city, business.category].filter(Boolean).join(" Â· ") || "Location not available"}</p>
+            <p className="lf-mobile-business-meta">{[business.city, business.category].filter(Boolean).join(" • ") || "Location not available"}</p>
             <div className="lf-mobile-business-contact">
               <span className={isPresent(business.website) ? "is-available" : ""}>Website {isPresent(business.website) ? "available" : "missing"}</span>
               <span className={isPresent(business.email) ? "is-available" : ""}>Email {isPresent(business.email) ? "available" : "missing"}</span>

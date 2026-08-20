@@ -126,45 +126,45 @@ export default function WebsiteDataCard({
       <div className="space-y-4">
         {/* Title */}
         <div>
-          <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block mb-1">
+          <label className="text-xs font-semibold text-[var(--lf-text-muted)] uppercase tracking-wider block mb-1">
             Page Title
           </label>
-          <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-            {data.title ?? <span className="text-gray-400 italic">None extracted</span>}
+          <p className="text-sm font-medium text-[var(--lf-text)]">
+            {data.title ?? <span className="text-[var(--lf-text-muted)] italic">None extracted</span>}
           </p>
         </div>
 
         {/* Meta Description */}
         <div>
-          <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block mb-1">
+          <label className="text-xs font-semibold text-[var(--lf-text-muted)] uppercase tracking-wider block mb-1">
             Meta Description
           </label>
-          <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed bg-gray-50 dark:bg-gray-800/50 p-2.5 rounded border border-gray-100 dark:border-gray-800">
-            {data.meta_description ?? <span className="text-gray-400 italic">None extracted</span>}
+          <p className="text-xs text-[var(--lf-text-secondary)] leading-relaxed bg-[var(--lf-subtle)] p-2.5 rounded border border-[var(--lf-border-subtle)]">
+            {data.meta_description ?? <span className="text-[var(--lf-text-muted)] italic">None extracted</span>}
           </p>
         </div>
 
         {/* Emails */}
         <div>
-          <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block mb-1.5">
+          <label className="text-xs font-semibold text-[var(--lf-text-muted)] uppercase tracking-wider block mb-1.5">
             Email Addresses
           </label>
           {data.emails && data.emails.length > 0 ? (
             <div className="flex flex-wrap gap-1.5">
               {data.emails.map((email) => (
-                <Tag key={email} icon={<MailOutlined />} color="blue">
+                <Tag key={email} icon={<MailOutlined />} color="gold">
                   {email}
                 </Tag>
               ))}
             </div>
           ) : (
-            <p className="text-xs text-gray-400 italic">No email addresses found</p>
+            <p className="text-xs text-[var(--lf-text-muted)] italic">No email addresses found</p>
           )}
         </div>
 
         {/* Social Profiles */}
         <div>
-          <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block mb-1.5">
+          <label className="text-xs font-semibold text-[var(--lf-text-muted)] uppercase tracking-wider block mb-1.5">
             Social Profiles
           </label>
           {socials.length > 0 ? (
@@ -175,7 +175,7 @@ export default function WebsiteDataCard({
                   href={s.url!}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded transition-colors"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-[var(--lf-subtle)] hover:bg-[var(--lf-raised)] text-[var(--lf-text-secondary)] rounded transition-colors border border-[var(--lf-border-subtle)]"
                 >
                   {s.icon}
                   <span>{s.label}</span>
@@ -183,13 +183,13 @@ export default function WebsiteDataCard({
               ))}
             </div>
           ) : (
-            <p className="text-xs text-gray-400 italic">No social profiles found</p>
+            <p className="text-xs text-[var(--lf-text-muted)] italic">No social profiles found</p>
           )}
         </div>
 
         {/* Action button to re-scrape */}
         {hasWebsiteUrl && onScrapeSingle && (
-          <div className="pt-2 border-t border-gray-100 dark:border-gray-800 flex justify-end">
+          <div className="pt-2 border-t border-[var(--lf-border-subtle)] flex justify-end">
             <Button
               size="small"
               icon={<ThunderboltOutlined />}

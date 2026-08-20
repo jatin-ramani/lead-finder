@@ -50,7 +50,7 @@ function Body({ query, selectedIds, initialScope, onExportFiltered, onExportSele
     {qualify && <div className="flex gap-3" role="group" aria-label="Contact requirements"><Checkbox checked={hasEmail} onChange={(e) => setHasEmail(e.target.checked)}>Has email</Checkbox><Checkbox checked={hasPhone} onChange={(e) => setHasPhone(e.target.checked)}>Has phone</Checkbox></div>}
     <Text type="secondary">Exporting businesses matching: {summary}</Text>
     {preview.isError
-      ? <Alert type="error" showIcon title="Failed to calculate export count" description={errorMessage} />
+      ? <Alert type="error" showIcon message="Failed to calculate export count" description={errorMessage} />
       : <Text>{preview.isLoading ? "Calculating…" : countMessage}</Text>}
     <div className="flex justify-end gap-2"><Button onClick={onClose}>Cancel</Button><Button type="primary" icon={<DownloadOutlined />} loading={isExporting} disabled={preview.isLoading || preview.isError || !count || (qualify && !hasEmail && !hasPhone)} onClick={submit}>Export</Button></div>
   </div>;

@@ -120,16 +120,16 @@ export default function ScanProgress({
         {/* Header with City, Category, Job ID and Status */}
         <div className="lf-scan-head flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="lf-scan-target text-base font-semibold">
+            <p className="lf-scan-target text-base font-semibold text-[var(--lf-text)]">
               <span>{job.city ?? "Unknown city"}</span>
-              <span className="lf-scan-sep text-gray-400 mx-2" aria-hidden>
+              <span className="lf-scan-sep text-[var(--lf-text-muted)] mx-2" aria-hidden>
                 •
               </span>
-              <span className="capitalize text-gray-600 dark:text-gray-300">
+              <span className="capitalize text-[var(--lf-text-secondary)]">
                 {job.category ?? "—"}
               </span>
             </p>
-            <p className="lf-scan-id text-xs text-gray-500 font-mono mt-0.5">Job #{job.id}</p>
+            <p className="lf-scan-id text-xs text-[var(--lf-text-muted)] font-mono mt-0.5">Job #{job.id}</p>
           </div>
           <StatusTag status={job.status} />
         </div>
@@ -148,7 +148,7 @@ export default function ScanProgress({
         {/* Honest Progress / Loading Section */}
         <div className="flex flex-col gap-2">
           {running && (
-            <div className="flex items-center justify-between text-xs font-medium text-gray-600 dark:text-gray-300" aria-live="polite">
+            <div className="flex items-center justify-between text-xs font-medium text-[var(--lf-text-secondary)]" aria-live="polite">
               <span className="flex items-center gap-1.5">
                 <CompassOutlined className="animate-spin text-[var(--lf-brand)]" aria-hidden />
                 {job.progress > 0 ? "Scanning and saving businesses..." : "Discovering businesses..."}
@@ -161,7 +161,7 @@ export default function ScanProgress({
           {running && job.progress === 0 ? (
             /* Indeterminate shimmer track — NO fake aria-valuenow */
             <div
-              className="w-full h-2 rounded bg-gray-200 dark:bg-gray-700 overflow-hidden relative"
+              className="w-full h-2 rounded bg-[var(--lf-track)] overflow-hidden relative"
               aria-label="Scan in progress, discovering businesses"
             >
               <div className="absolute inset-0 bg-[var(--lf-brand)]/60 animate-pulse rounded" />
@@ -174,7 +174,7 @@ export default function ScanProgress({
               aria-valuemin={0}
               aria-valuemax={100}
               aria-label={`Scan progress: ${job.progress}%`}
-              className="w-full h-2 rounded bg-gray-200 dark:bg-gray-700 overflow-hidden"
+              className="w-full h-2 rounded bg-[var(--lf-track)] overflow-hidden"
             >
               <div
                 className={`h-full transition-all duration-300 rounded ${
@@ -187,15 +187,15 @@ export default function ScanProgress({
         </div>
 
         {/* Live Metrics Grid */}
-        <dl className="grid grid-cols-2 gap-4 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800">
+        <dl className="grid grid-cols-2 gap-4 p-3 rounded-lg bg-[var(--lf-subtle)] border border-[var(--lf-border)]">
           <div>
-            <dt className="text-xs text-gray-500 dark:text-gray-400 font-medium">Businesses discovered</dt>
-            <dd className="text-lg font-semibold font-mono text-gray-900 dark:text-gray-100 mt-0.5">
+            <dt className="text-xs text-[var(--lf-text-muted)] font-medium">Businesses discovered</dt>
+            <dd className="text-lg font-semibold font-mono text-[var(--lf-text)] mt-0.5">
               {job.totalBusinesses.toLocaleString()}
             </dd>
           </div>
           <div>
-            <dt className="text-xs text-gray-500 dark:text-gray-400 font-medium">New businesses</dt>
+            <dt className="text-xs text-[var(--lf-text-muted)] font-medium">New businesses</dt>
             <dd className="text-lg font-semibold font-mono text-[var(--lf-brand)] mt-0.5">
               {job.newBusinesses.toLocaleString()}
             </dd>
@@ -205,7 +205,7 @@ export default function ScanProgress({
         {/* Success state footer action */}
         {completed && (
           <div className="flex items-center justify-between pt-1">
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-[var(--lf-text-muted)]">
               {job.newBusinesses > 0
                 ? `${job.newBusinesses.toLocaleString()} new businesses added to workspace.`
                 : "All returned results were already in your workspace."}

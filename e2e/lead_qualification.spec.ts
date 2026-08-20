@@ -29,6 +29,9 @@ async function mockApi(page: Page) {
     const request = route.request();
     const url = new URL(request.url());
     if (url.pathname === "/auth/me") return route.fulfill({ json: { authenticated: true } });
+    if (url.pathname === "/businesses/cities") {
+      return route.fulfill({ json: { success: true, data: [{ city: "Ahmedabad", total_businesses: 3, with_website: 1, without_website: 2, with_email: 2, without_email: 1, with_phone: 2, without_phone: 1, actionable_leads: 1 }] } });
+    }
     if (url.origin === "http://127.0.0.1:8000" && url.pathname === "/businesses" && request.method() === "GET") {
       const data = matches(url);
       return route.fulfill({ json: { success: true, data, pagination: { page: Number(url.searchParams.get("page") ?? 1), pageSize: 20, totalItems: data.length, totalPages: 1 } } });
@@ -41,7 +44,7 @@ test.describe("Lead qualification boolean filter contract", () => {
   test.beforeEach(async ({ context, page }) => {
     await authenticatePlaywright(context);
     await mockApi(page);
-    await page.goto("/businesses");
+    await page.goto("/businesses?city=Ahmedabad");
     await expect(page.getByText("Apex Dental Clinic").filter({ visible: true })).toBeVisible({ timeout: 15000 });
   });
 

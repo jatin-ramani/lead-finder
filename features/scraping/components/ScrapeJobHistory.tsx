@@ -1,6 +1,12 @@
 "use client";
 
-import { CheckCircleOutlined, CloseCircleOutlined, DeleteOutlined, EyeOutlined, SyncOutlined } from "@ant-design/icons";
+import {
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  DeleteOutlined,
+  EyeOutlined,
+  SyncOutlined,
+} from "@ant-design/icons";
 import { Button, Modal, Table, Tag } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useState } from "react";
@@ -31,7 +37,7 @@ export default function ScrapeJobHistory({
       key: "id",
       width: 90,
       render: (id: number) => (
-        <span className="font-mono text-xs font-semibold text-gray-900 dark:text-gray-100">
+        <span className="font-mono text-xs font-semibold text-[var(--lf-text)]">
           #{id}
         </span>
       ),
@@ -87,10 +93,12 @@ export default function ScrapeJobHistory({
           );
         }
         return (
-          <div className="w-full bg-gray-200 dark:bg-gray-700 h-2 rounded-full overflow-hidden">
+          <div className="w-full bg-[var(--lf-track)] h-2 rounded-full overflow-hidden">
             <div
               className={`h-full ${
-                record.status === "Completed" ? "bg-[var(--lf-success)]" : "bg-[var(--lf-brand)]"
+                record.status === "Completed"
+                  ? "bg-[var(--lf-success)]"
+                  : "bg-[var(--lf-brand)]"
               }`}
               style={{ width: `${Math.min(100, Math.max(0, progress ?? 0))}%` }}
             />
@@ -105,7 +113,9 @@ export default function ScrapeJobHistory({
       width: 100,
       align: "right",
       render: (val: number) => (
-        <span className="font-mono text-xs">{(val ?? 0).toLocaleString()}</span>
+        <span className="font-mono text-xs text-[var(--lf-text)]">
+          {(val ?? 0).toLocaleString()}
+        </span>
       ),
     },
     {
@@ -150,7 +160,7 @@ export default function ScrapeJobHistory({
       key: "started_at",
       width: 160,
       render: (date: string | null) => (
-        <span className="text-xs text-gray-500 font-mono">
+        <span className="text-xs text-[var(--lf-text-muted)] font-mono">
           {date ? new Date(date).toLocaleString() : "—"}
         </span>
       ),
@@ -217,8 +227,9 @@ export default function ScrapeJobHistory({
         okText="Delete job"
         okButtonProps={{ danger: true }}
       >
-        <p className="text-sm text-gray-600 dark:text-gray-300 py-2">
-          This will remove the job record from history. Scraped website data already saved to businesses will be preserved.
+        <p className="text-sm text-[var(--lf-text-secondary)] py-2">
+          This will remove the job record from history. Scraped website data
+          already saved to businesses will be preserved.
         </p>
       </Modal>
     </Panel>

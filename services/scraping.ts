@@ -14,6 +14,8 @@ import type {
   MessageResponse,
   ScrapeJob,
   ScrapeJobListResponse,
+  ScrapeJobResultsQuery,
+  ScrapeJobResultsResponse,
 } from "@/types/api";
 
 /** `POST /scrape/all` — every business that has a website. */
@@ -54,6 +56,18 @@ export function getScrapeJob(
   return get<DetailResponse<ScrapeJob>>(`/scrape/jobs/${id}`, { signal }).then(
     (response) => response.data,
   );
+}
+
+/** `GET /scrape/jobs/{id}/results` — detailed website scrape records for a job. */
+export function getScrapeJobResults(
+  id: number,
+  query?: ScrapeJobResultsQuery,
+  signal?: AbortSignal,
+): Promise<ScrapeJobResultsResponse> {
+  return get<ScrapeJobResultsResponse>(`/scrape/jobs/${id}/results`, {
+    params: query,
+    signal,
+  });
 }
 
 /** `DELETE /scrape/jobs/{id}` — removes a finished job from the history. */

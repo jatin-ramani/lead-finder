@@ -11,11 +11,11 @@ export const PALETTE = {
     subtle: "#F0F3F7", hover: "#F8FAFC",
   },
   dark: {
-    page: "#0D1117", surface: "#151B23", elevated: "#1B2430", border: "#303A46",
-    text: "#F3F6F9", textSecondary: "#B7C0CB", textMuted: "#8491A1",
-    brand: "#60A5FA", brandHover: "#7CB7FC", brandActive: "#3B82F6",
-    success: "#4ADE80", warning: "#FBBF24", error: "#F87171", info: "#38BDF8", focus: "#93C5FD",
-    subtle: "#202936", hover: "#1B2430",
+    page: "#09090B", surface: "#121214", elevated: "#18181B", border: "#232328",
+    text: "#F4F4F6", textSecondary: "#A1A1AA", textMuted: "#71717A",
+    brand: "#E5A93C", brandHover: "#F59E0B", brandActive: "#D97706",
+    success: "#22C55E", warning: "#E5A93C", error: "#EF4444", info: "#38BDF8", focus: "#E5A93C",
+    subtle: "#18181B", hover: "#1F1F24",
   },
 } as const;
 
@@ -58,7 +58,7 @@ function config(mode: ThemeMode): ThemeConfig {
       Card: { headerBg: "transparent", borderRadiusLG: 8 },
       Modal: { contentBg: p.elevated, headerBg: p.elevated, borderRadiusLG: 12, paddingContentHorizontalLG: 24 },
       Drawer: { colorBgElevated: p.elevated },
-      Menu: { itemHeight: 40, itemBorderRadius: 6, itemSelectedBg: dark ? "rgba(96,165,250,.14)" : "#EFF6FF", itemSelectedColor: p.brand, itemHoverBg: p.subtle, itemColor: p.textSecondary },
+      Menu: { itemHeight: 40, itemBorderRadius: 6, itemSelectedBg: dark ? "rgba(229,169,60,.14)" : "#EFF6FF", itemSelectedColor: p.brand, itemHoverBg: p.subtle, itemColor: p.textSecondary },
       Tooltip: { colorBgSpotlight: p.text, colorTextLightSolid: p.surface },
       Progress: { defaultColor: p.brand, remainingColor: p.subtle },
     },

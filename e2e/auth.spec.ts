@@ -14,19 +14,19 @@ test.describe("Phase 6A — Authentication & API Protection Real E2E Suite", () 
 
     // 3. Login with invalid credentials
     await page.getByPlaceholder("Enter secret key...").fill("wrong_secret_key_12345");
-    await page.getByRole("button", { name: "Sign In" }).click();
+    await page.getByRole("button", { name: /sign in/i }).click();
 
     // 4. Error shown
-    await expect(page.getByText(/Invalid authentication credentials|Authentication required/i)).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText(/Invalid authentication credentials|Authentication required|Could not sign in/i).first()).toBeVisible({ timeout: 15000 });
 
     // 5. Login with valid credentials
     const secretInput = page.getByPlaceholder("Enter secret key...");
     await secretInput.fill("");
     await secretInput.fill(ADMIN_SECRET);
-    await page.getByRole("button", { name: "Sign In" }).click();
+    await page.getByRole("button", { name: /sign in/i }).click();
 
     // 6. Redirect to dashboard
-    await expect(page).toHaveURL("http://127.0.0.1:3000/", { timeout: 15000 });
+    await expect(page).toHaveURL(/\/$/, { timeout: 15000 });
     await expect(page.getByRole("heading", { name: "Dashboard" }).first()).toBeVisible({ timeout: 15000 });
 
     // Helper for navigation across viewports
@@ -44,11 +44,11 @@ test.describe("Phase 6A — Authentication & API Protection Real E2E Suite", () 
         await page.goto(href);
       }
       await expect(page).toHaveURL(new RegExp(`.*${href}`), { timeout: 15000 });
-      await expect(page.getByRole("heading", { name: expectedHeading }).first()).toBeVisible({ timeout: 15000 });
+      await expect(page.getByRole("heading", { name: new RegExp(expectedHeading, "i") }).first()).toBeVisible({ timeout: 15000 });
     };
 
     // 7. Navigate Businesses
-    await navigateTo("/businesses", "Businesses");
+    await navigateTo("/businesses", "Discovered Cities|Businesses");
 
     // 8. Navigate Scanner
     await navigateTo("/scanner", "Scanner");
