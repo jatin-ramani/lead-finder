@@ -1,7 +1,7 @@
 "use client";
 
 import { ThunderboltOutlined } from "@ant-design/icons";
-import { AutoComplete, Button, Form } from "antd";
+import { AutoComplete, Button, Form, Input } from "antd";
 
 import Panel from "@/components/Panel";
 import type { ScanRequest } from "@/types/api";
@@ -144,6 +144,7 @@ export default function ScanForm({ onSubmit, scanning }: ScanFormProps) {
         requiredMark={false}
         disabled={scanning}
         onFinish={handleFinish}
+        autoComplete="off"
       >
         <Form.Item
           name="city"
@@ -159,10 +160,16 @@ export default function ScanForm({ onSubmit, scanning }: ScanFormProps) {
         >
           <AutoComplete
             options={[]}
-            placeholder="e.g. Ahmedabad"
-            aria-label="City to scan"
-            allowClear
-          />
+            popupMatchSelectWidth
+          >
+            <Input
+              placeholder="e.g. Ahmedabad"
+              aria-label="City to scan"
+              allowClear
+              autoComplete="off"
+              spellCheck={false}
+            />
+          </AutoComplete>
         </Form.Item>
 
         <Form.Item
@@ -173,9 +180,7 @@ export default function ScanForm({ onSubmit, scanning }: ScanFormProps) {
         >
           <AutoComplete
             options={CATEGORY_GROUPS}
-            placeholder="e.g. Dentists, Bakeries, Cafes, Salons"
-            aria-label="Category to scan"
-            allowClear
+            popupMatchSelectWidth
             filterOption={(input, option) => {
               const label = typeof option?.label === "string" ? option.label : "";
               const value =
@@ -185,7 +190,15 @@ export default function ScanForm({ onSubmit, scanning }: ScanFormProps) {
               const text = `${label} ${value}`.toLowerCase();
               return text.includes(input.toLowerCase());
             }}
-          />
+          >
+            <Input
+              placeholder="e.g. Dentists, Bakeries, Cafes, Salons"
+              aria-label="Category to scan"
+              allowClear
+              autoComplete="off"
+              spellCheck={false}
+            />
+          </AutoComplete>
         </Form.Item>
 
         <Button

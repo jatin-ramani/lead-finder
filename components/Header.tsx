@@ -58,14 +58,6 @@ export default function Header({
           onClick={onOpenMobileNav}
           className="lf-mobile-only"
         />
-        <Button
-          type="text"
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          aria-expanded={!collapsed}
-          icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-          onClick={onToggleCollapse}
-          className="lf-desktop-only lf-collapse-btn"
-        />
 
         <div className="lf-header-title">
           {/* The one <h1> on the page; the sidebar brand is a link, not a heading. */}

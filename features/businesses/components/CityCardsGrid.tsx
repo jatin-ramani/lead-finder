@@ -100,6 +100,7 @@ export default function CityCardsGrid({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               allowClear
+              autoComplete="off"
               className="w-full md:w-56"
             />
             <Button

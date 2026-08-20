@@ -91,6 +91,7 @@ function DebouncedInput({
       prefix={prefix}
       disabled={disabled}
       className={className}
+      autoComplete="off"
     />
   );
 }
