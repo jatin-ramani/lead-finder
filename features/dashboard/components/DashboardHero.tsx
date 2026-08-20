@@ -67,14 +67,14 @@ export default function DashboardHero({
           Businesses without a website
         </p>
 
-        <p className="lf-hero-value">
-          {business.withoutWebsite.toLocaleString()}
+        <div className="lf-hero-value">
+          <span>{business.withoutWebsite.toLocaleString()}</span>
           {business.totalBusinesses > 0 && (
             <span className="lf-hero-share">
               {opportunityShare}% of {business.totalBusinesses.toLocaleString()}
             </span>
           )}
-        </p>
+        </div>
 
         <p className="lf-hero-caption">
           Every one of these is a business you could build a site for.

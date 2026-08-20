@@ -13,11 +13,10 @@ export interface DonutSegment {
   hint: string;
 }
 
-const SIZE = 200;
-const RADIUS = 78;
-const STROKE = 22;
-/** Degrees of surface showing between segments — the 2px spacer rule. */
-const GAP_DEG = 2.4;
+const SIZE = 180;
+const RADIUS = 70;
+const STROKE = 20;
+const GAP_DEG = 3;
 
 function polar(cx: number, cy: number, r: number, deg: number) {
   const rad = ((deg - 90) * Math.PI) / 180;
@@ -38,11 +37,6 @@ interface LeadMixDonutProps {
   total: number;
 }
 
-/**
- * Part-to-whole at a glance. Every value is also printed in the legend, so the
- * arcs never have to be compared by eye and the tooltip is never the only way
- * to read a number.
- */
 export default function LeadMixDonut({ segments, total }: LeadMixDonutProps) {
   const [hovered, setHovered] = useState<string | null>(null);
 
@@ -50,7 +44,6 @@ export default function LeadMixDonut({ segments, total }: LeadMixDonutProps) {
     const drawable = segments.filter((segment) => segment.value > 0);
     if (total <= 0 || drawable.length === 0) return [];
 
-    // A lone non-zero segment draws as a full ring; a gap would look like a bug.
     const gap = drawable.length > 1 ? GAP_DEG : 0;
     let cursor = 0;
 
@@ -93,8 +86,8 @@ export default function LeadMixDonut({ segments, total }: LeadMixDonutProps) {
               fill="none"
               stroke={segment.color}
               strokeWidth={STROKE}
-              strokeLinecap="butt"
-              className="lf-donut-arc"
+              strokeLinecap="round"
+              className="lf-donut-arc transition-opacity duration-150 cursor-pointer"
               opacity={hovered && hovered !== segment.key ? 0.35 : 1}
               onMouseEnter={() => setHovered(segment.key)}
               onMouseLeave={() => setHovered(null)}
@@ -124,18 +117,22 @@ export default function LeadMixDonut({ segments, total }: LeadMixDonutProps) {
               onMouseEnter={() => setHovered(segment.key)}
               onMouseLeave={() => setHovered(null)}
             >
-              <span
-                className="lf-legend-dot"
-                style={{ background: segment.color }}
-                aria-hidden
-              />
-              <span className="lf-legend-label" title={segment.hint || undefined}>
-                {segment.label}
-              </span>
-              <span className="lf-legend-value">
-                {formatNumber(segment.value)}
+              <div className="lf-legend-left">
+                <span
+                  className="lf-legend-dot"
+                  style={{ background: segment.color }}
+                  aria-hidden
+                />
+                <span className="lf-legend-label" title={segment.hint || undefined}>
+                  {segment.label}
+                </span>
+              </div>
+              <div className="lf-legend-right">
+                <span className="lf-legend-value">
+                  {formatNumber(segment.value)}
+                </span>
                 <span className="lf-legend-share">{share}%</span>
-              </span>
+              </div>
             </li>
           );
         })}
