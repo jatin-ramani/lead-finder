@@ -2099,6 +2099,201 @@ a {
 }
 
 .lf-btn-favorite-active:hover {
+.lf-hero-main { padding: var(--lf-space-24) var(--lf-space-20); }
+  .lf-scan-stats { grid-template-columns: 1fr; }
+}
+
+/* Mobile Card View */
+.lf-mobile-business-card {
+  padding: var(--lf-space-16);
+  background: var(--lf-surface);
+  border: 1px solid var(--lf-border);
+  border-radius: var(--lf-radius-lg);
+}
+.lf-mobile-business-head {
+  display: flex;
+  align-items: center;
+  gap: var(--lf-space-10);
+}
+.lf-mobile-business-name {
+  min-width: 0;
+  flex: 1;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--lf-text);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+.lf-mobile-business-meta {
+  margin: var(--lf-space-8) 0;
+  color: var(--lf-text-muted);
+  font-size: var(--lf-font-xs);
+}
+.lf-mobile-business-contact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--lf-space-8);
+}
+.lf-mobile-business-contact span {
+  padding: 3px 7px;
+  border-radius: var(--lf-radius-pill);
+  background: var(--lf-subtle);
+  color: var(--lf-text-muted);
+  font-size: var(--lf-font-xs);
+}
+.lf-mobile-business-contact .is-available {
+  color: var(--lf-success);
+}
+
+.lf-filter-mobile { display: none; align-items: center; gap: var(--lf-space-8); }
+.lf-filter-mobile .lf-filter-search { flex: 1; min-width: 0; }
+.lf-filter-drawer-fields { display: grid; gap: var(--lf-space-20); }
+.lf-filter-drawer-fields fieldset {
+  display: grid;
+  gap: var(--lf-space-12);
+  margin: 0;
+  padding: var(--lf-space-16);
+  border: 1px solid var(--lf-border);
+  border-radius: var(--lf-radius-lg);
+}
+.lf-filter-drawer-fields legend {
+  padding: 0 var(--lf-space-4);
+  color: var(--lf-text);
+  font-size: var(--lf-font-sm);
+  font-weight: 600;
+}
+.lf-filter-drawer-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--lf-space-12);
+  padding-top: var(--lf-space-4);
+}
+@media (max-width: 767px) {
+  .lf-filter-desktop { display: none !important; }
+  .lf-filter-mobile { display: flex; }
+  .lf-mobile-export-label { display: none; }
+}
+
+/* Custom Lead Tag Pills & Controls */
+.lf-custom-tag-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.3;
+  border-radius: var(--lf-radius-pill);
+  background: var(--lf-subtle);
+  color: var(--lf-text-secondary);
+  border: 1px solid var(--lf-border-subtle);
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.lf-custom-tag-pill--more {
+  background: var(--lf-surface-sunken);
+  color: var(--lf-text-muted);
+  cursor: pointer;
+}
+
+.lf-custom-tag-pill--more:hover {
+  color: var(--lf-text);
+  border-color: var(--lf-border);
+}
+
+.lf-interactive-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px !important;
+  font-size: 12px !important;
+  border-radius: var(--lf-radius-pill) !important;
+  background: var(--lf-surface) !important;
+  color: var(--lf-text) !important;
+  border: 1px solid var(--lf-border) !important;
+}
+
+.lf-interactive-tag .ant-tag-close-icon {
+  color: var(--lf-text-muted) !important;
+  font-size: 10px !important;
+}
+
+.lf-interactive-tag .ant-tag-close-icon:hover {
+  color: var(--lf-error) !important;
+}
+
+.lf-add-tag-btn {
+  border-radius: var(--lf-radius-pill) !important;
+  font-size: 11px !important;
+  height: 24px !important;
+}
+
+.lf-drawer-tags-card {
+  margin-bottom: var(--lf-space-20);
+}
+
+/* Favorites System Styling */
+.lf-star-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  border-radius: var(--lf-radius-sm, 4px);
+  transition: transform 0.12s ease, opacity 0.12s ease;
+  line-height: 1;
+}
+
+.lf-star-btn:hover {
+  transform: scale(1.15);
+  opacity: 0.9;
+}
+
+.lf-star-btn:focus-visible {
+  outline: 2px solid var(--lf-focus-ring, #3b82f6);
+  outline-offset: 2px;
+}
+
+.lf-mobile-star-btn {
+  padding: 8px;
+  min-width: 36px;
+  min-height: 36px;
+}
+
+.lf-drawer-star-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--lf-border);
+  border-radius: var(--lf-radius-md, 6px);
+  background: var(--lf-surface);
+  color: var(--lf-text);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.lf-drawer-star-btn:hover {
+  background: var(--lf-subtle);
+  border-color: var(--lf-border-strong);
+}
+
+.lf-btn-favorite-active {
+  background: rgba(245, 158, 11, 0.12) !important;
+  border-color: #f59e0b !important;
+  color: #f59e0b !important;
+}
+
+.lf-btn-favorite-active:hover {
   background: rgba(245, 158, 11, 0.2) !important;
   border-color: #d97706 !important;
   color: #d97706 !important;
@@ -2108,4 +2303,87 @@ a {
   background: rgba(245, 158, 11, 0.18) !important;
   border-color: #fbbf24 !important;
   color: #fbbf24 !important;
+}
+
+/* ==========================================================================
+   Business Notes System
+   ========================================================================== */
+
+.lf-drawer-notes-card {
+  background: var(--lf-surface-sunken);
+  border: 1px solid var(--lf-border-subtle);
+  border-radius: var(--lf-radius-lg, 8px);
+  padding: 14px 16px;
+}
+
+.lf-note-editor {
+  background: var(--lf-surface);
+  border: 1px solid var(--lf-border);
+  border-radius: var(--lf-radius-md, 6px);
+  padding: 10px;
+}
+
+.lf-note-textarea {
+  background: var(--lf-surface) !important;
+  color: var(--lf-text) !important;
+  border-color: var(--lf-border) !important;
+  font-size: 13px !important;
+  resize: vertical !important;
+}
+
+.lf-note-textarea:focus {
+  border-color: var(--lf-brand) !important;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2) !important;
+}
+
+.lf-note-card {
+  background: var(--lf-surface);
+  border: 1px solid var(--lf-border);
+  border-radius: var(--lf-radius-md, 6px);
+  padding: 10px 12px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.lf-note-card:hover {
+  border-color: var(--lf-border-strong);
+}
+
+.lf-note-content {
+  color: var(--lf-text);
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.lf-note-action-btn {
+  color: var(--lf-text-muted) !important;
+  padding: 2px 4px !important;
+  height: 22px !important;
+}
+
+.lf-note-action-btn:hover {
+  color: var(--lf-text) !important;
+  background: var(--lf-subtle) !important;
+}
+
+[data-theme="dark"] .lf-drawer-notes-card {
+  background: #121214;
+  border-color: #232328;
+}
+
+[data-theme="dark"] .lf-note-card {
+  background: #18181B;
+  border-color: #232328;
+}
+
+[data-theme="dark"] .lf-note-editor {
+  background: #18181B;
+  border-color: #232328;
+}
+
+[data-theme="dark"] .lf-note-textarea {
+  background: #121214 !important;
+  color: #F4F4F5 !important;
+  border-color: #27272A !important;
 }

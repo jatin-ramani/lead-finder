@@ -54,10 +54,17 @@ export const queryKeys = {
     all: ["auth"] as const,
     me: () => [...queryKeys.auth.all, "me"] as const,
   },
+
   tags: {
     all: ["tags"] as const,
     list: () => [...queryKeys.tags.all, "list"] as const,
   },
+
+  notes: {
+    all: ["notes"] as const,
+    business: (id: number) => [...queryKeys.notes.all, "business", id] as const,
+  },
+
   system: {
     all: ["system"] as const,
     health: () => [...queryKeys.system.all, "health"] as const,

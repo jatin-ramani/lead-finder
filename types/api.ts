@@ -98,6 +98,28 @@ export interface BulkTagActionResponse {
   total_requested: number;
 }
 
+export interface BusinessNote {
+  id: number;
+  business_id: number;
+  content: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NoteListResponse {
+  success: boolean;
+  data: BusinessNote[];
+  total: number;
+}
+
+export interface CreateNoteRequest {
+  content: string;
+}
+
+export interface UpdateNoteRequest {
+  content: string;
+}
+
 export interface Business {
   id: number;
   name: string;

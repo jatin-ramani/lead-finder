@@ -5,6 +5,7 @@ import {
   CloseCircleFilled,
   CopyOutlined,
   DeleteOutlined,
+  EditOutlined,
   EnvironmentOutlined,
   ExportOutlined,
   GlobalOutlined,
@@ -14,14 +15,15 @@ import {
   StarFilled,
   StarOutlined,
 } from "@ant-design/icons";
-import { useQueryClient } from "@tanstack/react-query";
-import { App, Avatar, Button, Drawer, Input, type InputRef, Progress, Tag, Tooltip } from "antd";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { App, Avatar, Button, Drawer, Input, type InputRef, Popconfirm, Progress, Tag, Tooltip } from "antd";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
 import WebsiteDataCard from "@/features/scraping/components/WebsiteDataCard";
 import {
   avatarColor,
   copyText,
+  formatAbsoluteTime,
   initials,
   isPresent,
   splitPhones,
@@ -30,8 +32,10 @@ import {
   toMapsUrl,
   toTelHref,
 } from "@/lib/format";
-import { businessesApi, queryKeys, tagsApi } from "@/services";
-import type { Business } from "@/types/api";
+import { businessesApi, notesApi, queryKeys, tagsApi } from "@/services";
+import type { Business, BusinessNote } from "@/types/api";
+
+const { TextArea } = Input;
 
 interface BusinessDrawerProps {
   business: Business | null;
@@ -119,6 +123,23 @@ export default function BusinessDrawer({
   const [favoriteOverride, setFavoriteOverride] = useState<{ id: number; is_favorite: boolean } | null>(null);
   const inputRef = useRef<InputRef>(null);
 
+  // Notes state
+  const [isAddingNote, setIsAddingNote] = useState(false);
+  const [newNoteContent, setNewNoteContent] = useState("");
+  const [editingNoteId, setEditingNoteId] = useState<number | null>(null);
+  const [editingContent, setEditingContent] = useState("");
+  const [isSubmittingNote, setIsSubmittingNote] = useState(false);
+
+  const businessId = business?.id;
+
+  const { data: notesData, isLoading: isLoadingNotes } = useQuery({
+    queryKey: businessId ? queryKeys.notes.business(businessId) : ["notes", "empty"],
+    queryFn: () => (businessId ? notesApi.getBusinessNotes(businessId) : Promise.resolve({ success: true, data: [], total: 0 })),
+    enabled: Boolean(open && businessId),
+  });
+
+  const notes = notesData?.data || [];
+
   const isFavorite =
     favoriteOverride && favoriteOverride.id === business?.id
       ? favoriteOverride.is_favorite
@@ -131,6 +152,14 @@ export default function BusinessDrawer({
       inputRef.current?.focus();
     }
   }, [inputVisible]);
+
+  const handleClose = () => {
+    setIsAddingNote(false);
+    setNewNoteContent("");
+    setEditingNoteId(null);
+    setEditingContent("");
+    onClose();
+  };
 
   const handleToggleFavorite = async () => {
     if (!business) return;
@@ -180,6 +209,79 @@ export default function BusinessDrawer({
     }
   };
 
+  const handleCreateNote = async () => {
+    if (!business) return;
+    const trimmed = newNoteContent.trim();
+    if (!trimmed) {
+      message.error("Note content cannot be empty");
+      return;
+    }
+    if (trimmed.length > 5000) {
+      message.error("Note content cannot exceed 5000 characters");
+      return;
+    }
+
+    setIsSubmittingNote(true);
+    try {
+      await notesApi.createBusinessNote(business.id, trimmed);
+      message.success("Note added");
+      setNewNoteContent("");
+      setIsAddingNote(false);
+      queryClient.invalidateQueries({ queryKey: queryKeys.notes.business(business.id) });
+    } catch {
+      message.error("Failed to add note");
+    } finally {
+      setIsSubmittingNote(false);
+    }
+  };
+
+  const handleStartEditNote = (note: BusinessNote) => {
+    setEditingNoteId(note.id);
+    setEditingContent(note.content);
+  };
+
+  const handleCancelEditNote = () => {
+    setEditingNoteId(null);
+    setEditingContent("");
+  };
+
+  const handleUpdateNote = async (noteId: number) => {
+    if (!business) return;
+    const trimmed = editingContent.trim();
+    if (!trimmed) {
+      message.error("Note content cannot be empty");
+      return;
+    }
+    if (trimmed.length > 5000) {
+      message.error("Note content cannot exceed 5000 characters");
+      return;
+    }
+
+    setIsSubmittingNote(true);
+    try {
+      await notesApi.updateBusinessNote(noteId, trimmed);
+      message.success("Note updated");
+      setEditingNoteId(null);
+      setEditingContent("");
+      queryClient.invalidateQueries({ queryKey: queryKeys.notes.business(business.id) });
+    } catch {
+      message.error("Failed to update note");
+    } finally {
+      setIsSubmittingNote(false);
+    }
+  };
+
+  const handleDeleteNote = async (noteId: number) => {
+    if (!business) return;
+    try {
+      await notesApi.deleteBusinessNote(noteId);
+      message.success("Note deleted");
+      queryClient.invalidateQueries({ queryKey: queryKeys.notes.business(business.id) });
+    } catch {
+      message.error("Failed to delete note");
+    }
+  };
+
   const copy = async (label: string, value?: string | null) => {
     if (!isPresent(value)) return;
 
@@ -198,7 +300,7 @@ export default function BusinessDrawer({
   return (
     <Drawer
       open={open}
-      onClose={onClose}
+      onClose={handleClose}
       size={480}
       title="Business details"
       className="lf-drawer"
@@ -374,6 +476,155 @@ export default function BusinessDrawer({
                 >
                   Add Tag
                 </Button>
+              )}
+            </div>
+          </section>
+
+          {/* Business Internal CRM Notes Section */}
+          <section className="lf-drawer-notes-card">
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <h3 className="lf-drawer-section-title mb-0">Notes ({notes.length})</h3>
+              {!isAddingNote && (
+                <Button
+                  size="small"
+                  type="dashed"
+                  icon={<PlusOutlined />}
+                  onClick={() => setIsAddingNote(true)}
+                  className="lf-add-note-btn"
+                >
+                  Add Note
+                </Button>
+              )}
+            </div>
+
+            {/* Note Creation Editor */}
+            {isAddingNote && (
+              <div className="lf-note-editor mb-3">
+                <TextArea
+                  rows={3}
+                  value={newNoteContent}
+                  onChange={(e) => setNewNoteContent(e.target.value)}
+                  placeholder="Add internal CRM note (follow-ups, call logs, requirements)..."
+                  maxLength={5000}
+                  className="lf-note-textarea"
+                  aria-label="New note content"
+                />
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-xs text-[var(--lf-text-muted)]">
+                    {newNoteContent.length} / 5000
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="small"
+                      onClick={() => {
+                        setIsAddingNote(false);
+                        setNewNoteContent("");
+                      }}
+                      disabled={isSubmittingNote}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="primary"
+                      size="small"
+                      onClick={handleCreateNote}
+                      loading={isSubmittingNote}
+                      disabled={!newNoteContent.trim() || isSubmittingNote}
+                    >
+                      Save
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Notes List */}
+            <div className="flex flex-col gap-2.5 max-h-[340px] overflow-y-auto pr-1">
+              {isLoadingNotes ? (
+                <p className="text-xs text-[var(--lf-text-muted)] py-2">Loading notes...</p>
+              ) : notes.length === 0 && !isAddingNote ? (
+                <p className="text-xs text-[var(--lf-text-muted)] py-2 italic">
+                  No internal notes added yet.
+                </p>
+              ) : (
+                notes.map((note) => (
+                  <div key={note.id} className="lf-note-card">
+                    {editingNoteId === note.id ? (
+                      <div className="lf-note-editor">
+                        <TextArea
+                          rows={3}
+                          value={editingContent}
+                          onChange={(e) => setEditingContent(e.target.value)}
+                          maxLength={5000}
+                          className="lf-note-textarea"
+                          aria-label="Edit note content"
+                        />
+                        <div className="flex items-center justify-between mt-2">
+                          <span className="text-xs text-[var(--lf-text-muted)]">
+                            {editingContent.length} / 5000
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              size="small"
+                              onClick={handleCancelEditNote}
+                              disabled={isSubmittingNote}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              type="primary"
+                              size="small"
+                              onClick={() => handleUpdateNote(note.id)}
+                              loading={isSubmittingNote}
+                              disabled={!editingContent.trim() || isSubmittingNote}
+                            >
+                              Save
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="lf-note-content">{note.content}</div>
+                        <div className="flex items-center justify-between mt-2 pt-2 border-t border-[var(--lf-border-subtle)] text-[11px] text-[var(--lf-text-muted)]">
+                          <span>
+                            {formatAbsoluteTime(note.created_at) || "Recently"}
+                            {note.updated_at && note.updated_at !== note.created_at && " (edited)"}
+                          </span>
+                          <div className="flex items-center gap-1">
+                            <Tooltip title="Edit note">
+                              <Button
+                                type="text"
+                                size="small"
+                                icon={<EditOutlined className="text-xs" />}
+                                onClick={() => handleStartEditNote(note)}
+                                aria-label="Edit note"
+                                className="lf-note-action-btn"
+                              />
+                            </Tooltip>
+                            <Popconfirm
+                              title="Delete this note?"
+                              description="Are you sure you want to delete this internal note?"
+                              okText="Delete"
+                              cancelText="Cancel"
+                              okButtonProps={{ danger: true }}
+                              onConfirm={() => handleDeleteNote(note.id)}
+                            >
+                              <Button
+                                type="text"
+                                size="small"
+                                danger
+                                icon={<DeleteOutlined className="text-xs" />}
+                                aria-label="Delete note"
+                                className="lf-note-action-btn"
+                              />
+                            </Popconfirm>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ))
               )}
             </div>
           </section>

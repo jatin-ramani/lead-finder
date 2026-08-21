@@ -39,7 +39,7 @@ const mockBusinesses = [
 let globalFailFavorite = false;
 
 async function mockFavoriteRoutes(page: Page) {
-  let businesses = JSON.parse(JSON.stringify(mockBusinesses));
+  const businesses = JSON.parse(JSON.stringify(mockBusinesses));
 
   await page.route("**/*", async (route) => {
     const request = route.request();
@@ -118,7 +118,7 @@ async function mockFavoriteRoutes(page: Page) {
       const match = pathname.match(/^\/businesses\/(\d+)\/favorite$/);
       const id = Number(match?.[1]);
       const body = JSON.parse(request.postData() || "{}");
-      const biz = businesses.find((b: any) => b.id === id);
+      const biz = businesses.find((b: { id: number; is_favorite?: boolean }) => b.id === id);
       if (biz) {
         biz.is_favorite = Boolean(body.is_favorite);
       }
