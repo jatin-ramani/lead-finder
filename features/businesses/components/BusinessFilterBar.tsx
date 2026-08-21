@@ -5,6 +5,8 @@ import {
   DownloadOutlined,
   FilterOutlined,
   SearchOutlined,
+  StarFilled,
+  StarOutlined,
   TagsOutlined,
 } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
@@ -122,6 +124,7 @@ export default function BusinessFilterBar({
     hasWebsite,
     hasEmail,
     hasPhone,
+    isFavorite,
     leadGrade,
     tagList,
     activeCount,
@@ -213,6 +216,23 @@ export default function BusinessFilterBar({
           className="min-w-[160px] max-w-[240px]"
           options={tagOptions}
         />
+
+        <Tooltip title={isFavorite ? "Showing favorites only" : "Filter by favorites"}>
+          <Button
+            className={isFavorite ? "lf-btn-favorite-active" : ""}
+            icon={
+              isFavorite ? (
+                <StarFilled style={{ color: "#f59e0b" }} />
+              ) : (
+                <StarOutlined />
+              )
+            }
+            onClick={() => setFilter("is_favorite", isFavorite ? undefined : true)}
+            disabled={disabled}
+          >
+            Favorites
+          </Button>
+        </Tooltip>
 
         <div className="flex items-center gap-2" role="group" aria-label="Website availability">
           <Checkbox
@@ -334,6 +354,18 @@ export default function BusinessFilterBar({
                 options={tagOptions}
               />
             </div>
+            <fieldset>
+              <legend>Favorites</legend>
+              <Checkbox
+                checked={isFavorite === true}
+                disabled={disabled}
+                onChange={(event) =>
+                  setFilter("is_favorite", event.target.checked ? true : undefined)
+                }
+              >
+                Favorites only
+              </Checkbox>
+            </fieldset>
             <fieldset><legend>Website</legend><Checkbox checked={hasWebsite === true} disabled={disabled} onChange={(event) => setFilter("has_website", event.target.checked ? true : undefined)}>Has website</Checkbox><Checkbox checked={hasWebsite === false} disabled={disabled} onChange={(event) => setFilter("has_website", event.target.checked ? false : undefined)}>No website</Checkbox></fieldset>
             <fieldset><legend>Contact</legend><Checkbox checked={hasEmail} disabled={disabled} onChange={(event) => setFilter("has_email", event.target.checked ? true : undefined)}>Has email</Checkbox><Checkbox checked={hasPhone} disabled={disabled} onChange={(event) => setFilter("has_phone", event.target.checked ? true : undefined)}>Has phone</Checkbox></fieldset>
             <div className="lf-filter-drawer-actions"><Button icon={<ClearOutlined aria-hidden />} onClick={resetFilters} disabled={disabled || activeCount === 0}>Reset</Button><Button type="primary" onClick={() => setMobileFiltersOpen(false)}>Show results</Button></div>

@@ -111,6 +111,7 @@ export interface Business {
   lead_score?: number | null;
   lead_grade?: string | null;
   lead_score_reasons?: string[] | null;
+  is_favorite?: boolean;
   tags?: Tag[];
 }
 
@@ -125,6 +126,7 @@ export const BUSINESS_SORT_FIELDS = [
   "status",
   "lead_score",
   "lead_grade",
+  "is_favorite",
 ] as const;
 
 export type BusinessSortField = (typeof BUSINESS_SORT_FIELDS)[number];
@@ -147,6 +149,7 @@ export interface BusinessQuery {
   has_website?: boolean;
   has_email?: boolean;
   has_phone?: boolean;
+  is_favorite?: boolean;
   lead_grade?: string;
   min_lead_score?: number;
   max_lead_score?: number;
@@ -160,6 +163,23 @@ export interface BulkBusinessRequest {
   business_ids: number[];
 }
 
+export interface FavoriteToggleRequest {
+  is_favorite: boolean;
+}
+
+export interface BulkFavoriteRequest {
+  business_ids: number[];
+  is_favorite: boolean;
+}
+
+export interface BulkFavoriteResponse {
+  success: boolean;
+  message: string;
+  updated_count: number;
+  total_requested: number;
+  is_favorite: boolean;
+}
+
 export interface ContactQualification {
   has_email?: boolean;
   has_phone?: boolean;
@@ -170,7 +190,7 @@ export interface SelectedExportRequest extends BulkBusinessRequest, ContactQuali
 export interface ExportPreviewRequest {
   scope: "filtered" | "selected";
   business_ids?: number[];
-  filters?: Pick<BusinessQuery, "search" | "city" | "category" | "has_website" | "has_email" | "has_phone" | "lead_grade" | "min_lead_score" | "max_lead_score">;
+  filters?: Pick<BusinessQuery, "search" | "city" | "category" | "has_website" | "has_email" | "has_phone" | "lead_grade" | "min_lead_score" | "max_lead_score" | "is_favorite">;
   qualification?: ContactQualification;
 }
 

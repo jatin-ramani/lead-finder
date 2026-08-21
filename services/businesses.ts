@@ -1,8 +1,10 @@
 /** `GET|DELETE /businesses`, its detail routes, and the CSV exports. */
 
-import { del, delWithBody, download, get, post } from "./http";
+import { del, delWithBody, download, get, patch, post } from "./http";
 import type {
   BulkBusinessRequest,
+  BulkFavoriteRequest,
+  BulkFavoriteResponse,
   Business,
   BusinessListResponse,
   BusinessQuery,
@@ -11,6 +13,7 @@ import type {
   ContactQualification,
   ExportPreviewRequest,
   ExportPreviewResponse,
+  FavoriteToggleRequest,
   SelectedExportRequest,
   DeletedCountResponse,
   DetailResponse,
@@ -43,6 +46,24 @@ export function getBusiness(
   signal?: AbortSignal,
 ): Promise<Business> {
   return get<Business>(`/businesses/${id}`, { signal });
+}
+
+/** `PATCH /businesses/{id}/favorite` — updates favorite status. */
+export function favoriteBusiness(
+  id: number,
+  is_favorite: boolean,
+): Promise<Business> {
+  const body: FavoriteToggleRequest = { is_favorite };
+  return patch<Business>(`/businesses/${id}/favorite`, body);
+}
+
+/** `POST /businesses/favorite/bulk` — bulk updates favorite status. */
+export function bulkFavoriteBusinesses(
+  ids: number[],
+  is_favorite: boolean,
+): Promise<BulkFavoriteResponse> {
+  const body: BulkFavoriteRequest = { business_ids: ids, is_favorite };
+  return post<BulkFavoriteResponse>("/businesses/favorite/bulk", body);
 }
 
 /** `DELETE /businesses/{id}` — 404s when the id is unknown. */

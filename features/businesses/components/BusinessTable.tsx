@@ -10,6 +10,8 @@ import {
   MailOutlined,
   MoreOutlined,
   PhoneOutlined,
+  StarFilled,
+  StarOutlined,
 } from "@ant-design/icons";
 import {
   App,
@@ -29,6 +31,7 @@ import type { SorterResult } from "antd/es/table/interface";
 import { useMemo } from "react";
 
 import EmptyState from "@/components/EmptyState";
+import { useFavoriteBusiness } from "@/features/businesses/hooks/useBusinessMutations";
 import { PAGE_SIZE_OPTIONS, type UrlFilters } from "@/hooks/useUrlFilters";
 import {
   avatarColor,
@@ -86,6 +89,14 @@ export default function BusinessTable({
   isDeleting,
 }: BusinessTableProps) {
   const { message } = App.useApp();
+  const favoriteMutation = useFavoriteBusiness();
+
+  const toggleFavorite = (business: Business) => {
+    favoriteMutation.mutate({
+      id: business.id,
+      is_favorite: !business.is_favorite,
+    });
+  };
 
   const copy = async (label: string, value?: string | null) => {
     if (!isPresent(value)) {
@@ -100,6 +111,46 @@ export default function BusinessTable({
 
   const columns = useMemo<ColumnsType<Business>>(
     () => [
+      {
+        title: (
+          <Tooltip title="Sort by Favorites">
+            <StarFilled style={{ color: "var(--lf-amber, #f59e0b)", fontSize: 14 }} />
+          </Tooltip>
+        ),
+        dataIndex: "is_favorite",
+        key: "is_favorite",
+        width: 48,
+        align: "center",
+        fixed: "left",
+        sorter: true,
+        sortOrder:
+          filters.sortBy === "is_favorite"
+            ? filters.sortOrder === "asc"
+              ? "ascend"
+              : "descend"
+            : null,
+        render: (_value, record) => {
+          const isFav = Boolean(record.is_favorite);
+          return (
+            <button
+              type="button"
+              className={`lf-star-btn ${isFav ? "lf-star-active" : ""}`}
+              aria-label={isFav ? `Unfavorite ${record.name}` : `Favorite ${record.name}`}
+              title={isFav ? "Starred favorite" : "Mark as favorite"}
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleFavorite(record);
+              }}
+            >
+              {isFav ? (
+                <StarFilled style={{ color: "#f59e0b", fontSize: 16 }} />
+              ) : (
+                <StarOutlined style={{ color: "var(--lf-text-muted)", fontSize: 16 }} />
+              )}
+            </button>
+          );
+        },
+      },
       {
         title: "Business Name",
         dataIndex: "name",
@@ -468,6 +519,22 @@ export default function BusinessTable({
           <article key={business.id} className="lf-mobile-business-card">
             <div className="lf-mobile-business-head">
               <Checkbox checked={selectedIds.includes(business.id)} aria-label={`Select ${business.name}`} onChange={(event) => onSelectionChange(event.target.checked ? [...selectedIds, business.id] : selectedIds.filter((id) => id !== business.id))} />
+              <button
+                type="button"
+                className={`lf-star-btn lf-mobile-star-btn ${business.is_favorite ? "lf-star-active" : ""}`}
+                aria-label={business.is_favorite ? `Unfavorite ${business.name}` : `Favorite ${business.name}`}
+                title={business.is_favorite ? "Starred favorite" : "Mark as favorite"}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleFavorite(business);
+                }}
+              >
+                {business.is_favorite ? (
+                  <StarFilled style={{ color: "#f59e0b", fontSize: 18 }} />
+                ) : (
+                  <StarOutlined style={{ color: "var(--lf-text-muted)", fontSize: 18 }} />
+                )}
+              </button>
               <button type="button" className="lf-mobile-business-name" onClick={() => onView(business)}>{business.name}</button>
               <Button type="text" icon={<EyeOutlined />} aria-label={`View ${business.name}`} onClick={() => onView(business)} />
             </div>

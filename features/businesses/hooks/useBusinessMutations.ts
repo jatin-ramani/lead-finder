@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 
 import { businessesApi, queryKeys } from "@/services";
+import { isApiError } from "@/services/errors";
 
 /**
  * Writes against the business list.
@@ -37,8 +38,10 @@ export function useDeleteBusiness() {
       message.success("Business deleted");
       invalidate();
     },
-    // No onError: the global handler in QueryProvider shows the message and
-    // the request id. Declaring one here would silence it.
+    onError: (err) => {
+      const msg = isApiError(err) ? err.message : "Could not delete business";
+      message.error(msg);
+    },
   });
 }
 
@@ -67,6 +70,50 @@ export function useDeleteBusinesses() {
         );
       }
 
+      invalidate();
+    },
+    onError: (err) => {
+      const msg = isApiError(err) ? err.message : "Could not delete businesses";
+      message.error(msg);
+    },
+  });
+}
+
+/** `PATCH /businesses/{id}/favorite` */
+export function useFavoriteBusiness() {
+  const { message } = App.useApp();
+  const invalidate = useInvalidateBusinesses();
+
+  return useMutation({
+    mutationFn: ({ id, is_favorite }: { id: number; is_favorite: boolean }) =>
+      businessesApi.favoriteBusiness(id, is_favorite),
+    onSuccess: (_data, { is_favorite }) => {
+      message.success(is_favorite ? "Added to favorites" : "Removed from favorites");
+      invalidate();
+    },
+    onError: (err) => {
+      const msg = isApiError(err) ? err.message : "Could not update favorite status";
+      message.error(msg);
+      invalidate();
+    },
+  });
+}
+
+/** `POST /businesses/favorite/bulk` */
+export function useBulkFavoriteBusinesses() {
+  const { message } = App.useApp();
+  const invalidate = useInvalidateBusinesses();
+
+  return useMutation({
+    mutationFn: ({ ids, is_favorite }: { ids: number[]; is_favorite: boolean }) =>
+      businessesApi.bulkFavoriteBusinesses(ids, is_favorite),
+    onSuccess: (_data, { is_favorite }) => {
+      message.success(is_favorite ? "Added selected to favorites" : "Removed selected from favorites");
+      invalidate();
+    },
+    onError: (err) => {
+      const msg = isApiError(err) ? err.message : "Could not update favorites in bulk";
+      message.error(msg);
       invalidate();
     },
   });

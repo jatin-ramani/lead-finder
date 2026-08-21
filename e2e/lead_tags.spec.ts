@@ -166,6 +166,7 @@ test.describe("Lead Tags System E2E Suite", () => {
   });
 
   test("business table displays tags column and tag pills", async ({ page, isMobile }) => {
+    await expect(page.locator(".lf-table-card")).toBeVisible({ timeout: 10000 });
     if (isMobile) {
       const tagPill = page.locator(".lf-mobile-business-card .lf-custom-tag-pill").filter({ hasText: "Hot Lead" });
       await expect(tagPill.first()).toBeVisible();

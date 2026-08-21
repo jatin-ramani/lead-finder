@@ -11,6 +11,8 @@ import {
   MailOutlined,
   PhoneOutlined,
   PlusOutlined,
+  StarFilled,
+  StarOutlined,
 } from "@ant-design/icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { App, Avatar, Button, Drawer, Input, type InputRef, Progress, Tag, Tooltip } from "antd";
@@ -28,7 +30,7 @@ import {
   toMapsUrl,
   toTelHref,
 } from "@/lib/format";
-import { queryKeys, tagsApi } from "@/services";
+import { businessesApi, queryKeys, tagsApi } from "@/services";
 import type { Business } from "@/types/api";
 
 interface BusinessDrawerProps {
@@ -114,7 +116,13 @@ export default function BusinessDrawer({
 
   const [inputVisible, setInputVisible] = useState(false);
   const [inputValue, setInputValue] = useState("");
+  const [favoriteOverride, setFavoriteOverride] = useState<{ id: number; is_favorite: boolean } | null>(null);
   const inputRef = useRef<InputRef>(null);
+
+  const isFavorite =
+    favoriteOverride && favoriteOverride.id === business?.id
+      ? favoriteOverride.is_favorite
+      : Boolean(business?.is_favorite);
 
   const tags = business?.tags || [];
 
@@ -123,6 +131,20 @@ export default function BusinessDrawer({
       inputRef.current?.focus();
     }
   }, [inputVisible]);
+
+  const handleToggleFavorite = async () => {
+    if (!business) return;
+    const nextFav = !isFavorite;
+    setFavoriteOverride({ id: business.id, is_favorite: nextFav });
+    try {
+      await businessesApi.favoriteBusiness(business.id, nextFav);
+      message.success(nextFav ? "Added to favorites" : "Removed from favorites");
+      queryClient.invalidateQueries({ queryKey: queryKeys.businesses.all });
+    } catch {
+      setFavoriteOverride(null);
+      message.error("Could not update favorite status");
+    }
+  };
 
   const handleRemoveTag = async (tagId: number) => {
     if (!business) return;
@@ -144,18 +166,17 @@ export default function BusinessDrawer({
     }
 
     try {
-      const addedTag = await tagsApi.attachTagToBusiness({
+      await tagsApi.attachTagToBusiness({
         businessId: business.id,
         name: inputValue.trim(),
       });
-      message.success(`Tag "${addedTag.name}" attached`);
+      message.success("Tag added");
+      setInputValue("");
+      setInputVisible(false);
       queryClient.invalidateQueries({ queryKey: queryKeys.businesses.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.tags.all });
     } catch {
-      message.error("Could not attach tag");
-    } finally {
-      setInputVisible(false);
-      setInputValue("");
+      message.error("Could not add tag");
     }
   };
 
@@ -183,18 +204,37 @@ export default function BusinessDrawer({
       className="lf-drawer"
       destroyOnHidden
       extra={
-        websiteHref && (
-          <Button
-            type="primary"
-            size="small"
-            icon={<ExportOutlined aria-hidden />}
-            href={websiteHref}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Visit site
-          </Button>
-        )
+        <div className="flex items-center gap-2">
+          {business && (
+            <Button
+              size="small"
+              className={isFavorite ? "lf-btn-favorite-active" : "lf-btn-favorite"}
+              aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+              icon={
+                isFavorite ? (
+                  <StarFilled style={{ color: "#f59e0b" }} />
+                ) : (
+                  <StarOutlined />
+                )
+              }
+              onClick={handleToggleFavorite}
+            >
+              {isFavorite ? "Favorited" : "Favorite"}
+            </Button>
+          )}
+          {websiteHref && (
+            <Button
+              type="primary"
+              size="small"
+              icon={<ExportOutlined aria-hidden />}
+              href={websiteHref}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Visit site
+            </Button>
+          )}
+        </div>
       }
     >
       {business && (
@@ -213,8 +253,10 @@ export default function BusinessDrawer({
             >
               {initials(business.name)}
             </Avatar>
-            <div className="min-w-0">
-              <h2 className="lf-drawer-title">{business.name}</h2>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="lf-drawer-title truncate">{business.name}</h2>
+              </div>
               <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                 {online ? (
                   <Tag color="success" icon={<CheckCircleFilled />} className="lf-tag">
@@ -227,6 +269,11 @@ export default function BusinessDrawer({
                 )}
                 {isPresent(business.category) && (
                   <Tag className="lf-tag">{business.category}</Tag>
+                )}
+                {isFavorite && (
+                  <Tag color="warning" icon={<StarFilled style={{ color: "#f59e0b" }} />} className="lf-tag">
+                    Favorite
+                  </Tag>
                 )}
               </div>
             </div>

@@ -2,9 +2,7 @@
 
 import {
   BulbOutlined,
-  MenuFoldOutlined,
   MenuOutlined,
-  MenuUnfoldOutlined,
   MoonOutlined,
   LogoutOutlined,
 } from "@ant-design/icons";
@@ -19,8 +17,8 @@ import { useAuth } from "@/features/auth/AuthContext";
 const { Header: AntHeader } = Layout;
 
 interface HeaderProps {
-  collapsed: boolean;
-  onToggleCollapse: () => void;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
   onOpenMobileNav: () => void;
 }
 
@@ -38,8 +36,6 @@ interface HeaderProps {
  * nothing are not neutral — they erode trust in the ones that do.
  */
 export default function Header({
-  collapsed,
-  onToggleCollapse,
   onOpenMobileNav,
 }: HeaderProps) {
   const pathname = usePathname();

@@ -1,6 +1,13 @@
 "use client";
 
-import { CloseOutlined, DeleteOutlined, DownloadOutlined, ThunderboltOutlined } from "@ant-design/icons";
+import {
+  CloseOutlined,
+  DeleteOutlined,
+  DownloadOutlined,
+  StarFilled,
+  StarOutlined,
+  ThunderboltOutlined,
+} from "@ant-design/icons";
 import { Button, Modal } from "antd";
 import { useState } from "react";
 
@@ -11,9 +18,11 @@ interface BusinessBulkBarProps {
   onDelete: () => void;
   onScrapeSelected?: () => void;
   onBulkTag?: () => void;
+  onBulkFavorite?: (is_favorite: boolean) => void;
   isExporting: boolean;
   isDeleting: boolean;
   isScrapingSelected?: boolean;
+  isBulkFavoriting?: boolean;
 }
 
 export default function BusinessBulkBar({
@@ -23,9 +32,11 @@ export default function BusinessBulkBar({
   onDelete,
   onScrapeSelected,
   onBulkTag,
+  onBulkFavorite,
   isExporting,
   isDeleting,
   isScrapingSelected = false,
+  isBulkFavoriting = false,
 }: BusinessBulkBarProps) {
   const [scrapeConfirmModalOpen, setScrapeConfirmModalOpen] = useState(false);
 
@@ -40,11 +51,34 @@ export default function BusinessBulkBar({
       </span>
 
       <div className="lf-bulk-actions">
+        {onBulkFavorite && (
+          <>
+            <Button
+              size="small"
+              icon={<StarFilled style={{ color: "#f59e0b" }} />}
+              onClick={() => onBulkFavorite(true)}
+              loading={isBulkFavoriting}
+              disabled={isExporting || isDeleting || isScrapingSelected || isBulkFavoriting}
+            >
+              Favorite selected
+            </Button>
+            <Button
+              size="small"
+              icon={<StarOutlined />}
+              onClick={() => onBulkFavorite(false)}
+              loading={isBulkFavoriting}
+              disabled={isExporting || isDeleting || isScrapingSelected || isBulkFavoriting}
+            >
+              Unfavorite selected
+            </Button>
+          </>
+        )}
+
         {onBulkTag && (
           <Button
             size="small"
             onClick={onBulkTag}
-            disabled={isExporting || isDeleting || isScrapingSelected}
+            disabled={isExporting || isDeleting || isScrapingSelected || isBulkFavoriting}
           >
             Tag selected
           </Button>
