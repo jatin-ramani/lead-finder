@@ -109,6 +109,15 @@ function DebouncedInput({
  * All state lives in the URL. A user who filters by city, shares the link, and
  * opens it on another machine sees the exact same result set.
  */
+export const LEAD_STATUS_OPTIONS = [
+  { label: "New", value: "new" },
+  { label: "Contacted", value: "contacted" },
+  { label: "Interested", value: "interested" },
+  { label: "Follow-up", value: "follow_up" },
+  { label: "Converted", value: "converted" },
+  { label: "Lost", value: "lost" },
+];
+
 export default function BusinessFilterBar({
   filters,
   totalItems,
@@ -125,6 +134,7 @@ export default function BusinessFilterBar({
     hasEmail,
     hasPhone,
     isFavorite,
+    leadStatus,
     leadGrade,
     tagList,
     activeCount,
@@ -186,6 +196,17 @@ export default function BusinessFilterBar({
           ariaLabel="Filter by category (exact match)"
           disabled={disabled}
           className="lf-filter-control"
+        />
+
+        <Select
+          value={leadStatus || undefined}
+          placeholder="Status"
+          allowClear
+          onChange={(val) => setFilter("lead_status", val)}
+          disabled={disabled}
+          className="w-32"
+          options={LEAD_STATUS_OPTIONS}
+          aria-label="Filter by CRM lead status"
         />
 
         <Select
@@ -325,6 +346,16 @@ export default function BusinessFilterBar({
           <div className="lf-filter-drawer-fields">
             <DebouncedInput value={city} onCommit={(next) => setFilter("city", next)} placeholder="City" ariaLabel="Filter by city (exact match)" disabled={disabled} />
             <DebouncedInput value={category} onCommit={(next) => setFilter("category", next)} placeholder="Category" ariaLabel="Filter by category (exact match)" disabled={disabled} />
+            <Select
+              value={leadStatus || undefined}
+              placeholder="Status"
+              allowClear
+              onChange={(val) => setFilter("lead_status", val)}
+              disabled={disabled}
+              className="w-full"
+              options={LEAD_STATUS_OPTIONS}
+              aria-label="Filter by CRM lead status"
+            />
             <Select
               value={leadGrade || undefined}
               placeholder="Grade"

@@ -66,6 +66,25 @@ export function bulkFavoriteBusinesses(
   return post<BulkFavoriteResponse>("/businesses/favorite/bulk", body);
 }
 
+/** `PATCH /businesses/{id}/status` — updates CRM lead status. */
+export function updateBusinessLeadStatus(
+  id: number,
+  status: import("@/types/api").LeadStatus,
+): Promise<Business> {
+  return patch<Business>(`/businesses/${id}/status`, { status });
+}
+
+/** `POST /businesses/status/bulk` — bulk updates CRM lead status. */
+export function bulkUpdateLeadStatus(
+  ids: number[],
+  status: import("@/types/api").LeadStatus,
+): Promise<import("@/types/api").BulkLeadStatusResponse> {
+  return post<import("@/types/api").BulkLeadStatusResponse>(
+    "/businesses/status/bulk",
+    { business_ids: ids, status },
+  );
+}
+
 /** `DELETE /businesses/{id}` — 404s when the id is unknown. */
 export function deleteBusiness(id: number): Promise<MessageResponse> {
   return del<MessageResponse>(`/businesses/${id}`);

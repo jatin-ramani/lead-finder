@@ -20,6 +20,7 @@ import {
   Checkbox,
   Dropdown,
   Pagination,
+  Select,
   Skeleton,
   Table,
   Tag,
@@ -31,7 +32,11 @@ import type { SorterResult } from "antd/es/table/interface";
 import { useMemo } from "react";
 
 import EmptyState from "@/components/EmptyState";
-import { useFavoriteBusiness } from "@/features/businesses/hooks/useBusinessMutations";
+import {
+  useFavoriteBusiness,
+  useUpdateLeadStatus,
+} from "@/features/businesses/hooks/useBusinessMutations";
+import { LEAD_STATUS_OPTIONS } from "@/features/businesses/components/BusinessFilterBar";
 import { PAGE_SIZE_OPTIONS, type UrlFilters } from "@/hooks/useUrlFilters";
 import {
   avatarColor,
@@ -48,6 +53,7 @@ import {
 import type {
   Business,
   BusinessSortField,
+  LeadStatus,
   PaginationResponse,
   SortOrder,
 } from "@/types/api";
@@ -90,6 +96,7 @@ export default function BusinessTable({
 }: BusinessTableProps) {
   const { message } = App.useApp();
   const favoriteMutation = useFavoriteBusiness();
+  const updateStatusMutation = useUpdateLeadStatus();
 
   const toggleFavorite = (business: Business) => {
     favoriteMutation.mutate({
@@ -279,6 +286,44 @@ export default function BusinessTable({
               No Website
             </Tag>
           ),
+      },
+      {
+        title: "Lead Status",
+        dataIndex: "lead_status",
+        key: "lead_status",
+        width: 145,
+        sorter: true,
+        sortOrder:
+          filters.sortBy === "lead_status"
+            ? filters.sortOrder === "asc"
+              ? "ascend"
+              : "descend"
+            : null,
+        render: (_value, record) => {
+          const status = record.lead_status || "new";
+          return (
+            <div
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
+              className="inline-flex items-center"
+            >
+              <Select
+                size="small"
+                value={status}
+                className={`lf-status-select lf-status-select--${status}`}
+                popupClassName="lf-status-select-popup"
+                onChange={(nextStatus: LeadStatus) => {
+                  updateStatusMutation.mutate({
+                    id: record.id,
+                    status: nextStatus,
+                  });
+                }}
+                options={LEAD_STATUS_OPTIONS}
+                aria-label={`Change lead status for ${record.name}`}
+              />
+            </div>
+          );
+        },
       },
       {
         title: "Lead Score",
@@ -539,6 +584,23 @@ export default function BusinessTable({
               <Button type="text" icon={<EyeOutlined />} aria-label={`View ${business.name}`} onClick={() => onView(business)} />
             </div>
             <p className="lf-mobile-business-meta">{[business.city, business.category].filter(Boolean).join(" • ") || "Location not available"}</p>
+            <div className="flex items-center justify-between gap-2 my-2" onClick={(e) => e.stopPropagation()}>
+              <span className="text-xs font-semibold text-[var(--lf-text-muted)]">CRM Status:</span>
+              <Select
+                size="small"
+                value={business.lead_status || "new"}
+                className={`lf-status-select lf-status-select--${business.lead_status || "new"}`}
+                popupClassName="lf-status-select-popup"
+                onChange={(nextStatus: LeadStatus) => {
+                  updateStatusMutation.mutate({
+                    id: business.id,
+                    status: nextStatus,
+                  });
+                }}
+                options={LEAD_STATUS_OPTIONS}
+                aria-label={`Change lead status for ${business.name}`}
+              />
+            </div>
             <div className="lf-mobile-business-contact">
               <span className={isPresent(business.website) ? "is-available" : ""}>Website {isPresent(business.website) ? "available" : "missing"}</span>
               <span className={isPresent(business.email) ? "is-available" : ""}>Email {isPresent(business.email) ? "available" : "missing"}</span>

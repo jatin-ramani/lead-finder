@@ -8,7 +8,20 @@ export const DEFAULT_PAGE_SIZE = 20;
 export const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 const DEFAULT_SORT_BY: BusinessSortField = "id";
 const DEFAULT_SORT_ORDER: SortOrder = "desc";
-const FILTER_PARAMS = ["search", "city", "category", "has_website", "has_email", "has_phone", "lead_grade", "min_lead_score", "tags", "is_favorite", "view"] as const;
+const FILTER_PARAMS = [
+  "search",
+  "city",
+  "category",
+  "has_website",
+  "has_email",
+  "has_phone",
+  "lead_status",
+  "lead_grade",
+  "min_lead_score",
+  "tags",
+  "is_favorite",
+  "view",
+] as const;
 type FilterParam = (typeof FILTER_PARAMS)[number];
 
 function readInt(value: string | null, fallback: number) {
@@ -29,6 +42,7 @@ export interface UrlFilters {
   search: string; city: string; category: string; view: string;
   hasWebsite: boolean | undefined; hasEmail: boolean; hasPhone: boolean;
   isFavorite: boolean | undefined;
+  leadStatus: string;
   leadGrade: string; minLeadScore: number | undefined; tags: string; tagList: string[];
   page: number; pageSize: number; sortBy: BusinessSortField; sortOrder: SortOrder;
   activeCount: number; hasActiveFilters: boolean;
@@ -56,6 +70,7 @@ export function useUrlFilters(): UrlFilters {
   const hasEmail = readBoolean(params.get("has_email")) === true;
   const hasPhone = readBoolean(params.get("has_phone")) === true;
   const isFavorite = readBoolean(params.get("is_favorite"));
+  const leadStatus = params.get("lead_status") ?? "";
   const leadGrade = params.get("lead_grade") ?? "";
   const rawMinScore = params.get("min_lead_score");
   const minLeadScore = rawMinScore ? readInt(rawMinScore, 0) : undefined;
@@ -98,7 +113,21 @@ export function useUrlFilters(): UrlFilters {
   }, [apply]);
 
   const resetFilters = useCallback(() => {
-    apply({ search: undefined, city: undefined, category: undefined, has_website: undefined, has_email: undefined, has_phone: undefined, is_favorite: undefined, lead_grade: undefined, min_lead_score: undefined, tags: undefined, view: undefined, page: 1 }, "push");
+    apply({
+      search: undefined,
+      city: undefined,
+      category: undefined,
+      has_website: undefined,
+      has_email: undefined,
+      has_phone: undefined,
+      is_favorite: undefined,
+      lead_status: undefined,
+      lead_grade: undefined,
+      min_lead_score: undefined,
+      tags: undefined,
+      view: undefined,
+      page: 1,
+    }, "push");
   }, [apply]);
 
   const activeCount = FILTER_PARAMS.filter((key) => key !== "view" && params.has(key)).length;
@@ -115,10 +144,11 @@ export function useUrlFilters(): UrlFilters {
     ...(hasEmail && { has_email: true }),
     ...(hasPhone && { has_phone: true }),
     ...(isFavorite !== undefined && { is_favorite: isFavorite }),
+    ...(leadStatus && { lead_status: leadStatus }),
     ...(leadGrade && { lead_grade: leadGrade }),
     ...(minLeadScore !== undefined && { min_lead_score: minLeadScore }),
     ...(tags && { tags }),
-  }), [page, pageSize, sortBy, sortOrder, search, city, category, hasWebsite, hasEmail, hasPhone, isFavorite, leadGrade, minLeadScore, tags]);
+  }), [page, pageSize, sortBy, sortOrder, search, city, category, hasWebsite, hasEmail, hasPhone, isFavorite, leadStatus, leadGrade, minLeadScore, tags]);
 
   return {
     query,
@@ -130,6 +160,7 @@ export function useUrlFilters(): UrlFilters {
     hasEmail,
     hasPhone,
     isFavorite,
+    leadStatus,
     leadGrade,
     minLeadScore,
     tags,

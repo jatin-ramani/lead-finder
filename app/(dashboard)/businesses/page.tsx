@@ -26,6 +26,7 @@ import TagManagementModal from "@/features/businesses/components/TagManagementMo
 import { useBusinessList } from "@/features/businesses/hooks/useBusinessList";
 import {
   useBulkFavoriteBusinesses,
+  useBulkUpdateLeadStatus,
   useDeleteBusiness,
   useDeleteBusinesses,
 } from "@/features/businesses/hooks/useBusinessMutations";
@@ -67,6 +68,7 @@ function BusinessesWorkspace() {
   const deleteOne = useDeleteBusiness();
   const deleteMany = useDeleteBusinesses();
   const bulkFavorite = useBulkFavoriteBusinesses();
+  const bulkStatus = useBulkUpdateLeadStatus();
   const { exportFiltered, exportSelected, isExporting } = useExportBusinesses();
 
   const { scrapeSelected, scrapeSingle, isPendingLauncher } = useScrapeRunner();
@@ -250,6 +252,10 @@ function BusinessesWorkspace() {
         onClear={clearSelection}
         onExport={openExportSelected}
         onDelete={confirmDeleteSelected}
+        onBulkStatus={async (status) => {
+          await bulkStatus.mutateAsync({ ids: selectedIds, status });
+        }}
+        isBulkUpdatingStatus={bulkStatus.isPending}
         onBulkFavorite={async (isFav) => {
           await bulkFavorite.mutateAsync({ ids: selectedIds, is_favorite: isFav });
         }}

@@ -6,6 +6,7 @@ import { useCallback } from "react";
 
 import { businessesApi, queryKeys } from "@/services";
 import { isApiError } from "@/services/errors";
+import type { LeadStatus } from "@/types/api";
 
 /**
  * Writes against the business list.
@@ -53,9 +54,6 @@ export function useDeleteBusinesses() {
   return useMutation({
     mutationFn: (ids: number[]) => businessesApi.deleteBusinesses(ids),
     onSuccess: (result, ids) => {
-      // The server reports what it actually removed, which can be fewer than
-      // were selected if someone else deleted one first. Reporting the
-      // selection count instead would be a comfortable lie.
       const deleted = result.deleted;
 
       if (deleted === 0) {
@@ -113,6 +111,48 @@ export function useBulkFavoriteBusinesses() {
     },
     onError: (err) => {
       const msg = isApiError(err) ? err.message : "Could not update favorites in bulk";
+      message.error(msg);
+      invalidate();
+    },
+  });
+}
+
+/** `PATCH /businesses/{id}/status` */
+export function useUpdateLeadStatus() {
+  const { message } = App.useApp();
+  const invalidate = useInvalidateBusinesses();
+
+  return useMutation({
+    mutationFn: ({ id, status }: { id: number; status: LeadStatus }) =>
+      businessesApi.updateBusinessLeadStatus(id, status),
+    onSuccess: (_data, { status }) => {
+      const label = status.replace("_", " ").toUpperCase();
+      message.success(`Status updated to ${label}`);
+      invalidate();
+    },
+    onError: (err) => {
+      const msg = isApiError(err) ? err.message : "Could not update lead status";
+      message.error(msg);
+      invalidate();
+    },
+  });
+}
+
+/** `POST /businesses/status/bulk` */
+export function useBulkUpdateLeadStatus() {
+  const { message } = App.useApp();
+  const invalidate = useInvalidateBusinesses();
+
+  return useMutation({
+    mutationFn: ({ ids, status }: { ids: number[]; status: LeadStatus }) =>
+      businessesApi.bulkUpdateLeadStatus(ids, status),
+    onSuccess: (result) => {
+      const label = result.status.replace("_", " ").toUpperCase();
+      message.success(`Updated ${result.updated_count} leads to ${label}`);
+      invalidate();
+    },
+    onError: (err) => {
+      const msg = isApiError(err) ? err.message : "Could not update status in bulk";
       message.error(msg);
       invalidate();
     },

@@ -16,9 +16,11 @@ import {
   StarOutlined,
 } from "@ant-design/icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { App, Avatar, Button, Drawer, Input, type InputRef, Popconfirm, Progress, Tag, Tooltip } from "antd";
+import { App, Avatar, Button, Drawer, Input, type InputRef, Popconfirm, Progress, Select, Tag, Tooltip } from "antd";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
+import { useUpdateLeadStatus } from "@/features/businesses/hooks/useBusinessMutations";
+import { LEAD_STATUS_OPTIONS } from "@/features/businesses/components/BusinessFilterBar";
 import WebsiteDataCard from "@/features/scraping/components/WebsiteDataCard";
 import {
   avatarColor,
@@ -33,7 +35,7 @@ import {
   toTelHref,
 } from "@/lib/format";
 import { businessesApi, notesApi, queryKeys, tagsApi } from "@/services";
-import type { Business, BusinessNote } from "@/types/api";
+import type { Business, BusinessNote, LeadStatus } from "@/types/api";
 
 const { TextArea } = Input;
 
@@ -121,7 +123,9 @@ export default function BusinessDrawer({
   const [inputVisible, setInputVisible] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [favoriteOverride, setFavoriteOverride] = useState<{ id: number; is_favorite: boolean } | null>(null);
+  const [statusOverride, setStatusOverride] = useState<{ id: number; status: LeadStatus } | null>(null);
   const inputRef = useRef<InputRef>(null);
+  const updateStatusMutation = useUpdateLeadStatus();
 
   // Notes state
   const [isAddingNote, setIsAddingNote] = useState(false);
@@ -296,6 +300,19 @@ export default function BusinessDrawer({
 
   const leadScore = business?.lead_score ?? 0;
   const leadGrade = business?.lead_grade || "D";
+  const currentStatus: LeadStatus =
+    statusOverride && statusOverride.id === business?.id
+      ? statusOverride.status
+      : business?.lead_status || "new";
+
+  const handleStatusChange = (nextStatus: LeadStatus) => {
+    if (!business) return;
+    setStatusOverride({ id: business.id, status: nextStatus });
+    updateStatusMutation.mutate({
+      id: business.id,
+      status: nextStatus,
+    });
+  };
 
   return (
     <Drawer
@@ -380,6 +397,29 @@ export default function BusinessDrawer({
               </div>
             </div>
           </header>
+
+          {/* CRM Pipeline Status Section */}
+          <section className="lf-drawer-status-card">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-[var(--lf-text-muted)]">
+                  CRM Pipeline Status
+                </span>
+                <p className="text-xs text-[var(--lf-text-secondary)] mt-0.5 mb-0">
+                  Lead progression state
+                </p>
+              </div>
+              <Select
+                size="middle"
+                value={currentStatus}
+                className={`lf-status-select lf-status-select--${currentStatus} min-w-[135px]`}
+                popupClassName="lf-status-select-popup"
+                onChange={handleStatusChange}
+                options={LEAD_STATUS_OPTIONS}
+                aria-label="Change lead status in drawer"
+              />
+            </div>
+          </section>
 
           {/* Lead Score & Opportunity Breakdown */}
           <section className="lf-score-card">

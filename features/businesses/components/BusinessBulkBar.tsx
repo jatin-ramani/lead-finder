@@ -8,8 +8,11 @@ import {
   StarOutlined,
   ThunderboltOutlined,
 } from "@ant-design/icons";
-import { Button, Modal } from "antd";
+import { Button, Modal, Select } from "antd";
 import { useState } from "react";
+
+import { LEAD_STATUS_OPTIONS } from "@/features/businesses/components/BusinessFilterBar";
+import type { LeadStatus } from "@/types/api";
 
 interface BusinessBulkBarProps {
   count: number;
@@ -19,10 +22,12 @@ interface BusinessBulkBarProps {
   onScrapeSelected?: () => void;
   onBulkTag?: () => void;
   onBulkFavorite?: (is_favorite: boolean) => void;
+  onBulkStatus?: (status: LeadStatus) => Promise<void> | void;
   isExporting: boolean;
   isDeleting: boolean;
   isScrapingSelected?: boolean;
   isBulkFavoriting?: boolean;
+  isBulkUpdatingStatus?: boolean;
 }
 
 export default function BusinessBulkBar({
@@ -33,12 +38,16 @@ export default function BusinessBulkBar({
   onScrapeSelected,
   onBulkTag,
   onBulkFavorite,
+  onBulkStatus,
   isExporting,
   isDeleting,
   isScrapingSelected = false,
   isBulkFavoriting = false,
+  isBulkUpdatingStatus = false,
 }: BusinessBulkBarProps) {
   const [scrapeConfirmModalOpen, setScrapeConfirmModalOpen] = useState(false);
+  const [statusModalOpen, setStatusModalOpen] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<LeadStatus>("contacted");
 
   if (count === 0) return null;
 
@@ -51,6 +60,23 @@ export default function BusinessBulkBar({
       </span>
 
       <div className="lf-bulk-actions">
+        {onBulkStatus && (
+          <Button
+            size="small"
+            onClick={() => setStatusModalOpen(true)}
+            loading={isBulkUpdatingStatus}
+            disabled={
+              isExporting ||
+              isDeleting ||
+              isScrapingSelected ||
+              isBulkFavoriting ||
+              isBulkUpdatingStatus
+            }
+          >
+            Change status
+          </Button>
+        )}
+
         {onBulkFavorite && (
           <>
             <Button
@@ -58,7 +84,13 @@ export default function BusinessBulkBar({
               icon={<StarFilled style={{ color: "#f59e0b" }} />}
               onClick={() => onBulkFavorite(true)}
               loading={isBulkFavoriting}
-              disabled={isExporting || isDeleting || isScrapingSelected || isBulkFavoriting}
+              disabled={
+                isExporting ||
+                isDeleting ||
+                isScrapingSelected ||
+                isBulkFavoriting ||
+                isBulkUpdatingStatus
+              }
             >
               Favorite selected
             </Button>
@@ -67,7 +99,13 @@ export default function BusinessBulkBar({
               icon={<StarOutlined />}
               onClick={() => onBulkFavorite(false)}
               loading={isBulkFavoriting}
-              disabled={isExporting || isDeleting || isScrapingSelected || isBulkFavoriting}
+              disabled={
+                isExporting ||
+                isDeleting ||
+                isScrapingSelected ||
+                isBulkFavoriting ||
+                isBulkUpdatingStatus
+              }
             >
               Unfavorite selected
             </Button>
@@ -78,7 +116,13 @@ export default function BusinessBulkBar({
           <Button
             size="small"
             onClick={onBulkTag}
-            disabled={isExporting || isDeleting || isScrapingSelected || isBulkFavoriting}
+            disabled={
+              isExporting ||
+              isDeleting ||
+              isScrapingSelected ||
+              isBulkFavoriting ||
+              isBulkUpdatingStatus
+            }
           >
             Tag selected
           </Button>
@@ -127,6 +171,30 @@ export default function BusinessBulkBar({
           aria-label="Clear selection"
         />
       </div>
+
+      <Modal
+        title={`Change status of ${count} selected ${noun}`}
+        open={statusModalOpen}
+        onOk={async () => {
+          await onBulkStatus?.(selectedStatus);
+          setStatusModalOpen(false);
+        }}
+        onCancel={() => setStatusModalOpen(false)}
+        okText="Update status"
+        confirmLoading={isBulkUpdatingStatus}
+      >
+        <div className="py-3">
+          <label className="text-xs font-semibold text-[var(--lf-text-muted)] block mb-2">
+            Select new CRM pipeline status:
+          </label>
+          <Select
+            value={selectedStatus}
+            onChange={(val) => setSelectedStatus(val as LeadStatus)}
+            className="w-full"
+            options={LEAD_STATUS_OPTIONS}
+          />
+        </div>
+      </Modal>
 
       <Modal
         title={`Scrape ${count} selected ${noun}?`}

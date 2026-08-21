@@ -120,6 +120,14 @@ export interface UpdateNoteRequest {
   content: string;
 }
 
+export type LeadStatus =
+  | "new"
+  | "contacted"
+  | "interested"
+  | "follow_up"
+  | "converted"
+  | "lost";
+
 export interface Business {
   id: number;
   name: string;
@@ -130,6 +138,7 @@ export interface Business {
   category: string | null;
   address: string | null;
   status: string | null;
+  lead_status?: LeadStatus;
   lead_score?: number | null;
   lead_grade?: string | null;
   lead_score_reasons?: string[] | null;
@@ -146,6 +155,7 @@ export const BUSINESS_SORT_FIELDS = [
   "city",
   "category",
   "status",
+  "lead_status",
   "lead_score",
   "lead_grade",
   "is_favorite",
@@ -172,6 +182,7 @@ export interface BusinessQuery {
   has_email?: boolean;
   has_phone?: boolean;
   is_favorite?: boolean;
+  lead_status?: string;
   lead_grade?: string;
   min_lead_score?: number;
   max_lead_score?: number;
@@ -202,6 +213,23 @@ export interface BulkFavoriteResponse {
   is_favorite: boolean;
 }
 
+export interface LeadStatusUpdateRequest {
+  status: LeadStatus;
+}
+
+export interface BulkLeadStatusRequest {
+  business_ids: number[];
+  status: LeadStatus;
+}
+
+export interface BulkLeadStatusResponse {
+  success: boolean;
+  message: string;
+  updated_count: number;
+  total_requested: number;
+  status: string;
+}
+
 export interface ContactQualification {
   has_email?: boolean;
   has_phone?: boolean;
@@ -212,7 +240,7 @@ export interface SelectedExportRequest extends BulkBusinessRequest, ContactQuali
 export interface ExportPreviewRequest {
   scope: "filtered" | "selected";
   business_ids?: number[];
-  filters?: Pick<BusinessQuery, "search" | "city" | "category" | "has_website" | "has_email" | "has_phone" | "lead_grade" | "min_lead_score" | "max_lead_score" | "is_favorite">;
+  filters?: Pick<BusinessQuery, "search" | "city" | "category" | "has_website" | "has_email" | "has_phone" | "lead_grade" | "min_lead_score" | "max_lead_score" | "is_favorite" | "lead_status">;
   qualification?: ContactQualification;
 }
 

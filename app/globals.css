@@ -2387,3 +2387,105 @@ a {
   color: #F4F4F5 !important;
   border-color: #27272A !important;
 }
+
+/* ==========================================================================
+   CRM Pipeline / Lead Status System
+   ========================================================================== */
+
+.lf-drawer-status-card {
+  background: var(--lf-surface-sunken);
+  border: 1px solid var(--lf-border-subtle);
+  border-radius: var(--lf-radius-lg, 8px);
+  padding: 14px 16px;
+}
+
+[data-theme="dark"] .lf-drawer-status-card {
+  background: #121214;
+  border-color: #232328;
+}
+
+.lf-status-select .ant-select-selector {
+  border-radius: 9999px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.03em !important;
+  text-transform: uppercase !important;
+  padding: 0 10px !important;
+  height: 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  transition: all 0.15s ease-in-out !important;
+}
+
+.lf-status-select--new .ant-select-selector {
+  background: #F1F5F9 !important;
+  border-color: #CBD5E1 !important;
+  color: #475569 !important;
+}
+
+.lf-status-select--contacted .ant-select-selector {
+  background: #EFF6FF !important;
+  border-color: #BFDBFE !important;
+  color: #2563EB !important;
+}
+
+.lf-status-select--interested .ant-select-selector {
+  background: #FFFBEB !important;
+  border-color: #FDE68A !important;
+  color: #D97706 !important;
+}
+
+.lf-status-select--follow_up .ant-select-selector {
+  background: #FAF5FF !important;
+  border-color: #E9D5FF !important;
+  color: #9333EA !important;
+}
+
+.lf-status-select--converted .ant-select-selector {
+  background: #ECFDF5 !important;
+  border-color: #A7F3D0 !important;
+  color: #059669 !important;
+}
+
+.lf-status-select--lost .ant-select-selector {
+  background: #FEF2F2 !important;
+  border-color: #FECACA !important;
+  color: #DC2626 !important;
+}
+
+/* Dark theme status overrides */
+[data-theme="dark"] .lf-status-select--new .ant-select-selector {
+  background: rgba(148, 163, 184, 0.15) !important;
+  border-color: rgba(148, 163, 184, 0.3) !important;
+  color: #94A3B8 !important;
+}
+
+[data-theme="dark"] .lf-status-select--contacted .ant-select-selector {
+  background: rgba(59, 130, 246, 0.15) !important;
+  border-color: rgba(59, 130, 246, 0.3) !important;
+  color: #60A5FA !important;
+}
+
+[data-theme="dark"] .lf-status-select--interested .ant-select-selector {
+  background: rgba(245, 158, 11, 0.15) !important;
+  border-color: rgba(245, 158, 11, 0.3) !important;
+  color: #FBBF24 !important;
+}
+
+[data-theme="dark"] .lf-status-select--follow_up .ant-select-selector {
+  background: rgba(168, 85, 247, 0.15) !important;
+  border-color: rgba(168, 85, 247, 0.3) !important;
+  color: #C084FC !important;
+}
+
+[data-theme="dark"] .lf-status-select--converted .ant-select-selector {
+  background: rgba(16, 185, 129, 0.15) !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+  color: #34D399 !important;
+}
+
+[data-theme="dark"] .lf-status-select--lost .ant-select-selector {
+  background: rgba(239, 68, 68, 0.15) !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
+  color: #F87171 !important;
+}
