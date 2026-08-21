@@ -24,4 +24,5 @@ export * as businessesApi from "./businesses";
 export * as scanningApi from "./scanning";
 export * as scrapingApi from "./scraping";
 export * as dashboardApi from "./dashboard";
+export * as tagsApi from "./tags";
 export * as systemApi from "./system";

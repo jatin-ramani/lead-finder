@@ -274,6 +274,46 @@ export default function BusinessTable({
           isPresent(value) ? value : <Text type="secondary">—</Text>,
       },
       {
+        title: "Tags",
+        key: "tags",
+        width: 160,
+        render: (_value, record) => {
+          const tags = record.tags || [];
+          if (tags.length === 0) {
+            return <Text type="secondary" className="text-xs">—</Text>;
+          }
+          const visibleTags = tags.slice(0, 2);
+          const hiddenCount = tags.length - visibleTags.length;
+
+          return (
+            <div className="flex items-center gap-1 flex-wrap">
+              {visibleTags.map((t) => (
+                <span key={t.id} className="lf-custom-tag-pill">
+                  {t.name}
+                </span>
+              ))}
+              {hiddenCount > 0 && (
+                <Tooltip
+                  title={
+                    <div className="flex flex-col gap-1 py-0.5">
+                      {tags.map((t) => (
+                        <span key={t.id} className="text-xs">
+                          • {t.name}
+                        </span>
+                      ))}
+                    </div>
+                  }
+                >
+                  <span className="lf-custom-tag-pill lf-custom-tag-pill--more">
+                    +{hiddenCount}
+                  </span>
+                </Tooltip>
+              )}
+            </div>
+          );
+        },
+      },
+      {
         title: "Actions",
         key: "actions",
         fixed: "right",
@@ -437,6 +477,15 @@ export default function BusinessTable({
               <span className={isPresent(business.email) ? "is-available" : ""}>Email {isPresent(business.email) ? "available" : "missing"}</span>
               <span className={isPresent(business.phone) ? "is-available" : ""}>Phone {isPresent(business.phone) ? "available" : "missing"}</span>
             </div>
+            {business.tags && business.tags.length > 0 && (
+              <div className="flex items-center gap-1 flex-wrap mt-2">
+                {business.tags.map((t) => (
+                  <span key={t.id} className="lf-custom-tag-pill">
+                    {t.name}
+                  </span>
+                ))}
+              </div>
+            )}
           </article>
         ))}
         {pagination && <Pagination current={pagination.page} pageSize={pagination.pageSize} total={pagination.totalItems} showSizeChanger={false} onChange={(page) => filters.setPage(page)} />}

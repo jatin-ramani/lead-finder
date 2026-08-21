@@ -9,7 +9,7 @@ import {
   MailOutlined,
   PhoneOutlined,
 } from "@ant-design/icons";
-import { App, Button, Skeleton } from "antd";
+import { App, Button } from "antd";
 import { Suspense, useCallback, useMemo, useState } from "react";
 
 import ErrorState from "@/components/feedback/ErrorState";
@@ -19,8 +19,10 @@ import BusinessDrawer from "@/features/businesses/components/BusinessDrawer";
 import BusinessFilterBar from "@/features/businesses/components/BusinessFilterBar";
 import BusinessTable from "@/features/businesses/components/BusinessTable";
 import BusinessesSkeleton from "@/features/businesses/components/BusinessesSkeleton";
+import BulkTagModal from "@/features/businesses/components/BulkTagModal";
 import CityCardsGrid from "@/features/businesses/components/CityCardsGrid";
 import ExportModal from "@/features/businesses/components/ExportModal";
+import TagManagementModal from "@/features/businesses/components/TagManagementModal";
 import { useBusinessList } from "@/features/businesses/hooks/useBusinessList";
 import {
   useDeleteBusiness,
@@ -71,6 +73,8 @@ function BusinessesWorkspace() {
   const [detail, setDetail] = useState<Business | null>(null);
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [exportScope, setExportScope] = useState<"filtered" | "selected">("filtered");
+  const [manageTagsOpen, setManageTagsOpen] = useState(false);
+  const [bulkTagOpen, setBulkTagOpen] = useState(false);
 
   const clearSelection = useCallback(() => setSelectedIds([]), []);
 
@@ -235,6 +239,7 @@ function BusinessesWorkspace() {
         totalItems={pagination?.totalItems}
         onExport={openExportFiltered}
         isExporting={isExporting}
+        onManageTags={() => setManageTagsOpen(true)}
         disabled={isBusinessesLoading}
       />
 
@@ -244,6 +249,7 @@ function BusinessesWorkspace() {
         onExport={openExportSelected}
         onDelete={confirmDeleteSelected}
         onScrapeSelected={() => scrapeSelected(selectedIds)}
+        onBulkTag={() => setBulkTagOpen(true)}
         isExporting={isExporting}
         isDeleting={deleteMany.isPending}
         isScrapingSelected={isPendingLauncher}
@@ -281,6 +287,18 @@ function BusinessesWorkspace() {
         onExportFiltered={exportFiltered}
         onExportSelected={exportSelected}
         isExporting={isExporting}
+      />
+
+      <TagManagementModal
+        open={manageTagsOpen}
+        onClose={() => setManageTagsOpen(false)}
+      />
+
+      <BulkTagModal
+        open={bulkTagOpen}
+        onClose={() => setBulkTagOpen(false)}
+        selectedIds={selectedIds}
+        onComplete={clearSelection}
       />
     </PageContainer>
   );

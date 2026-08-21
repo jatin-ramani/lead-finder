@@ -10,9 +10,11 @@ import {
   GlobalOutlined,
   MailOutlined,
   PhoneOutlined,
+  PlusOutlined,
 } from "@ant-design/icons";
-import { App, Avatar, Button, Drawer, Progress, Tag, Tooltip } from "antd";
-import type { ReactNode } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { App, Avatar, Button, Drawer, Input, type InputRef, Progress, Tag, Tooltip } from "antd";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 
 import WebsiteDataCard from "@/features/scraping/components/WebsiteDataCard";
 import {
@@ -26,6 +28,7 @@ import {
   toMapsUrl,
   toTelHref,
 } from "@/lib/format";
+import { queryKeys, tagsApi } from "@/services";
 import type { Business } from "@/types/api";
 
 interface BusinessDrawerProps {
@@ -107,6 +110,54 @@ export default function BusinessDrawer({
   isScrapingSingle = false,
 }: BusinessDrawerProps) {
   const { message } = App.useApp();
+  const queryClient = useQueryClient();
+
+  const [inputVisible, setInputVisible] = useState(false);
+  const [inputValue, setInputValue] = useState("");
+  const inputRef = useRef<InputRef>(null);
+
+  const tags = business?.tags || [];
+
+  useEffect(() => {
+    if (inputVisible) {
+      inputRef.current?.focus();
+    }
+  }, [inputVisible]);
+
+  const handleRemoveTag = async (tagId: number) => {
+    if (!business) return;
+    try {
+      await tagsApi.removeTagFromBusiness({ businessId: business.id, tagId });
+      message.success("Tag removed");
+      queryClient.invalidateQueries({ queryKey: queryKeys.businesses.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tags.all });
+    } catch {
+      message.error("Could not remove tag");
+    }
+  };
+
+  const handleInputConfirm = async () => {
+    if (!business || !inputValue.trim()) {
+      setInputVisible(false);
+      setInputValue("");
+      return;
+    }
+
+    try {
+      const addedTag = await tagsApi.attachTagToBusiness({
+        businessId: business.id,
+        name: inputValue.trim(),
+      });
+      message.success(`Tag "${addedTag.name}" attached`);
+      queryClient.invalidateQueries({ queryKey: queryKeys.businesses.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tags.all });
+    } catch {
+      message.error("Could not attach tag");
+    } finally {
+      setInputVisible(false);
+      setInputValue("");
+    }
+  };
 
   const copy = async (label: string, value?: string | null) => {
     if (!isPresent(value)) return;
@@ -228,6 +279,56 @@ export default function BusinessDrawer({
                 </ul>
               </div>
             )}
+          </section>
+
+          {/* Tags Section */}
+          <section className="lf-drawer-tags-card">
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <h3 className="lf-drawer-section-title mb-0">Tags</h3>
+              <span className="text-xs text-[var(--lf-text-muted)]">
+                {tags.length} {tags.length === 1 ? "tag" : "tags"}
+              </span>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-1.5 min-h-[36px] p-2 rounded-lg bg-[var(--lf-surface-sunken)] border border-[var(--lf-border-subtle)]">
+              {tags.map((tag) => (
+                <Tag
+                  key={tag.id}
+                  closable
+                  onClose={(e) => {
+                    e.preventDefault();
+                    void handleRemoveTag(tag.id);
+                  }}
+                  className="lf-interactive-tag"
+                >
+                  {tag.name}
+                </Tag>
+              ))}
+              {inputVisible ? (
+                <Input
+                  ref={inputRef}
+                  type="text"
+                  size="small"
+                  className="lf-tag-input"
+                  style={{ width: 130 }}
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onBlur={() => void handleInputConfirm()}
+                  onPressEnter={() => void handleInputConfirm()}
+                  placeholder="Tag name..."
+                />
+              ) : (
+                <Button
+                  size="small"
+                  type="dashed"
+                  icon={<PlusOutlined />}
+                  onClick={() => setInputVisible(true)}
+                  className="lf-add-tag-btn"
+                >
+                  Add Tag
+                </Button>
+              )}
+            </div>
           </section>
 
           <section>

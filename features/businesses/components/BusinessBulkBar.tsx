@@ -10,6 +10,7 @@ interface BusinessBulkBarProps {
   onExport: () => void;
   onDelete: () => void;
   onScrapeSelected?: () => void;
+  onBulkTag?: () => void;
   isExporting: boolean;
   isDeleting: boolean;
   isScrapingSelected?: boolean;
@@ -21,6 +22,7 @@ export default function BusinessBulkBar({
   onExport,
   onDelete,
   onScrapeSelected,
+  onBulkTag,
   isExporting,
   isDeleting,
   isScrapingSelected = false,
@@ -38,6 +40,16 @@ export default function BusinessBulkBar({
       </span>
 
       <div className="lf-bulk-actions">
+        {onBulkTag && (
+          <Button
+            size="small"
+            onClick={onBulkTag}
+            disabled={isExporting || isDeleting || isScrapingSelected}
+          >
+            Tag selected
+          </Button>
+        )}
+
         {onScrapeSelected && (
           <Button
             size="small"

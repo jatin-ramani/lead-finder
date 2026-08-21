@@ -5,11 +5,15 @@ import {
   DownloadOutlined,
   FilterOutlined,
   SearchOutlined,
+  TagsOutlined,
 } from "@ant-design/icons";
+import { useQuery } from "@tanstack/react-query";
 import { Badge, Button, Checkbox, Drawer, Input, Select, Tooltip } from "antd";
 import { useEffect, useRef, useState } from "react";
 
 import type { UrlFilters } from "@/hooks/useUrlFilters";
+import { queryKeys, tagsApi } from "@/services";
+import type { Tag } from "@/types/api";
 
 /**
  * How long typing pauses before a request goes out.
@@ -25,6 +29,7 @@ interface BusinessFilterBarProps {
   totalItems: number | undefined;
   onExport: () => void;
   isExporting: boolean;
+  onManageTags?: () => void;
   disabled?: boolean;
 }
 
@@ -107,6 +112,7 @@ export default function BusinessFilterBar({
   totalItems,
   onExport,
   isExporting,
+  onManageTags,
   disabled = false,
 }: BusinessFilterBarProps) {
   const {
@@ -117,11 +123,23 @@ export default function BusinessFilterBar({
     hasEmail,
     hasPhone,
     leadGrade,
+    tagList,
     activeCount,
     setFilter,
     resetFilters,
   } = filters;
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+
+  const { data: tagsData } = useQuery({
+    queryKey: queryKeys.tags.list(),
+    queryFn: () => tagsApi.listTags(),
+    staleTime: 30_000,
+  });
+
+  const tagOptions = ((tagsData?.data || []) as Tag[]).map((t: Tag) => ({
+    label: t.name,
+    value: t.slug,
+  }));
 
   return (
     <div className="lf-filter-card">
@@ -182,6 +200,20 @@ export default function BusinessFilterBar({
           ]}
         />
 
+        <Select
+          mode="multiple"
+          maxTagCount="responsive"
+          value={tagList}
+          placeholder="Filter by tags"
+          allowClear
+          onChange={(vals: string[]) =>
+            setFilter("tags", vals.length > 0 ? vals.join(",") : undefined)
+          }
+          disabled={disabled}
+          className="min-w-[160px] max-w-[240px]"
+          options={tagOptions}
+        />
+
         <div className="flex items-center gap-2" role="group" aria-label="Website availability">
           <Checkbox
             checked={hasWebsite === true}
@@ -207,6 +239,18 @@ export default function BusinessFilterBar({
             onChange={(event) => setFilter("has_phone", event.target.checked ? true : undefined)}
           >Has phone</Checkbox>
         </div>
+
+        {onManageTags && (
+          <Tooltip title="Manage custom tags">
+            <Button
+              icon={<TagsOutlined aria-hidden />}
+              onClick={onManageTags}
+              disabled={disabled}
+            >
+              Tags
+            </Button>
+          </Tooltip>
+        )}
 
         <Tooltip title="Clear all filters">
           <Button
@@ -241,32 +285,61 @@ export default function BusinessFilterBar({
       <div className="lf-filter-mobile">
         <DebouncedInput value={search} onCommit={(next) => setFilter("search", next)} placeholder="Search businesses" ariaLabel="Search businesses" prefix={<SearchOutlined aria-hidden />} disabled={disabled} className="lf-filter-search" />
         <Button icon={<FilterOutlined aria-hidden />} onClick={() => setMobileFiltersOpen(true)} disabled={disabled}>Filters{activeCount > 0 ? ` (${activeCount})` : ""}</Button>
+        {onManageTags && (
+          <Button icon={<TagsOutlined aria-hidden />} onClick={onManageTags} disabled={disabled}>
+            Tags
+          </Button>
+        )}
         <Button type="primary" icon={<DownloadOutlined aria-hidden />} onClick={onExport} loading={isExporting} disabled={disabled || isExporting || totalItems === 0} aria-label="Export businesses"><span className="lf-mobile-export-label">Export</span></Button>
       </div>
 
-      {mobileFiltersOpen && <Drawer title="Filter businesses" placement="right" open onClose={() => setMobileFiltersOpen(false)} destroyOnHidden className="lf-filter-drawer">
-        <div className="lf-filter-drawer-fields">
-          <DebouncedInput value={city} onCommit={(next) => setFilter("city", next)} placeholder="City" ariaLabel="Filter by city (exact match)" disabled={disabled} />
-          <DebouncedInput value={category} onCommit={(next) => setFilter("category", next)} placeholder="Category" ariaLabel="Filter by category (exact match)" disabled={disabled} />
-          <Select
-            value={leadGrade || undefined}
-            placeholder="Grade"
-            allowClear
-            onChange={(val) => setFilter("lead_grade", val)}
-            disabled={disabled}
-            className="w-full"
-            options={[
-              { label: "Grade A (80+)", value: "A" },
-              { label: "Grade B (60-79)", value: "B" },
-              { label: "Grade C (40-59)", value: "C" },
-              { label: "Grade D (0-39)", value: "D" },
-            ]}
-          />
-          <fieldset><legend>Website</legend><Checkbox checked={hasWebsite === true} disabled={disabled} onChange={(event) => setFilter("has_website", event.target.checked ? true : undefined)}>Has website</Checkbox><Checkbox checked={hasWebsite === false} disabled={disabled} onChange={(event) => setFilter("has_website", event.target.checked ? false : undefined)}>No website</Checkbox></fieldset>
-          <fieldset><legend>Contact</legend><Checkbox checked={hasEmail} disabled={disabled} onChange={(event) => setFilter("has_email", event.target.checked ? true : undefined)}>Has email</Checkbox><Checkbox checked={hasPhone} disabled={disabled} onChange={(event) => setFilter("has_phone", event.target.checked ? true : undefined)}>Has phone</Checkbox></fieldset>
-          <div className="lf-filter-drawer-actions"><Button icon={<ClearOutlined aria-hidden />} onClick={resetFilters} disabled={disabled || activeCount === 0}>Reset</Button><Button type="primary" onClick={() => setMobileFiltersOpen(false)}>Show results</Button></div>
-        </div>
-      </Drawer>}
+      {mobileFiltersOpen && (
+        <Drawer
+          title="Filter businesses"
+          placement="right"
+          open
+          onClose={() => setMobileFiltersOpen(false)}
+          destroyOnHidden
+          className="lf-filter-drawer"
+        >
+          <div className="lf-filter-drawer-fields">
+            <DebouncedInput value={city} onCommit={(next) => setFilter("city", next)} placeholder="City" ariaLabel="Filter by city (exact match)" disabled={disabled} />
+            <DebouncedInput value={category} onCommit={(next) => setFilter("category", next)} placeholder="Category" ariaLabel="Filter by category (exact match)" disabled={disabled} />
+            <Select
+              value={leadGrade || undefined}
+              placeholder="Grade"
+              allowClear
+              onChange={(val) => setFilter("lead_grade", val)}
+              disabled={disabled}
+              className="w-full"
+              options={[
+                { label: "Grade A (80+)", value: "A" },
+                { label: "Grade B (60-79)", value: "B" },
+                { label: "Grade C (40-59)", value: "C" },
+                { label: "Grade D (0-39)", value: "D" },
+              ]}
+            />
+            <div>
+              <label className="text-xs font-semibold text-[var(--lf-text-muted)] mb-1 block">Tags</label>
+              <Select
+                mode="multiple"
+                value={tagList}
+                placeholder="Select tags"
+                allowClear
+                onChange={(vals: string[]) =>
+                  setFilter("tags", vals.length > 0 ? vals.join(",") : undefined)
+                }
+                disabled={disabled}
+                className="w-full"
+                options={tagOptions}
+              />
+            </div>
+            <fieldset><legend>Website</legend><Checkbox checked={hasWebsite === true} disabled={disabled} onChange={(event) => setFilter("has_website", event.target.checked ? true : undefined)}>Has website</Checkbox><Checkbox checked={hasWebsite === false} disabled={disabled} onChange={(event) => setFilter("has_website", event.target.checked ? false : undefined)}>No website</Checkbox></fieldset>
+            <fieldset><legend>Contact</legend><Checkbox checked={hasEmail} disabled={disabled} onChange={(event) => setFilter("has_email", event.target.checked ? true : undefined)}>Has email</Checkbox><Checkbox checked={hasPhone} disabled={disabled} onChange={(event) => setFilter("has_phone", event.target.checked ? true : undefined)}>Has phone</Checkbox></fieldset>
+            <div className="lf-filter-drawer-actions"><Button icon={<ClearOutlined aria-hidden />} onClick={resetFilters} disabled={disabled || activeCount === 0}>Reset</Button><Button type="primary" onClick={() => setMobileFiltersOpen(false)}>Show results</Button></div>
+          </div>
+        </Drawer>
+      )}
       {activeCount > 0 && totalItems !== undefined && (
         // Polite: the count changes as a result of a request completing, not
         // of the keystroke itself.

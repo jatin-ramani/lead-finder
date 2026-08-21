@@ -156,6 +156,15 @@ export async function post<T>(
   return response.data;
 }
 
+export async function patch<T>(
+  url: string,
+  body?: unknown,
+  config?: AxiosRequestConfig,
+): Promise<T> {
+  const response = await http.patch<T>(url, body, config);
+  return response.data;
+}
+
 export async function del<T>(
   url: string,
   config?: AxiosRequestConfig,

@@ -76,6 +76,28 @@ export interface ErrorEnvelope {
 // BUSINESSES
 // ===========================================================================
 
+export interface Tag {
+  id: number;
+  name: string;
+  slug: string;
+  business_count?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface TagListResponse {
+  success: boolean;
+  data: Tag[];
+}
+
+export interface BulkTagActionResponse {
+  success: boolean;
+  message: string;
+  tag?: Tag | null;
+  updated_count: number;
+  total_requested: number;
+}
+
 export interface Business {
   id: number;
   name: string;
@@ -89,6 +111,7 @@ export interface Business {
   lead_score?: number | null;
   lead_grade?: string | null;
   lead_score_reasons?: string[] | null;
+  tags?: Tag[];
 }
 
 export type BusinessListResponse = PaginatedResponse<Business>;
@@ -127,6 +150,7 @@ export interface BusinessQuery {
   lead_grade?: string;
   min_lead_score?: number;
   max_lead_score?: number;
+  tags?: string;
   sortBy?: BusinessSortField;
   sortOrder?: SortOrder;
 }
