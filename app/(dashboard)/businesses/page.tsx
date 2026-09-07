@@ -50,11 +50,7 @@ function BusinessesWorkspace() {
   const showCityList =
     !filters.city &&
     filters.view !== "all" &&
-    !filters.search &&
-    !filters.category &&
-    filters.hasWebsite === undefined &&
-    !filters.hasEmail &&
-    !filters.hasPhone;
+    !filters.hasActiveFilters;
 
   const {
     businesses,

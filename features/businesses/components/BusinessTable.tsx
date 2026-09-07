@@ -560,64 +560,87 @@ export default function BusinessTable({
       aria-busy={isRefetching || isLoading}
     >
       <div className="lf-mobile-business-list" aria-label="Businesses">
-        {businesses.map((business) => (
-          <article key={business.id} className="lf-mobile-business-card">
-            <div className="lf-mobile-business-head">
-              <Checkbox checked={selectedIds.includes(business.id)} aria-label={`Select ${business.name}`} onChange={(event) => onSelectionChange(event.target.checked ? [...selectedIds, business.id] : selectedIds.filter((id) => id !== business.id))} />
-              <button
-                type="button"
-                className={`lf-star-btn lf-mobile-star-btn ${business.is_favorite ? "lf-star-active" : ""}`}
-                aria-label={business.is_favorite ? `Unfavorite ${business.name}` : `Favorite ${business.name}`}
-                title={business.is_favorite ? "Starred favorite" : "Mark as favorite"}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleFavorite(business);
-                }}
-              >
-                {business.is_favorite ? (
-                  <StarFilled style={{ color: "#f59e0b", fontSize: 18 }} />
-                ) : (
-                  <StarOutlined style={{ color: "var(--lf-text-muted)", fontSize: 18 }} />
-                )}
-              </button>
-              <button type="button" className="lf-mobile-business-name" onClick={() => onView(business)}>{business.name}</button>
-              <Button type="text" icon={<EyeOutlined />} aria-label={`View ${business.name}`} onClick={() => onView(business)} />
-            </div>
-            <p className="lf-mobile-business-meta">{[business.city, business.category].filter(Boolean).join(" • ") || "Location not available"}</p>
-            <div className="flex items-center justify-between gap-2 my-2" onClick={(e) => e.stopPropagation()}>
-              <span className="text-xs font-semibold text-[var(--lf-text-muted)]">CRM Status:</span>
-              <Select
-                size="small"
-                value={business.lead_status || "new"}
-                className={`lf-status-select lf-status-select--${business.lead_status || "new"}`}
-                popupClassName="lf-status-select-popup"
-                onChange={(nextStatus: LeadStatus) => {
-                  updateStatusMutation.mutate({
-                    id: business.id,
-                    status: nextStatus,
-                  });
-                }}
-                options={LEAD_STATUS_OPTIONS}
-                aria-label={`Change lead status for ${business.name}`}
-              />
-            </div>
-            <div className="lf-mobile-business-contact">
-              <span className={isPresent(business.website) ? "is-available" : ""}>Website {isPresent(business.website) ? "available" : "missing"}</span>
-              <span className={isPresent(business.email) ? "is-available" : ""}>Email {isPresent(business.email) ? "available" : "missing"}</span>
-              <span className={isPresent(business.phone) ? "is-available" : ""}>Phone {isPresent(business.phone) ? "available" : "missing"}</span>
-            </div>
-            {business.tags && business.tags.length > 0 && (
-              <div className="flex items-center gap-1 flex-wrap mt-2">
-                {business.tags.map((t) => (
-                  <span key={t.id} className="lf-custom-tag-pill">
-                    {t.name}
-                  </span>
-                ))}
+        {!showSkeleton && businesses.length === 0 ? (
+          <div className="p-4">
+            <EmptyState
+              compact
+              title={
+                filters.hasActiveFilters
+                  ? "No matching businesses"
+                  : "No businesses yet"
+              }
+              description={
+                filters.hasActiveFilters
+                  ? "No business matches the current filters. Try widening your search."
+                  : "Nothing has been discovered yet. Run a scan to pull businesses into your workspace."
+              }
+              action={
+                filters.hasActiveFilters
+                  ? { label: "Clear filters", onClick: filters.resetFilters }
+                  : undefined
+              }
+            />
+          </div>
+        ) : (
+          businesses.map((business) => (
+            <article key={business.id} className="lf-mobile-business-card">
+              <div className="lf-mobile-business-head">
+                <Checkbox checked={selectedIds.includes(business.id)} aria-label={`Select ${business.name}`} onChange={(event) => onSelectionChange(event.target.checked ? [...selectedIds, business.id] : selectedIds.filter((id) => id !== business.id))} />
+                <button
+                  type="button"
+                  className={`lf-star-btn lf-mobile-star-btn ${business.is_favorite ? "lf-star-active" : ""}`}
+                  aria-label={business.is_favorite ? `Unfavorite ${business.name}` : `Favorite ${business.name}`}
+                  title={business.is_favorite ? "Starred favorite" : "Mark as favorite"}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleFavorite(business);
+                  }}
+                >
+                  {business.is_favorite ? (
+                    <StarFilled style={{ color: "#f59e0b", fontSize: 18 }} />
+                  ) : (
+                    <StarOutlined style={{ color: "var(--lf-text-muted)", fontSize: 18 }} />
+                  )}
+                </button>
+                <button type="button" className="lf-mobile-business-name" onClick={() => onView(business)}>{business.name}</button>
+                <Button type="text" icon={<EyeOutlined />} aria-label={`View ${business.name}`} onClick={() => onView(business)} />
               </div>
-            )}
-          </article>
-        ))}
-        {pagination && <Pagination current={pagination.page} pageSize={pagination.pageSize} total={pagination.totalItems} showSizeChanger={false} onChange={(page) => filters.setPage(page)} />}
+              <p className="lf-mobile-business-meta">{[business.city, business.category].filter(Boolean).join(" • ") || "Location not available"}</p>
+              <div className="flex items-center justify-between gap-2 my-2" onClick={(e) => e.stopPropagation()}>
+                <span className="text-xs font-semibold text-[var(--lf-text-muted)]">CRM Status:</span>
+                <Select
+                  size="small"
+                  value={business.lead_status || "new"}
+                  className={`lf-status-select lf-status-select--${business.lead_status || "new"}`}
+                  popupClassName="lf-status-select-popup"
+                  onChange={(nextStatus: LeadStatus) => {
+                    updateStatusMutation.mutate({
+                      id: business.id,
+                      status: nextStatus,
+                    });
+                  }}
+                  options={LEAD_STATUS_OPTIONS}
+                  aria-label={`Change lead status for ${business.name}`}
+                />
+              </div>
+              <div className="lf-mobile-business-contact">
+                <span className={isPresent(business.website) ? "is-available" : ""}>Website {isPresent(business.website) ? "available" : "missing"}</span>
+                <span className={isPresent(business.email) ? "is-available" : ""}>Email {isPresent(business.email) ? "available" : "missing"}</span>
+                <span className={isPresent(business.phone) ? "is-available" : ""}>Phone {isPresent(business.phone) ? "available" : "missing"}</span>
+              </div>
+              {business.tags && business.tags.length > 0 && (
+                <div className="flex items-center gap-1 flex-wrap mt-2">
+                  {business.tags.map((t) => (
+                    <span key={t.id} className="lf-custom-tag-pill">
+                      {t.name}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </article>
+          ))
+        )}
+        {pagination && businesses.length > 0 && <Pagination current={pagination.page} pageSize={pagination.pageSize} total={pagination.totalItems} showSizeChanger={false} onChange={(page) => filters.setPage(page)} />}
       </div>
 
       <Table<Business>

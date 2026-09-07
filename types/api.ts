@@ -230,6 +230,58 @@ export interface BulkLeadStatusResponse {
   status: string;
 }
 
+export type ActivityType =
+  | "business_created"
+  | "business_updated"
+  | "lead_created"
+  | "status_changed"
+  | "favorite_added"
+  | "favorite_removed"
+  | "tag_added"
+  | "tag_removed"
+  | "note_created"
+  | "note_updated"
+  | "note_deleted"
+  | "email_added"
+  | "phone_added"
+  | "website_added"
+  | "scrape_completed"
+  | "lead_scanned"
+  | "lead_scraped"
+  | "lead_enriched"
+  | "lead_score_changed"
+  | "follow_up_created"
+  | "follow_up_updated"
+  | "follow_up_completed"
+  | "follow_up_cancelled"
+  | "follow_up_deleted"
+  | "email_sent"
+  | "email_opened"
+  | "email_clicked"
+  | "campaign_added"
+  | "campaign_removed"
+  | "enrichment_completed"
+  | string;
+
+export interface BusinessActivity {
+  id: number;
+  business_id: number;
+  activity_type: ActivityType;
+  title: string;
+  description?: string | null;
+  metadata?: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface BusinessActivityListResponse {
+  success: boolean;
+  items: BusinessActivity[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages?: number;
+}
+
 export interface ContactQualification {
   has_email?: boolean;
   has_phone?: boolean;
@@ -499,3 +551,63 @@ export interface SystemInfoResponse {
   apiVersion: string;
   serverTime: string;
 }
+
+// ===========================================================================
+// CRM FOLLOW-UPS
+// ===========================================================================
+
+export type FollowUpStatus = "pending" | "completed" | "cancelled";
+export type FollowUpPriority = "low" | "medium" | "high";
+
+export interface BusinessFollowUp {
+  id: number;
+  business_id: number;
+  title: string;
+  description?: string | null;
+  due_at?: string | null;
+  completed_at?: string | null;
+  status: FollowUpStatus;
+  priority: FollowUpPriority;
+  is_overdue: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FollowUpListResponse {
+  success: boolean;
+  items: BusinessFollowUp[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
+
+export interface FollowUpSingleResponse {
+  success: boolean;
+  data: BusinessFollowUp;
+  message?: string;
+}
+
+export interface FollowUpCreateInput {
+  title: string;
+  description?: string;
+  due_at?: string | null;
+  priority?: FollowUpPriority;
+}
+
+export interface FollowUpUpdateInput {
+  title?: string;
+  description?: string | null;
+  due_at?: string | null;
+  priority?: FollowUpPriority;
+}
+
+export interface FollowUpFilterParams {
+  business_id?: number;
+  status?: FollowUpStatus;
+  priority?: FollowUpPriority;
+  overdue?: boolean;
+  page?: number;
+  page_size?: number;
+}
+

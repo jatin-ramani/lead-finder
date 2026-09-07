@@ -18,6 +18,7 @@ const FILTER_PARAMS = [
   "lead_status",
   "lead_grade",
   "min_lead_score",
+  "max_lead_score",
   "tags",
   "is_favorite",
   "view",
@@ -26,7 +27,7 @@ type FilterParam = (typeof FILTER_PARAMS)[number];
 
 function readInt(value: string | null, fallback: number) {
   const parsed = Number.parseInt(value ?? "", 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
 }
 function readBoolean(value: string | null): boolean | undefined {
   if (value === "true") return true;
@@ -40,13 +41,17 @@ function readSortBy(value: string | null): BusinessSortField {
 export interface UrlFilters {
   query: BusinessQuery & Required<Pick<BusinessQuery, "page" | "pageSize" | "sortBy" | "sortOrder">>;
   search: string; city: string; category: string; view: string;
-  hasWebsite: boolean | undefined; hasEmail: boolean; hasPhone: boolean;
+  hasWebsite: boolean | undefined; hasEmail: boolean | undefined; hasPhone: boolean | undefined;
   isFavorite: boolean | undefined;
   leadStatus: string;
-  leadGrade: string; minLeadScore: number | undefined; tags: string; tagList: string[];
+  leadGrade: string;
+  minLeadScore: number | undefined;
+  maxLeadScore: number | undefined;
+  tags: string; tagList: string[];
   page: number; pageSize: number; sortBy: BusinessSortField; sortOrder: SortOrder;
   activeCount: number; hasActiveFilters: boolean;
   setFilter: (key: FilterParam, value: string | boolean | number | undefined) => void;
+  setScoreRange: (min?: number, max?: number) => void;
   setPage: (page: number, pageSize?: number) => void;
   setSort: (sortBy: BusinessSortField, sortOrder: SortOrder) => void;
   resetFilters: () => void;
@@ -67,13 +72,15 @@ export function useUrlFilters(): UrlFilters {
   const category = params.get("category") ?? "";
   const view = params.get("view") ?? "";
   const hasWebsite = readBoolean(params.get("has_website"));
-  const hasEmail = readBoolean(params.get("has_email")) === true;
-  const hasPhone = readBoolean(params.get("has_phone")) === true;
+  const hasEmail = readBoolean(params.get("has_email"));
+  const hasPhone = readBoolean(params.get("has_phone"));
   const isFavorite = readBoolean(params.get("is_favorite"));
   const leadStatus = params.get("lead_status") ?? "";
   const leadGrade = params.get("lead_grade") ?? "";
   const rawMinScore = params.get("min_lead_score");
-  const minLeadScore = rawMinScore ? readInt(rawMinScore, 0) : undefined;
+  const minLeadScore = rawMinScore !== null ? readInt(rawMinScore, 0) : undefined;
+  const rawMaxScore = params.get("max_lead_score");
+  const maxLeadScore = rawMaxScore !== null ? readInt(rawMaxScore, 100) : undefined;
   const tags = params.get("tags") ?? "";
   const tagList = useMemo(() => (tags ? tags.split(",").map((t) => t.trim()).filter(Boolean) : []), [tags]);
   const page = readInt(params.get("page"), 1);
@@ -104,6 +111,10 @@ export function useUrlFilters(): UrlFilters {
     apply({ [key]: typeof value === "string" ? value.trim() || undefined : value, page: 1 }, key === "search" ? "replace" : "push");
   }, [apply]);
 
+  const setScoreRange = useCallback((min?: number, max?: number) => {
+    apply({ min_lead_score: min, max_lead_score: max, page: 1 }, "push");
+  }, [apply]);
+
   const setPage = useCallback((next: number, size?: number) => {
     apply({ page: next, ...(size === undefined ? {} : { pageSize: size }) }, "push");
   }, [apply]);
@@ -124,6 +135,7 @@ export function useUrlFilters(): UrlFilters {
       lead_status: undefined,
       lead_grade: undefined,
       min_lead_score: undefined,
+      max_lead_score: undefined,
       tags: undefined,
       view: undefined,
       page: 1,
@@ -141,14 +153,15 @@ export function useUrlFilters(): UrlFilters {
     ...(city && { city }),
     ...(category && { category }),
     ...(hasWebsite !== undefined && { has_website: hasWebsite }),
-    ...(hasEmail && { has_email: true }),
-    ...(hasPhone && { has_phone: true }),
+    ...(hasEmail !== undefined && { has_email: hasEmail }),
+    ...(hasPhone !== undefined && { has_phone: hasPhone }),
     ...(isFavorite !== undefined && { is_favorite: isFavorite }),
     ...(leadStatus && { lead_status: leadStatus }),
     ...(leadGrade && { lead_grade: leadGrade }),
     ...(minLeadScore !== undefined && { min_lead_score: minLeadScore }),
+    ...(maxLeadScore !== undefined && { max_lead_score: maxLeadScore }),
     ...(tags && { tags }),
-  }), [page, pageSize, sortBy, sortOrder, search, city, category, hasWebsite, hasEmail, hasPhone, isFavorite, leadStatus, leadGrade, minLeadScore, tags]);
+  }), [page, pageSize, sortBy, sortOrder, search, city, category, hasWebsite, hasEmail, hasPhone, isFavorite, leadStatus, leadGrade, minLeadScore, maxLeadScore, tags]);
 
   return {
     query,
@@ -163,6 +176,7 @@ export function useUrlFilters(): UrlFilters {
     leadStatus,
     leadGrade,
     minLeadScore,
+    maxLeadScore,
     tags,
     tagList,
     page,
@@ -172,6 +186,7 @@ export function useUrlFilters(): UrlFilters {
     activeCount,
     hasActiveFilters: activeCount > 0,
     setFilter,
+    setScoreRange,
     setPage,
     setSort,
     resetFilters,

@@ -65,6 +65,21 @@ export const queryKeys = {
     business: (id: number) => [...queryKeys.notes.all, "business", id] as const,
   },
 
+  activities: {
+    all: ["activities"] as const,
+    business: (id: number, page?: number, activityType?: string) =>
+      [...queryKeys.activities.all, "business", id, page, activityType] as const,
+  },
+
+  followUps: {
+    all: ["followUps"] as const,
+    business: (id: number, status?: string, priority?: string, overdue?: boolean, page?: number) =>
+      [...queryKeys.followUps.all, "business", id, status, priority, overdue, page] as const,
+    detail: (id: number) => [...queryKeys.followUps.all, "detail", id] as const,
+    global: (params?: Record<string, unknown>) =>
+      [...queryKeys.followUps.all, "global", params] as const,
+  },
+
   system: {
     all: ["system"] as const,
     health: () => [...queryKeys.system.all, "health"] as const,

@@ -25,6 +25,8 @@ function useInvalidateBusinesses() {
   return useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: queryKeys.businesses.all });
     void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.activities.all });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.followUps.all });
   }, [queryClient]);
 }
 

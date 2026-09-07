@@ -170,6 +170,38 @@ test.describe("Website Scraping Experience & Results E2E Suite", () => {
             },
           }),
         });
+      } else if (url.includes("/activities")) {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            success: true,
+            items: [],
+            total: 0,
+            page: 1,
+            page_size: 20,
+            total_pages: 1,
+          }),
+        });
+      } else if (url.includes("/notes")) {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            success: true,
+            data: [],
+            total: 0,
+          }),
+        });
+      } else if (url.includes("/tags")) {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            success: true,
+            data: [],
+          }),
+        });
       } else if (url.includes("/businesses/cities")) {
         await route.fulfill({
           status: 200,
