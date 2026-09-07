@@ -611,3 +611,135 @@ export interface FollowUpFilterParams {
   page_size?: number;
 }
 
+// ===========================================================================
+// EMAIL AUTOMATIONS
+// ===========================================================================
+
+export type AutomationTriggerType =
+  | "lead_created"
+  | "lead_status_changed"
+  | "follow_up_due"
+  | "follow_up_overdue";
+
+export type ExecutionStatus =
+  | "scheduled"
+  | "processing"
+  | "sent"
+  | "failed"
+  | "cancelled";
+
+export interface EmailAutomation {
+  id: number;
+  name: string;
+  description?: string | null;
+  trigger_type: AutomationTriggerType;
+  subject_template: string;
+  body_template: string;
+  enabled: boolean;
+  delay_minutes: number;
+  max_retries: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EmailAutomationExecution {
+  id: number;
+  automation_id: number;
+  business_id: number;
+  follow_up_id?: number | null;
+  status: ExecutionStatus;
+  trigger_event: string;
+  trigger_key: string;
+  recipient_email: string;
+  rendered_subject?: string | null;
+  rendered_body?: string | null;
+  provider?: string | null;
+  provider_message_id?: string | null;
+  error_message?: string | null;
+  retry_count: number;
+  next_retry_at?: string | null;
+  scheduled_at: string;
+  sent_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  automation_name?: string;
+  business_name?: string;
+}
+
+export interface SupportedVariable {
+  key: string;
+  label: string;
+  description: string;
+  example?: string | null;
+}
+
+export interface AutomationCreateInput {
+  name: string;
+  description?: string;
+  trigger_type: AutomationTriggerType;
+  subject_template: string;
+  body_template: string;
+  enabled?: boolean;
+  delay_minutes?: number;
+  max_retries?: number;
+}
+
+export interface AutomationUpdateInput {
+  name?: string;
+  description?: string | null;
+  trigger_type?: AutomationTriggerType;
+  subject_template?: string;
+  body_template?: string;
+  enabled?: boolean;
+  delay_minutes?: number;
+  max_retries?: number;
+}
+
+export interface AutomationListResponse {
+  success: boolean;
+  items: EmailAutomation[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
+
+export interface AutomationSingleResponse {
+  success: boolean;
+  data: EmailAutomation;
+  message?: string;
+}
+
+export interface ExecutionListResponse {
+  success: boolean;
+  items: EmailAutomationExecution[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
+
+export interface ProcessDueResponse {
+  success: boolean;
+  processed: number;
+  sent: number;
+  failed: number;
+  retried: number;
+  cancelled: number;
+}
+
+export interface AutomationFilterParams {
+  enabled?: boolean;
+  trigger_type?: AutomationTriggerType;
+  page?: number;
+  page_size?: number;
+}
+
+export interface ExecutionFilterParams {
+  automation_id?: number;
+  business_id?: number;
+  status?: ExecutionStatus;
+  page?: number;
+  page_size?: number;
+}
+

@@ -28,4 +28,5 @@ export * as tagsApi from "./tags";
 export * as notesApi from "./notes";
 export * as activitiesApi from "./activities";
 export * as followUpsApi from "./follow-ups";
+export * as automationsApi from "./automations";
 export * as systemApi from "./system";

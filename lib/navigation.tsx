@@ -2,6 +2,7 @@ import {
   ApiOutlined,
   DashboardOutlined,
   GlobalOutlined,
+  MailOutlined,
   RadarChartOutlined,
   ShopOutlined,
 } from "@ant-design/icons";
@@ -62,6 +63,14 @@ export const NAV_SECTIONS: NavSection[] = [
         icon: <GlobalOutlined />,
         title: "Website Scraper",
         subtitle: "Extract title, description, email addresses and social links",
+      },
+      {
+        key: "automations",
+        href: "/automations",
+        label: "Automations",
+        icon: <MailOutlined />,
+        title: "Email Automations",
+        subtitle: "Event-driven email workflows and dispatch tracking",
       },
     ],
   },

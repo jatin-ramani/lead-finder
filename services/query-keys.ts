@@ -80,6 +80,18 @@ export const queryKeys = {
       [...queryKeys.followUps.all, "global", params] as const,
   },
 
+  automations: {
+    all: ["automations"] as const,
+    list: (params?: Record<string, unknown>) =>
+      [...queryKeys.automations.all, "list", params] as const,
+    detail: (id: number) => [...queryKeys.automations.all, "detail", id] as const,
+    variables: () => [...queryKeys.automations.all, "variables"] as const,
+    executions: (params?: Record<string, unknown>) =>
+      [...queryKeys.automations.all, "executions", params] as const,
+    automationExecutions: (id: number, params?: Record<string, unknown>) =>
+      [...queryKeys.automations.all, "automationExecutions", id, params] as const,
+  },
+
   system: {
     all: ["system"] as const,
     health: () => [...queryKeys.system.all, "health"] as const,
