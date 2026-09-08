@@ -1,9 +1,11 @@
 import {
   ApiOutlined,
   DashboardOutlined,
+  FileTextOutlined,
   GlobalOutlined,
   MailOutlined,
   RadarChartOutlined,
+  SendOutlined,
   ShopOutlined,
 } from "@ant-design/icons";
 import type { ReactNode } from "react";
@@ -71,6 +73,22 @@ export const NAV_SECTIONS: NavSection[] = [
         icon: <MailOutlined />,
         title: "Email Automations",
         subtitle: "Event-driven email workflows and dispatch tracking",
+      },
+      {
+        key: "templates",
+        href: "/templates",
+        label: "Templates",
+        icon: <FileTextOutlined />,
+        title: "Email Templates",
+        subtitle: "Reusable email templates and dynamic variable layouts",
+      },
+      {
+        key: "campaigns",
+        href: "/campaigns",
+        label: "Campaigns",
+        icon: <SendOutlined />,
+        title: "Email Campaigns",
+        subtitle: "Targeted audience broadcasts and scheduled sequences",
       },
     ],
   },

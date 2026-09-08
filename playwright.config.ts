@@ -8,7 +8,7 @@ export default defineConfig({
   retries: 0,
   reporter: "line",
   use: {
-    baseURL: "http://127.0.0.1:3000",
+    baseURL: "http://127.0.0.1:3005",
     trace: "on-first-retry",
   },
   projects: [
@@ -35,8 +35,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "npm run dev -- -p 3000 -H 127.0.0.1",
-    url: "http://127.0.0.1:3000",
+    command: "npm run dev -- -p 3005 -H 127.0.0.1",
+    url: "http://127.0.0.1:3005",
     reuseExistingServer: true,
     timeout: 120 * 1000,
   },

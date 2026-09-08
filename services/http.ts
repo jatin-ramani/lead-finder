@@ -156,6 +156,15 @@ export async function post<T>(
   return response.data;
 }
 
+export async function put<T>(
+  url: string,
+  body?: unknown,
+  config?: AxiosRequestConfig,
+): Promise<T> {
+  const response = await http.put<T>(url, body, config);
+  return response.data;
+}
+
 export async function patch<T>(
   url: string,
   body?: unknown,

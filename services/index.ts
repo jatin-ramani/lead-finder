@@ -29,4 +29,7 @@ export * as notesApi from "./notes";
 export * as activitiesApi from "./activities";
 export * as followUpsApi from "./follow-ups";
 export * as automationsApi from "./automations";
+export * as templatesApi from "./templates";
+export * as campaignsApi from "./campaigns";
+export * as gmailApi from "./gmail";
 export * as systemApi from "./system";

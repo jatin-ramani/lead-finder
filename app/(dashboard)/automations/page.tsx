@@ -1,409 +1,371 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
+  App,
   Button,
   Card,
-  Col,
-  Empty,
-  Popconfirm,
-  Row,
-  Select,
   Space,
-  Statistic,
-  Switch,
-  Table,
-  Tag,
-  Tooltip,
   Typography,
 } from "antd";
 import {
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  CloseCircleOutlined,
-  DeleteOutlined,
-  EditOutlined,
   HistoryOutlined,
   MailOutlined,
-  PlusOutlined,
-  ReloadOutlined,
-  ThunderboltOutlined,
+  RocketOutlined,
 } from "@ant-design/icons";
 
 import type {
-  AutomationCreateInput,
-  AutomationFilterParams,
-  AutomationTriggerType,
-  AutomationUpdateInput,
-  EmailAutomation,
+  AIGradeTemplateItem,
+  CityAutomationStartInput,
 } from "@/types/api";
 import {
-  useAutomations,
-  useCreateAutomation,
-  useDeleteAutomation,
-  useExecutions,
-  useProcessDueExecutions,
-  useToggleAutomation,
-  useUpdateAutomation,
-} from "@/features/automations/hooks/useAutomations";
-import { AutomationModal } from "@/features/automations/components/AutomationModal";
-import { ExecutionLogsDrawer } from "@/features/automations/components/ExecutionLogsDrawer";
+  useAvailableCities,
+  useCancelCityAutomation,
+  useCityAutomationReport,
+  useCityStats,
+  useGenerateAITemplates,
+  useGenerateSingleTemplate,
+  useStartCityAutomation,
+} from "@/features/automations/hooks/useCityAutomations";
+import {
+  useDisconnectGmail,
+  useGmailAuthUrl,
+  useGmailStatus,
+  useSendGmailTestEmails,
+} from "@/features/automations/hooks/useGmailIntegration";
+import { GmailConnectionBanner } from "@/features/automations/components/GmailConnectionBanner";
+import { TestEmailSection } from "@/features/automations/components/TestEmailSection";
+import { CityAudienceCard } from "@/features/automations/components/CityAudienceCard";
+import { AITemplateCards } from "@/features/automations/components/AITemplateCards";
+import { TemplateEditorModal } from "@/features/automations/components/TemplateEditorModal";
+import { AutomationConfirmModal } from "@/features/automations/components/AutomationConfirmModal";
+import { AutomationProgressView } from "@/features/automations/components/AutomationProgressView";
+import { AutomationHistoryDrawer } from "@/features/automations/components/AutomationHistoryDrawer";
 
-const { Title, Text, Paragraph } = Typography;
-const { Option } = Select;
+const { Title, Paragraph } = Typography;
 
-const TRIGGER_BADGE_MAP: Record<
-  AutomationTriggerType,
-  { label: string; color: string }
-> = {
-  lead_created: { label: "Lead Created", color: "blue" },
-  lead_status_changed: { label: "Status Changed", color: "purple" },
-  follow_up_due: { label: "Follow-Up Due", color: "cyan" },
-  follow_up_overdue: { label: "Follow-Up Overdue", color: "volcano" },
-};
+export default function EmailAutomationPage() {
+  const { message } = App.useApp();
 
-export default function AutomationsPage() {
-  const [triggerFilter, setTriggerFilter] = useState<AutomationTriggerType | undefined>();
-  const [enabledFilter, setEnabledFilter] = useState<boolean | undefined>();
-  const [page, setPage] = useState(1);
-  const pageSize = 20;
+  // 1. Gmail API Integration Status & Actions
+  const { data: gmailStatus, isLoading: isLoadingGmail, refetch: refetchGmailStatus } = useGmailStatus();
+  const getAuthUrlMutation = useGmailAuthUrl();
+  const disconnectGmailMutation = useDisconnectGmail();
+  const sendTestEmailsMutation = useSendGmailTestEmails();
 
-  // Modal and Drawer states
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingAutomation, setEditingAutomation] = useState<EmailAutomation | null>(null);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [selectedForLogs, setSelectedForLogs] = useState<EmailAutomation | null>(null);
+  // Check URL query parameters for OAuth redirect feedback
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const urlParams = new URLSearchParams(window.location.search);
+    const connected = urlParams.get("gmail_connected");
+    const email = urlParams.get("email");
+    const error = urlParams.get("gmail_error");
 
-  // Queries
-  const filterParams: AutomationFilterParams = {
-    trigger_type: triggerFilter,
-    enabled: enabledFilter,
-    page,
-    page_size: pageSize,
-  };
-  const { data: automationsData, isLoading, isFetching, refetch } = useAutomations(filterParams);
-  const { data: globalExecutions } = useExecutions({ page: 1, page_size: 100 });
-
-  // Mutations
-  const createMutation = useCreateAutomation();
-  const updateMutation = useUpdateAutomation();
-  const toggleMutation = useToggleAutomation();
-  const deleteMutation = useDeleteAutomation();
-  const processDueMutation = useProcessDueExecutions();
-
-  const automations = automationsData?.items ?? [];
-  const totalAutomations = automationsData?.total ?? 0;
-
-  // Calculate high-level stats
-  const activeCount = automations.filter((a) => a.enabled).length;
-  const execItems = globalExecutions?.items ?? [];
-  const sentCount = execItems.filter((e) => e.status === "sent").length;
-  const scheduledCount = execItems.filter((e) => e.status === "scheduled").length;
-  const failedCount = execItems.filter((e) => e.status === "failed").length;
-
-  const handleOpenCreate = () => {
-    setEditingAutomation(null);
-    setIsModalOpen(true);
-  };
-
-  const handleOpenEdit = (auto: EmailAutomation) => {
-    setEditingAutomation(auto);
-    setIsModalOpen(true);
-  };
-
-  const handleOpenLogs = (auto: EmailAutomation | null = null) => {
-    setSelectedForLogs(auto);
-    setIsDrawerOpen(true);
-  };
-
-  const handleFormSubmit = async (
-    values: AutomationCreateInput | AutomationUpdateInput,
-  ) => {
-    if (editingAutomation) {
-      await updateMutation.mutateAsync({
-        id: editingAutomation.id,
-        payload: values,
-      });
-    } else {
-      await createMutation.mutateAsync(values as AutomationCreateInput);
+    if (connected === "true") {
+      message.success(`Gmail account (${email || "authorized"}) successfully connected!`);
+      void refetchGmailStatus();
+      window.history.replaceState({}, "", window.location.pathname);
+    } else if (error) {
+      message.error(`Gmail connection failed: ${error}`);
+      window.history.replaceState({}, "", window.location.pathname);
     }
-    setIsModalOpen(false);
+  }, [message, refetchGmailStatus]);
+
+  const handleConnectGmail = async () => {
+    try {
+      const res = await getAuthUrlMutation.mutateAsync();
+      if (res.auth_url) {
+        window.location.href = res.auth_url;
+      }
+    } catch {
+      // Handled by hook error toast
+    }
   };
 
-  const columns = [
-    {
-      title: "Automation Rule",
-      dataIndex: "name",
-      key: "name",
-      render: (name: string, record: EmailAutomation) => (
-        <div className="space-y-1 max-w-xs">
-          <div className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-            <span>{name}</span>
-            {!record.enabled && <Tag color="default">Paused</Tag>}
-          </div>
-          {record.description && (
-            <div className="text-xs text-gray-500 line-clamp-1">
-              {record.description}
-            </div>
-          )}
-        </div>
-      ),
+  const handleDisconnectGmail = async () => {
+    await disconnectGmailMutation.mutateAsync();
+  };
+
+  // 2. City selection & stats
+  const { data: citiesData, isLoading: isLoadingCities } = useAvailableCities();
+  const cities = citiesData?.items || [];
+
+  const [selectedCityState, setSelectedCityState] = useState<string | undefined>();
+  const selectedCity = selectedCityState || (cities.length > 0 ? cities[0].city : undefined);
+
+  const { data: stats, isLoading: isLoadingStats } = useCityStats(selectedCity);
+
+  // 3. AI Grade Templates state
+  const [gradeTemplates, setGradeTemplates] = useState<Record<string, AIGradeTemplateItem> | null>(null);
+  const [generatingGrade, setGeneratingGrade] = useState<string | null>(null);
+
+  // Clear templates when city changes
+  const handleCityChange = (city: string) => {
+    setSelectedCityState(city);
+    setGradeTemplates(null);
+  };
+
+  const generateAllMutation = useGenerateAITemplates();
+  const generateSingleMutation = useGenerateSingleTemplate();
+  const startAutomationMutation = useStartCityAutomation();
+  const cancelAutomationMutation = useCancelCityAutomation();
+
+  // Template Editor Modal
+  const [editingGrade, setEditingGrade] = useState<string | null>(null);
+
+  // Confirm Launch Modal
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+
+  // History Drawer
+  const [historyDrawerOpen, setHistoryDrawerOpen] = useState(false);
+
+  // Active Report View (if user launched or clicked a previous run)
+  const [activeReportId, setActiveReportId] = useState<number | null>(null);
+
+  const {
+    data: reportData,
+    isLoading: isLoadingReport,
+    refetch: refetchReport,
+  } = useCityAutomationReport(activeReportId, {
+    refetchInterval: (query: { state: { data?: { data?: { status?: string } } } }) => {
+      const st = query.state.data?.data?.status;
+      return st === "running" ? 2500 : false;
     },
-    {
-      title: "Trigger Event",
-      dataIndex: "trigger_type",
-      key: "trigger_type",
-      render: (trigger: AutomationTriggerType) => {
-        const badge = TRIGGER_BADGE_MAP[trigger] || { label: trigger, color: "blue" };
-        return <Tag color={badge.color}>{badge.label}</Tag>;
+  });
+
+  const handleGenerateAll = async () => {
+    if (!selectedCity) return;
+    try {
+      const res = await generateAllMutation.mutateAsync({ city: selectedCity });
+      if (res.success && res.data) {
+        setGradeTemplates(res.data);
+        message.success(`Generated 4 tailored AI email templates for ${selectedCity}!`);
+      }
+    } catch {
+      // Handled by hook error toast
+    }
+  };
+
+  const handleRegenerateSingle = async (grade: string) => {
+    if (!selectedCity) return;
+    setGeneratingGrade(grade);
+    try {
+      const res = await generateSingleMutation.mutateAsync({
+        grade,
+        city: selectedCity,
+      });
+      if (res.success && res.data) {
+        setGradeTemplates((prev) => ({
+          ...(prev || {}),
+          [grade]: res.data,
+        }));
+        message.success(`Regenerated Grade ${grade} template!`);
+      }
+    } finally {
+      setGeneratingGrade(null);
+    }
+  };
+
+  const handleSaveEditedTemplate = (grade: string, updated: AIGradeTemplateItem) => {
+    setGradeTemplates((prev) => ({
+      ...(prev || {}),
+      [grade]: updated,
+    }));
+    message.success(`Grade ${grade} template updated!`);
+  };
+
+  const handleStartAutomation = async () => {
+    if (!selectedCity || !gradeTemplates) return;
+
+    const payload: CityAutomationStartInput = {
+      city: selectedCity,
+      name: `Email Automation — ${selectedCity}`,
+      templates: {
+        A: {
+          subject: gradeTemplates.A?.subject || `Partnership for {{business_name}}`,
+          body: gradeTemplates.A?.body || `Hello {{contact_name}},\n\nConnecting from ${selectedCity}.`,
+          name: `Email Automation — ${selectedCity} (Grade A)`,
+        },
+        B: {
+          subject: gradeTemplates.B?.subject || `Solutions for {{business_name}}`,
+          body: gradeTemplates.B?.body || `Hello {{contact_name}},\n\nConnecting from ${selectedCity}.`,
+          name: `Email Automation — ${selectedCity} (Grade B)`,
+        },
+        C: {
+          subject: gradeTemplates.C?.subject || `Consultation for {{business_name}}`,
+          body: gradeTemplates.C?.body || `Hello {{contact_name}},\n\nConnecting from ${selectedCity}.`,
+          name: `Email Automation — ${selectedCity} (Grade C)`,
+        },
+        D: {
+          subject: gradeTemplates.D?.subject || `Intro for {{business_name}}`,
+          body: gradeTemplates.D?.body || `Hello {{contact_name}},\n\nConnecting from ${selectedCity}.`,
+          name: `Email Automation — ${selectedCity} (Grade D)`,
+        },
       },
-    },
-    {
-      title: "Subject Template",
-      dataIndex: "subject_template",
-      key: "subject_template",
-      render: (subject: string) => (
-        <div className="font-mono text-xs text-gray-700 dark:text-gray-300 max-w-sm truncate" title={subject}>
-          {subject}
-        </div>
-      ),
-    },
-    {
-      title: "Delay",
-      dataIndex: "delay_minutes",
-      key: "delay_minutes",
-      render: (mins: number) => (
-        <Space size={4}>
-          <ClockCircleOutlined className="text-gray-400" />
-          <span className="text-xs text-gray-600 dark:text-gray-400">
-            {mins === 0 ? "Immediate" : `${mins}m delay`}
-          </span>
-        </Space>
-      ),
-    },
-    {
-      title: "Status",
-      dataIndex: "enabled",
-      key: "enabled",
-      render: (enabled: boolean, record: EmailAutomation) => (
-        <Switch
-          checked={enabled}
-          loading={toggleMutation.isPending && toggleMutation.variables?.id === record.id}
-          onChange={(checked) =>
-            toggleMutation.mutate({ id: record.id, enabled: checked })
-          }
-          checkedChildren="Active"
-          unCheckedChildren="Paused"
+    };
+
+    try {
+      const res = await startAutomationMutation.mutateAsync(payload);
+      setConfirmModalOpen(false);
+      if (res.data?.id) {
+        setActiveReportId(res.data.id);
+      }
+    } catch {
+      // Error handled by hook toast
+    }
+  };
+
+  const handleCancelRun = async (campaignId: number) => {
+    await cancelAutomationMutation.mutateAsync(campaignId);
+    void refetchReport();
+  };
+
+  const eligibleCount = stats?.email_eligible_leads ?? 0;
+  const hasTemplates = Boolean(gradeTemplates && Object.keys(gradeTemplates).length > 0);
+
+  // If viewing an active run report
+  if (activeReportId && reportData?.data) {
+    return (
+      <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-6">
+        <AutomationProgressView
+          report={reportData.data}
+          isLoading={isLoadingReport}
+          onRefresh={() => void refetchReport()}
+          onCancelRun={handleCancelRun}
+          isCancelling={cancelAutomationMutation.isPending}
+          onStartNew={() => setActiveReportId(null)}
+          ineligibleLeadsCount={stats?.ineligible_leads ?? 0}
         />
-      ),
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      render: (_: unknown, record: EmailAutomation) => (
-        <Space size="small">
-          <Tooltip title="View execution history">
-            <Button
-              size="small"
-              icon={<HistoryOutlined />}
-              onClick={() => handleOpenLogs(record)}
-            >
-              Logs
-            </Button>
-          </Tooltip>
-          <Tooltip title="Edit automation">
-            <Button
-              size="small"
-              icon={<EditOutlined />}
-              onClick={() => handleOpenEdit(record)}
-            />
-          </Tooltip>
-          <Popconfirm
-            title="Delete Automation"
-            description="Are you sure you want to delete this automation and its scheduled executions?"
-            onConfirm={() => deleteMutation.mutate(record.id)}
-            okText="Delete"
-            cancelText="Cancel"
-            okButtonProps={{ danger: true }}
-          >
-            <Button size="small" danger icon={<DeleteOutlined />} aria-label="Delete automation" />
-          </Popconfirm>
-        </Space>
-      ),
-    },
-  ];
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto p-4 sm:p-6">
-      {/* Top Header Banner */}
+    <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-6">
+      {/* Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <Title level={2} className="!mb-1 flex items-center gap-2">
-            <MailOutlined className="text-blue-500" />
-            Email Automations
+          <Title level={2} className="!mb-1 flex items-center gap-2.5">
+            <MailOutlined className="text-blue-600" />
+            <span>Email Automation</span>
           </Title>
           <Paragraph type="secondary" className="!mb-0 text-sm">
-            Event-driven email campaigns triggered by lead discovery, follow-ups, and CRM status changes.
+            Launch grade-tailored outreach campaigns for leads across target cities with Gmail API delivery.
           </Paragraph>
         </div>
 
-        <Space wrap>
-          <Button
-            icon={<HistoryOutlined />}
-            onClick={() => handleOpenLogs(null)}
-          >
-            All Dispatch Logs
-          </Button>
-          <Button
-            icon={<ThunderboltOutlined />}
-            loading={processDueMutation.isPending}
-            onClick={() => processDueMutation.mutate(50)}
-          >
-            Process Queue Now
-          </Button>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={handleOpenCreate}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            New Automation
-          </Button>
-        </Space>
+        <Button
+          icon={<HistoryOutlined />}
+          onClick={() => setHistoryDrawerOpen(true)}
+          className="shadow-sm"
+        >
+          Previous Automations
+        </Button>
       </div>
 
-      {/* KPI Overview Cards */}
-      <Row gutter={[16, 16]}>
-        <Col xs={12} sm={6}>
-          <Card size="small" className="border border-gray-200 dark:border-gray-800 shadow-sm">
-            <Statistic
-              title={<Text type="secondary">Active Rules</Text>}
-              value={activeCount}
-              suffix={`/ ${totalAutomations}`}
-              valueStyle={{ color: "#1890ff" }}
-              prefix={<ThunderboltOutlined />}
-            />
-          </Card>
-        </Col>
-        <Col xs={12} sm={6}>
-          <Card size="small" className="border border-gray-200 dark:border-gray-800 shadow-sm">
-            <Statistic
-              title={<Text type="secondary">Emails Sent</Text>}
-              value={sentCount}
-              valueStyle={{ color: "#52c41a" }}
-              prefix={<CheckCircleOutlined />}
-            />
-          </Card>
-        </Col>
-        <Col xs={12} sm={6}>
-          <Card size="small" className="border border-gray-200 dark:border-gray-800 shadow-sm">
-            <Statistic
-              title={<Text type="secondary">Scheduled / Due</Text>}
-              value={scheduledCount}
-              valueStyle={{ color: "#faad14" }}
-              prefix={<ClockCircleOutlined />}
-            />
-          </Card>
-        </Col>
-        <Col xs={12} sm={6}>
-          <Card size="small" className="border border-gray-200 dark:border-gray-800 shadow-sm">
-            <Statistic
-              title={<Text type="secondary">Failed / Retries</Text>}
-              value={failedCount}
-              valueStyle={{ color: failedCount > 0 ? "#ff4d4f" : undefined }}
-              prefix={<CloseCircleOutlined />}
-            />
-          </Card>
-        </Col>
-      </Row>
-
-      {/* Main Table Card with Filter Bar */}
-      <Card
-        className="border border-gray-200 dark:border-gray-800 shadow-sm"
-        title={
-          <div className="flex flex-wrap items-center justify-between gap-3 py-1">
-            <Space wrap>
-              <Select
-                placeholder="Filter by Trigger"
-                allowClear
-                style={{ width: 180 }}
-                value={triggerFilter}
-                onChange={(val) => {
-                  setTriggerFilter(val);
-                  setPage(1);
-                }}
-              >
-                <Option value="lead_created">Lead Created</Option>
-                <Option value="lead_status_changed">Status Changed</Option>
-                <Option value="follow_up_due">Follow-Up Due</Option>
-                <Option value="follow_up_overdue">Follow-Up Overdue</Option>
-              </Select>
-
-              <Select
-                placeholder="Filter by State"
-                allowClear
-                style={{ width: 140 }}
-                value={enabledFilter}
-                onChange={(val) => {
-                  setEnabledFilter(val);
-                  setPage(1);
-                }}
-              >
-                <Option value={true}>Active Only</Option>
-                <Option value={false}>Paused Only</Option>
-              </Select>
-            </Space>
-
-            <Button
-              icon={<ReloadOutlined spin={isFetching} />}
-              onClick={() => void refetch()}
-              size="small"
-            >
-              Refresh
-            </Button>
-          </div>
-        }
-      >
-        <Table
-          columns={columns}
-          dataSource={automations}
-          rowKey="id"
-          loading={isLoading}
-          pagination={{
-            current: page,
-            pageSize,
-            total: totalAutomations,
-            onChange: (p) => setPage(p),
-            showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} rules`,
-          }}
-          locale={{
-            emptyText: (
-              <Empty
-                image={Empty.PRESENTED_IMAGE_SIMPLE}
-                description="No email automations configured yet. Create one to start automated outreach!"
-              >
-                <Button type="primary" onClick={handleOpenCreate} icon={<PlusOutlined />}>
-                  Create First Automation
-                </Button>
-              </Empty>
-            ),
-          }}
-        />
-      </Card>
-
-      {/* Modals & Drawers */}
-      <AutomationModal
-        open={isModalOpen}
-        editingAutomation={editingAutomation}
-        onCancel={() => setIsModalOpen(false)}
-        onSubmit={handleFormSubmit}
-        isSubmitting={createMutation.isPending || updateMutation.isPending}
+      {/* Gmail API Connection & Quota Status */}
+      <GmailConnectionBanner
+        status={gmailStatus}
+        isLoading={isLoadingGmail}
+        onConnect={handleConnectGmail}
+        isConnecting={getAuthUrlMutation.isPending}
+        onDisconnect={handleDisconnectGmail}
+        isDisconnecting={disconnectGmailMutation.isPending}
       />
 
-      <ExecutionLogsDrawer
-        open={isDrawerOpen}
-        automation={selectedForLogs}
-        onClose={() => setIsDrawerOpen(false)}
+      {/* Workflow Step 1: City & Audience */}
+      <CityAudienceCard
+        cities={cities}
+        isLoadingCities={isLoadingCities}
+        selectedCity={selectedCity}
+        onSelectCity={handleCityChange}
+        stats={stats}
+        isLoadingStats={isLoadingStats}
+      />
+
+      {/* Workflow Step 2: AI Email Templates by Grade */}
+      {selectedCity && (
+        <AITemplateCards
+          city={selectedCity}
+          templates={gradeTemplates}
+          isGeneratingAll={generateAllMutation.isPending}
+          generatingGrade={generatingGrade}
+          onGenerateAll={handleGenerateAll}
+          onRegenerateGrade={handleRegenerateSingle}
+          onEditGrade={(g) => setEditingGrade(g)}
+        />
+      )}
+
+      {/* Test Email Sending Section */}
+      <TestEmailSection
+        gmailStatus={gmailStatus}
+        isLoadingStatus={isLoadingGmail}
+        onConnectGmail={handleConnectGmail}
+        isConnectingGmail={getAuthUrlMutation.isPending}
+        onSendTestEmails={(payload) => sendTestEmailsMutation.mutateAsync(payload)}
+        isSending={sendTestEmailsMutation.isPending}
+      />
+
+      {/* Workflow Step 3: Start Automation Action Bar */}
+      {selectedCity && (
+        <Card className="border border-gray-200 dark:border-gray-800 shadow-sm rounded-xl bg-gradient-to-r from-gray-50 to-blue-50/30 dark:from-gray-900 dark:to-blue-950/20">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div className="font-bold text-base text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                <RocketOutlined className="text-blue-600" />
+                <span>Ready to Launch Automation for {selectedCity}?</span>
+              </div>
+              <p className="text-xs text-gray-500 !mb-0 mt-0.5">
+                {hasTemplates
+                  ? `${eligibleCount} email-eligible lead${eligibleCount === 1 ? "" : "s"} will receive personalized grade-tailored emails.`
+                  : "Generate AI email templates above to enable campaign launch."}
+              </p>
+            </div>
+
+            <Space>
+              <Button
+                type="primary"
+                size="large"
+                icon={<RocketOutlined />}
+                disabled={!hasTemplates || eligibleCount === 0 || !gmailStatus?.is_connected}
+                onClick={() => setConfirmModalOpen(true)}
+                className="bg-emerald-600 hover:bg-emerald-700 border-none shadow-md font-semibold px-8 h-11"
+              >
+                Start Automation
+              </Button>
+            </Space>
+          </div>
+        </Card>
+      )}
+
+      {/* Modals & Drawers */}
+      {editingGrade && selectedCity && (
+        <TemplateEditorModal
+          open={Boolean(editingGrade)}
+          grade={editingGrade}
+          cityName={selectedCity}
+          template={gradeTemplates?.[editingGrade] || null}
+          onCancel={() => setEditingGrade(null)}
+          onSave={handleSaveEditedTemplate}
+        />
+      )}
+
+      {confirmModalOpen && selectedCity && gradeTemplates && (
+        <AutomationConfirmModal
+          open={confirmModalOpen}
+          city={selectedCity}
+          stats={stats}
+          templates={gradeTemplates}
+          onCancel={() => setConfirmModalOpen(false)}
+          onConfirm={handleStartAutomation}
+          isStarting={startAutomationMutation.isPending}
+        />
+      )}
+
+      <AutomationHistoryDrawer
+        open={historyDrawerOpen}
+        onClose={() => setHistoryDrawerOpen(false)}
+        onSelectRun={(id) => setActiveReportId(id)}
       />
     </div>
   );

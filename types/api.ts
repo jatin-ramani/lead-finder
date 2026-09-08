@@ -743,3 +743,410 @@ export interface ExecutionFilterParams {
   page_size?: number;
 }
 
+// City-First Grade Automation Types
+export interface CityStatItem {
+  city: string;
+  total_leads: number;
+  eligible_leads: number;
+  ineligible_leads: number;
+}
+
+export interface CityStatListResponse {
+  success: boolean;
+  items: CityStatItem[];
+}
+
+export interface GradeStatDetail {
+  total: number;
+  eligible: number;
+  ineligible: number;
+}
+
+export interface CityGradeStatsResponse {
+  success: boolean;
+  city: string;
+  total_leads: number;
+  email_eligible_leads: number;
+  ineligible_leads: number;
+  grades: {
+    A: GradeStatDetail;
+    B: GradeStatDetail;
+    C: GradeStatDetail;
+    D: GradeStatDetail;
+    [key: string]: GradeStatDetail;
+  };
+}
+
+export interface AIGradeTemplateItem {
+  subject: string;
+  body: string;
+  rationale?: string;
+  name?: string;
+}
+
+export interface AIGradeTemplatesResponse {
+  success: boolean;
+  city: string;
+  data: {
+    A: AIGradeTemplateItem;
+    B: AIGradeTemplateItem;
+    C: AIGradeTemplateItem;
+    D: AIGradeTemplateItem;
+    [key: string]: AIGradeTemplateItem;
+  };
+}
+
+export interface AISingleTemplateResponse {
+  success: boolean;
+  grade: string;
+  data: AIGradeTemplateItem;
+}
+
+export interface GradeTemplatePayload {
+  subject: string;
+  body: string;
+  name?: string;
+}
+
+export interface CityAutomationStartInput {
+  city: string;
+  templates: {
+    A: GradeTemplatePayload;
+    B: GradeTemplatePayload;
+    C: GradeTemplatePayload;
+    D: GradeTemplatePayload;
+    [key: string]: GradeTemplatePayload;
+  };
+  name?: string;
+  scheduled_at?: string | null;
+}
+
+export interface GradeBreakdownStats {
+  total: number;
+  sent: number;
+  failed: number;
+  pending: number;
+  cancelled: number;
+}
+
+export interface RecipientExecutionLogItem {
+  id: number;
+  business_id: number;
+  business_name: string;
+  recipient_email: string;
+  lead_grade: string;
+  status: string;
+  error_message?: string | null;
+  sent_at?: string | null;
+  attempted_at?: string | null;
+}
+
+export interface CityAutomationReportData {
+  id: number;
+  name: string;
+  city: string;
+  status: string;
+  recipient_count: number;
+  sent_count: number;
+  failed_count: number;
+  pending_count: number;
+  cancelled_count: number;
+  scheduled_at?: string | null;
+  started_at?: string | null;
+  completed_at?: string | null;
+  created_at: string;
+  grade_breakdown: {
+    A: GradeBreakdownStats;
+    B: GradeBreakdownStats;
+    C: GradeBreakdownStats;
+    D: GradeBreakdownStats;
+    [key: string]: GradeBreakdownStats;
+  };
+  recipient_logs: RecipientExecutionLogItem[];
+}
+
+export interface CityAutomationReportResponse {
+  success: boolean;
+  data: CityAutomationReportData;
+  message?: string;
+}
+
+export interface CityAutomationRunItem {
+  id: number;
+  name: string;
+  city: string;
+  status: string;
+  recipient_count: number;
+  sent_count: number;
+  failed_count: number;
+  created_at: string;
+  completed_at?: string | null;
+}
+
+export interface CityAutomationListResponse {
+  success: boolean;
+  items: CityAutomationRunItem[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
+
+
+
+// ===========================================================================
+// EMAIL TEMPLATES & CAMPAIGNS (PHASE 5)
+// ===========================================================================
+
+export interface EmailTemplate {
+  id: number;
+  name: string;
+  description?: string | null;
+  subject: string;
+  body: string;
+  is_archived: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TemplateCreateInput {
+  name: string;
+  description?: string;
+  subject: string;
+  body: string;
+}
+
+export interface TemplateUpdateInput {
+  name?: string;
+  description?: string | null;
+  subject?: string;
+  body?: string;
+  is_archived?: boolean;
+}
+
+export interface TemplateListResponse {
+  success: boolean;
+  items: EmailTemplate[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
+
+export interface TemplateSingleResponse {
+  success: boolean;
+  data: EmailTemplate;
+  message?: string;
+}
+
+export interface TemplatePreviewRequest {
+  subject?: string;
+  body?: string;
+  template_id?: number;
+  business_id?: number;
+  custom_context?: Record<string, unknown>;
+}
+
+export interface TemplatePreviewResponse {
+  success: boolean;
+  rendered_subject: string;
+  rendered_body: string;
+  context_used: Record<string, unknown>;
+}
+
+export type CampaignStatus =
+  | "draft"
+  | "scheduled"
+  | "running"
+  | "completed"
+  | "failed"
+  | "cancelled";
+
+export type CampaignRecipientStatus =
+  | "pending"
+  | "processing"
+  | "sent"
+  | "failed"
+  | "cancelled";
+
+export interface CampaignFilterCriteria {
+  search?: string;
+  city?: string;
+  category?: string;
+  has_website?: boolean;
+  has_email?: boolean;
+  has_phone?: boolean;
+  lead_grade?: string;
+  min_lead_score?: number;
+  max_lead_score?: number;
+  tags?: string;
+  is_favorite?: boolean;
+  lead_status?: string;
+  business_ids?: number[];
+}
+
+export interface EmailCampaign {
+  id: number;
+  name: string;
+  description?: string | null;
+  template_id: number;
+  template_name?: string | null;
+  status: CampaignStatus;
+  filter_criteria: CampaignFilterCriteria;
+  recipient_count: number;
+  sent_count: number;
+  failed_count: number;
+  scheduled_at?: string | null;
+  started_at?: string | null;
+  completed_at?: string | null;
+  snapshot_at?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EmailCampaignRecipient {
+  id: number;
+  campaign_id: number;
+  business_id: number;
+  business_name?: string | null;
+  recipient_email: string;
+  recipient_name?: string | null;
+  status: CampaignRecipientStatus;
+  attempt_count: number;
+  error_message?: string | null;
+  provider_message_id?: string | null;
+  sent_at?: string | null;
+  attempted_at?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CampaignCreateInput {
+  name: string;
+  description?: string;
+  template_id: number;
+  filter_criteria?: CampaignFilterCriteria;
+  scheduled_at?: string | null;
+}
+
+export interface CampaignUpdateInput {
+  name?: string;
+  description?: string | null;
+  template_id?: number;
+  filter_criteria?: CampaignFilterCriteria;
+  scheduled_at?: string | null;
+}
+
+export interface CampaignListResponse {
+  success: boolean;
+  items: EmailCampaign[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
+
+export interface CampaignSingleResponse {
+  success: boolean;
+  data: EmailCampaign;
+  message?: string;
+}
+
+export interface CampaignRecipientListResponse {
+  success: boolean;
+  items: EmailCampaignRecipient[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
+
+export interface RecipientPreviewResponse {
+  success: boolean;
+  total_eligible_leads: number;
+  sample_leads: Array<{
+    id: number;
+    name: string;
+    email: string | null;
+    city: string | null;
+    category: string | null;
+    lead_grade: string | null;
+    lead_score: number | null;
+    lead_status: string | null;
+  }>;
+}
+
+export interface TemplateFilterParams {
+  search?: string;
+  is_archived?: boolean;
+  page?: number;
+  page_size?: number;
+}
+
+export interface CampaignFilterParams {
+  search?: string;
+  status?: CampaignStatus;
+  template_id?: number;
+  page?: number;
+  page_size?: number;
+}
+
+export interface CampaignRecipientFilterParams {
+  status?: CampaignRecipientStatus;
+  page?: number;
+  page_size?: number;
+}
+
+export interface ProcessDueCampaignsResponse {
+  success: boolean;
+  campaigns_processed: number;
+  recipients_sent: number;
+  recipients_failed: number;
+  campaigns_completed: number;
+}
+
+// ===========================================================================
+// GMAIL INTEGRATION & TEST SEND
+// ===========================================================================
+
+export interface GmailStatusResponse {
+  success: boolean;
+  is_configured: boolean;
+  is_connected: boolean;
+  email_address: string | null;
+  daily_send_count: number;
+  daily_quota_limit: number;
+  daily_quota_remaining: number;
+  token_expiry: string | null;
+}
+
+export interface GmailAuthUrlResponse {
+  success: boolean;
+  auth_url: string;
+  state: string;
+  redirect_uri: string;
+}
+
+export interface GmailTestSendRequest {
+  recipient_email: string;
+  template_grades: string[];
+}
+
+export interface GmailTestItemResult {
+  grade: string;
+  status: "sent" | "failed" | "skipped";
+  subject: string;
+  message_id?: string | null;
+  error?: string | null;
+  sent_at?: string | null;
+}
+
+export interface GmailTestSendResponse {
+  success: boolean;
+  recipient_email: string;
+  total: number;
+  sent: number;
+  failed: number;
+  skipped: number;
+  results: GmailTestItemResult[];
+}

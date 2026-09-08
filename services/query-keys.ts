@@ -90,6 +90,35 @@ export const queryKeys = {
       [...queryKeys.automations.all, "executions", params] as const,
     automationExecutions: (id: number, params?: Record<string, unknown>) =>
       [...queryKeys.automations.all, "automationExecutions", id, params] as const,
+    cities: () => [...queryKeys.automations.all, "cities"] as const,
+    cityStats: (city: string) => [...queryKeys.automations.all, "cityStats", city] as const,
+    runs: (params?: Record<string, unknown>) =>
+      [...queryKeys.automations.all, "runs", params] as const,
+    runReport: (id: number) => [...queryKeys.automations.all, "runReport", id] as const,
+  },
+
+  templates: {
+    all: ["templates"] as const,
+    list: (params?: Record<string, unknown>) =>
+      [...queryKeys.templates.all, "list", params] as const,
+    detail: (id: number) => [...queryKeys.templates.all, "detail", id] as const,
+    variables: () => [...queryKeys.templates.all, "variables"] as const,
+  },
+
+  campaigns: {
+    all: ["campaigns"] as const,
+    list: (params?: Record<string, unknown>) =>
+      [...queryKeys.campaigns.all, "list", params] as const,
+    detail: (id: number) => [...queryKeys.campaigns.all, "detail", id] as const,
+    recipients: (id: number, params?: Record<string, unknown>) =>
+      [...queryKeys.campaigns.all, id, "recipients", params] as const,
+    previewRecipients: (criteria: Record<string, unknown>) =>
+      [...queryKeys.campaigns.all, "preview-recipients", criteria] as const,
+  },
+
+  gmail: {
+    all: ["gmail"] as const,
+    status: () => [...queryKeys.gmail.all, "status"] as const,
   },
 
   system: {

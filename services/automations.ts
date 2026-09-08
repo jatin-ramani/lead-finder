@@ -109,3 +109,84 @@ export function processDueExecutions(
     params: { limit },
   });
 }
+
+// ===========================================================================
+// City-First Grade Automation API Methods
+// ===========================================================================
+
+export function getAvailableCities(
+  signal?: AbortSignal,
+): Promise<import("@/types/api").CityStatListResponse> {
+  return get<import("@/types/api").CityStatListResponse>("/automations/cities", { signal });
+}
+
+export function getCityStats(
+  city: string,
+  signal?: AbortSignal,
+): Promise<import("@/types/api").CityGradeStatsResponse> {
+  return get<import("@/types/api").CityGradeStatsResponse>("/automations/city-stats", {
+    params: { city },
+    signal,
+  });
+}
+
+export function generateAITemplates(
+  city: string,
+  industry?: string,
+): Promise<import("@/types/api").AIGradeTemplatesResponse> {
+  return post<import("@/types/api").AIGradeTemplatesResponse>(
+    "/automations/generate-templates",
+    { city, industry },
+  );
+}
+
+export function generateSingleTemplate(
+  grade: string,
+  city: string,
+  industry?: string,
+): Promise<import("@/types/api").AISingleTemplateResponse> {
+  return post<import("@/types/api").AISingleTemplateResponse>(
+    "/automations/generate-single-template",
+    { grade, city, industry },
+  );
+}
+
+export function startCityAutomation(
+  payload: import("@/types/api").CityAutomationStartInput,
+): Promise<import("@/types/api").CityAutomationReportResponse> {
+  return post<import("@/types/api").CityAutomationReportResponse>(
+    "/automations/start-city-automation",
+    payload,
+  );
+}
+
+export function getCityAutomationRuns(
+  page: number = 1,
+  pageSize: number = 20,
+  signal?: AbortSignal,
+): Promise<import("@/types/api").CityAutomationListResponse> {
+  return get<import("@/types/api").CityAutomationListResponse>("/automations/runs", {
+    params: { page, page_size: pageSize },
+    signal,
+  });
+}
+
+export function getCityAutomationReport(
+  id: number,
+  signal?: AbortSignal,
+): Promise<import("@/types/api").CityAutomationReportResponse> {
+  return get<import("@/types/api").CityAutomationReportResponse>(
+    `/automations/runs/${id}`,
+    { signal },
+  );
+}
+
+export function cancelCityAutomation(
+  id: number,
+): Promise<import("@/types/api").CityAutomationReportResponse> {
+  return post<import("@/types/api").CityAutomationReportResponse>(
+    `/automations/runs/${id}/cancel`,
+    undefined,
+  );
+}
+
