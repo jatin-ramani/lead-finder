@@ -135,6 +135,15 @@ export default function TemplatesPage() {
   const templatesList = data?.items || [];
   const totalCount = data?.total || 0;
 
+  const getGradeTag = (name: string, desc?: string | null) => {
+    const text = `${name} ${desc || ""}`.toUpperCase();
+    if (text.includes("GRADE A")) return <Tag color="gold" className="font-semibold">Grade A</Tag>;
+    if (text.includes("GRADE B")) return <Tag color="blue" className="font-semibold">Grade B</Tag>;
+    if (text.includes("GRADE C")) return <Tag color="cyan" className="font-semibold">Grade C</Tag>;
+    if (text.includes("GRADE D")) return <Tag color="default" className="font-semibold">Grade D</Tag>;
+    return null;
+  };
+
   const columns: ColumnsType<EmailTemplate> = [
     {
       title: "Template Name",
@@ -142,10 +151,11 @@ export default function TemplatesPage() {
       key: "name",
       render: (name: string, record: EmailTemplate) => (
         <div>
-          <Space>
+          <Space wrap size={6}>
             <Text strong className="text-gray-800 dark:text-gray-100">
               {name}
             </Text>
+            {getGradeTag(record.name, record.description)}
             {record.is_archived && <Tag color="default">Archived</Tag>}
           </Space>
           {record.description && (

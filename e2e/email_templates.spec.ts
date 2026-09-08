@@ -10,20 +10,40 @@ import { authenticatePlaywright } from "./support/auth";
 let mockTemplates: EmailTemplate[] = [
   {
     id: 1,
-    name: "Cold Dental Outreach",
-    description: "Introductory email for newly scanned clinics",
-    subject: "Growth opportunity for {{business_name}}",
-    body: "Hi {{contact_name}},\n\nWe saw {{business_name}} is expanding in your area.",
+    name: "Grade A — High Priority Lead",
+    description: "Default outreach template for Grade A (High Priority) leads.",
+    subject: "Partnership opportunity for {{business_name}}",
+    body: "<p>Hi {{contact_name}},</p><p>Growth opportunity for {{business_name}}.</p>",
     is_archived: false,
     created_at: "2026-09-08T10:00:00Z",
     updated_at: "2026-09-08T10:00:00Z",
   },
   {
     id: 2,
-    name: "Follow-up Audit Presentation",
-    description: "Follow-up pitch for qualified prospects",
-    subject: "Audit review for {{business_name}}",
-    body: "Hi,\n\nFollowing up on our website audit for {{business_name}}.",
+    name: "Grade B — Good Lead",
+    description: "Default outreach template for Grade B (Good) leads.",
+    subject: "Growth ideas for {{business_name}}",
+    body: "<p>Hi {{contact_name}},</p><p>Review for {{business_name}}.</p>",
+    is_archived: false,
+    created_at: "2026-09-08T10:00:00Z",
+    updated_at: "2026-09-08T10:00:00Z",
+  },
+  {
+    id: 3,
+    name: "Grade C — Potential Lead",
+    description: "Default outreach template for Grade C (Potential) leads.",
+    subject: "Quick question regarding {{business_name}}",
+    body: "<p>Hello {{contact_name}},</p><p>Digital visibility check for {{business_name}}.</p>",
+    is_archived: false,
+    created_at: "2026-09-08T10:00:00Z",
+    updated_at: "2026-09-08T10:00:00Z",
+  },
+  {
+    id: 4,
+    name: "Grade D — Low Priority Lead",
+    description: "Default outreach template for Grade D (Low Priority) leads.",
+    subject: "Exploring opportunities for {{business_name}}",
+    body: "<p>Hi {{contact_name}},</p><p>Exploring opportunities for {{business_name}}.</p>",
     is_archived: false,
     created_at: "2026-09-08T10:00:00Z",
     updated_at: "2026-09-08T10:00:00Z",
@@ -216,20 +236,40 @@ test.describe("Phase 5: Email Templates E2E Suite", () => {
     mockTemplates = [
       {
         id: 1,
-        name: "Cold Dental Outreach",
-        description: "Introductory email for newly scanned clinics",
-        subject: "Growth opportunity for {{business_name}}",
-        body: "Hi {{contact_name}},\n\nWe saw {{business_name}} is expanding in your area.",
+        name: "Grade A — High Priority Lead",
+        description: "Default outreach template for Grade A (High Priority) leads.",
+        subject: "Partnership opportunity for {{business_name}}",
+        body: "<p>Hi {{contact_name}},</p><p>Growth opportunity for {{business_name}}.</p>",
         is_archived: false,
         created_at: "2026-09-08T10:00:00Z",
         updated_at: "2026-09-08T10:00:00Z",
       },
       {
         id: 2,
-        name: "Follow-up Audit Presentation",
-        description: "Follow-up pitch for qualified prospects",
-        subject: "Audit review for {{business_name}}",
-        body: "Hi,\n\nFollowing up on our website audit for {{business_name}}.",
+        name: "Grade B — Good Lead",
+        description: "Default outreach template for Grade B (Good) leads.",
+        subject: "Growth ideas for {{business_name}}",
+        body: "<p>Hi {{contact_name}},</p><p>Review for {{business_name}}.</p>",
+        is_archived: false,
+        created_at: "2026-09-08T10:00:00Z",
+        updated_at: "2026-09-08T10:00:00Z",
+      },
+      {
+        id: 3,
+        name: "Grade C — Potential Lead",
+        description: "Default outreach template for Grade C (Potential) leads.",
+        subject: "Quick question regarding {{business_name}}",
+        body: "<p>Hello {{contact_name}},</p><p>Digital visibility check for {{business_name}}.</p>",
+        is_archived: false,
+        created_at: "2026-09-08T10:00:00Z",
+        updated_at: "2026-09-08T10:00:00Z",
+      },
+      {
+        id: 4,
+        name: "Grade D — Low Priority Lead",
+        description: "Default outreach template for Grade D (Low Priority) leads.",
+        subject: "Exploring opportunities for {{business_name}}",
+        body: "<p>Hi {{contact_name}},</p><p>Exploring opportunities for {{business_name}}.</p>",
         is_archived: false,
         created_at: "2026-09-08T10:00:00Z",
         updated_at: "2026-09-08T10:00:00Z",
@@ -258,12 +298,20 @@ test.describe("Phase 5: Email Templates E2E Suite", () => {
     await expect(page.locator("text=Supported Placeholders")).toBeVisible();
   });
 
-  test("Templates table lists templates with actions", async ({ page }) => {
+  test("Templates table lists default grade templates with grade badges", async ({ page }) => {
     await page.goto("/templates");
     await page.waitForLoadState("networkidle");
 
-    await expect(page.locator("text=Cold Dental Outreach")).toBeVisible();
-    await expect(page.locator("text=Follow-up Audit Presentation")).toBeVisible();
+    await expect(page.locator("text=Grade A — High Priority Lead")).toBeVisible();
+    await expect(page.locator("text=Grade B — Good Lead")).toBeVisible();
+    await expect(page.locator("text=Grade C — Potential Lead")).toBeVisible();
+    await expect(page.locator("text=Grade D — Low Priority Lead")).toBeVisible();
+
+    // Verify Grade badges
+    await expect(page.locator(".ant-tag:has-text('Grade A')")).toBeVisible();
+    await expect(page.locator(".ant-tag:has-text('Grade B')")).toBeVisible();
+    await expect(page.locator(".ant-tag:has-text('Grade C')")).toBeVisible();
+    await expect(page.locator(".ant-tag:has-text('Grade D')")).toBeVisible();
   });
 
   test("Create new email template modal with variable helper and live preview", async ({ page }) => {
@@ -301,20 +349,20 @@ test.describe("Phase 5: Email Templates E2E Suite", () => {
     await page.goto("/templates");
     await page.waitForLoadState("networkidle");
 
-    const row = page.locator("tr:has-text('Cold Dental Outreach')");
+    const row = page.locator("tr:has-text('Grade A — High Priority Lead')");
     const previewBtn = row.locator("button").first();
     await previewBtn.click({ force: true });
 
     const previewModal = page.locator(".ant-modal");
     await expect(previewModal).toBeVisible();
-    await expect(previewModal.getByText("Template Preview: Cold Dental Outreach")).toBeVisible();
+    await expect(previewModal.getByText("Template Preview: Grade A — High Priority Lead")).toBeVisible();
   });
 
   test("Archive toggle and delete actions", async ({ page }) => {
     await page.goto("/templates");
     await page.waitForLoadState("networkidle");
 
-    const row = page.locator("tr:has-text('Follow-up Audit Presentation')");
+    const row = page.locator("tr:has-text('Grade D — Low Priority Lead')");
     const deleteBtn = row.locator("button.ant-btn-dangerous");
     await deleteBtn.click({ force: true });
 
@@ -322,6 +370,6 @@ test.describe("Phase 5: Email Templates E2E Suite", () => {
     await expect(popconfirm).toBeVisible();
     await popconfirm.getByRole("button", { name: /Yes, Delete/i }).click({ force: true });
 
-    await expect(page.getByText("Follow-up Audit Presentation")).not.toBeVisible();
+    await expect(page.getByText("Grade D — Low Priority Lead")).not.toBeVisible();
   });
 });
