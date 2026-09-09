@@ -190,3 +190,13 @@ export function cancelCityAutomation(
   );
 }
 
+export function resumeCityAutomation(
+  id: number,
+): Promise<import("@/types/api").CityAutomationReportResponse> {
+  return post<import("@/types/api").CityAutomationReportResponse>(
+    `/automations/runs/${id}/resume`,
+    undefined,
+  );
+}
+
+

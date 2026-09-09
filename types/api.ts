@@ -826,7 +826,9 @@ export interface GradeBreakdownStats {
   sent: number;
   failed: number;
   pending: number;
+  processing?: number;
   cancelled: number;
+  skipped?: number;
 }
 
 export interface RecipientExecutionLogItem {
@@ -850,7 +852,11 @@ export interface CityAutomationReportData {
   sent_count: number;
   failed_count: number;
   pending_count: number;
+  processing_count?: number;
   cancelled_count: number;
+  skipped_count?: number;
+  percentage?: number;
+  paused_reason?: string | null;
   scheduled_at?: string | null;
   started_at?: string | null;
   completed_at?: string | null;

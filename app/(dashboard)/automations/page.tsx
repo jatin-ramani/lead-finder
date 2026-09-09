@@ -25,6 +25,7 @@ import {
   useCityStats,
   useGenerateAITemplates,
   useGenerateSingleTemplate,
+  useResumeCityAutomation,
   useStartCityAutomation,
 } from "@/features/automations/hooks/useCityAutomations";
 import {
@@ -109,6 +110,7 @@ export default function EmailAutomationPage() {
   const generateSingleMutation = useGenerateSingleTemplate();
   const startAutomationMutation = useStartCityAutomation();
   const cancelAutomationMutation = useCancelCityAutomation();
+  const resumeAutomationMutation = useResumeCityAutomation();
 
   // Template Editor Modal
   const [editingGrade, setEditingGrade] = useState<string | null>(null);
@@ -120,7 +122,29 @@ export default function EmailAutomationPage() {
   const [historyDrawerOpen, setHistoryDrawerOpen] = useState(false);
 
   // Active Report View (if user launched or clicked a previous run)
-  const [activeReportId, setActiveReportId] = useState<number | null>(null);
+  const [activeReportId, setActiveReportIdState] = useState<number | null>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("leadfinder_active_automation_id");
+      if (saved) {
+        const parsed = parseInt(saved, 10);
+        if (!isNaN(parsed) && parsed > 0) {
+          return parsed;
+        }
+      }
+    }
+    return null;
+  });
+
+  const setActiveReportId = (id: number | null) => {
+    setActiveReportIdState(id);
+    if (typeof window !== "undefined") {
+      if (id) {
+        localStorage.setItem("leadfinder_active_automation_id", id.toString());
+      } else {
+        localStorage.removeItem("leadfinder_active_automation_id");
+      }
+    }
+  };
 
   const {
     data: reportData,
@@ -129,7 +153,7 @@ export default function EmailAutomationPage() {
   } = useCityAutomationReport(activeReportId, {
     refetchInterval: (query: { state: { data?: { data?: { status?: string } } } }) => {
       const st = query.state.data?.data?.status;
-      return st === "running" ? 2500 : false;
+      return st === "running" || st === "processing" ? 2500 : false;
     },
   });
 
@@ -220,6 +244,11 @@ export default function EmailAutomationPage() {
     void refetchReport();
   };
 
+  const handleResumeRun = async (campaignId: number) => {
+    await resumeAutomationMutation.mutateAsync(campaignId);
+    void refetchReport();
+  };
+
   const eligibleCount = stats?.email_eligible_leads ?? 0;
   const hasTemplates = Boolean(gradeTemplates && Object.keys(gradeTemplates).length > 0);
 
@@ -232,9 +261,10 @@ export default function EmailAutomationPage() {
           isLoading={isLoadingReport}
           onRefresh={() => void refetchReport()}
           onCancelRun={handleCancelRun}
+          onResumeRun={handleResumeRun}
           isCancelling={cancelAutomationMutation.isPending}
+          isResuming={resumeAutomationMutation.isPending}
           onStartNew={() => setActiveReportId(null)}
-          ineligibleLeadsCount={stats?.ineligible_leads ?? 0}
         />
       </div>
     );

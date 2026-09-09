@@ -117,3 +117,21 @@ export function useCancelCityAutomation() {
     },
   });
 }
+
+export function useResumeCityAutomation() {
+  const { message } = App.useApp();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: number) => automationsApi.resumeCityAutomation(id),
+    onSuccess: () => {
+      message.success("Automation run resumed");
+      void queryClient.invalidateQueries({ queryKey: queryKeys.automations.all });
+    },
+    onError: (err) => {
+      const msg = isApiError(err) ? err.message : "Failed to resume automation";
+      message.error(msg);
+    },
+  });
+}
+

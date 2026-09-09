@@ -36,14 +36,17 @@ interface AutomationProgressViewProps {
   isLoading: boolean;
   onRefresh: () => void;
   onCancelRun: (id: number) => void;
+  onResumeRun?: (id: number) => void;
   isCancelling: boolean;
+  isResuming?: boolean;
   onStartNew: () => void;
-  ineligibleLeadsCount?: number;
 }
 
 const STATUS_TAG_MAP: Record<string, { color: string; label: string }> = {
   running: { color: "processing", label: "Running" },
+  paused: { color: "warning", label: "Paused" },
   completed: { color: "success", label: "Completed" },
+  completed_with_errors: { color: "warning", label: "Completed with Errors" },
   cancelled: { color: "default", label: "Cancelled" },
   failed: { color: "error", label: "Failed" },
   scheduled: { color: "warning", label: "Scheduled" },
@@ -55,18 +58,22 @@ export const AutomationProgressView: React.FC<AutomationProgressViewProps> = ({
   isLoading,
   onRefresh,
   onCancelRun,
+  onResumeRun,
   isCancelling,
+  isResuming = false,
   onStartNew,
-  ineligibleLeadsCount = 0,
 }) => {
   const [filterFailedOnly, setFilterFailedOnly] = useState(false);
 
   const total = report.recipient_count;
   const sent = report.sent_count;
   const failed = report.failed_count;
-  const processed = sent + failed;
-  const percent = total > 0 ? Math.round((processed / total) * 100) : 100;
+  const pending = report.pending_count;
+  const processing = report.processing_count || 0;
+  const processed = sent + failed + report.cancelled_count + (report.skipped_count || 0);
+  const percent = report.percentage ?? (total > 0 ? Math.round((processed / total) * 100) : 100);
   const isRunning = report.status === "running";
+  const isPaused = report.status === "paused";
   const isScheduled = report.status === "scheduled";
   const statusBadge = STATUS_TAG_MAP[report.status] || {
     color: "default",
@@ -135,6 +142,32 @@ export const AutomationProgressView: React.FC<AutomationProgressViewProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* Paused Alert Banner */}
+      {isPaused && (
+        <Card className="border border-amber-300 bg-amber-50 dark:bg-amber-950/30 rounded-xl">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div className="font-bold text-amber-900 dark:text-amber-200 text-sm">
+                Automation Paused
+              </div>
+              <div className="text-xs text-amber-800 dark:text-amber-300 mt-0.5">
+                {report.paused_reason || "Sending was paused. Pending items are safely preserved in queue."}
+              </div>
+            </div>
+            {onResumeRun && (
+              <Button
+                type="primary"
+                loading={isResuming}
+                onClick={() => onResumeRun(report.id)}
+                className="bg-amber-600 hover:bg-amber-700 font-semibold"
+              >
+                Resume Automation
+              </Button>
+            )}
+          </div>
+        </Card>
+      )}
+
       {/* Header Banner */}
       <Card className="border border-gray-200 dark:border-gray-800 shadow-sm rounded-xl">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -159,7 +192,7 @@ export const AutomationProgressView: React.FC<AutomationProgressViewProps> = ({
             <Button icon={<ReloadOutlined />} onClick={onRefresh} loading={isLoading}>
               Refresh
             </Button>
-            {(isRunning || isScheduled) && (
+            {(isRunning || isScheduled || isPaused) && (
               <Popconfirm
                 title="Cancel Automation"
                 description="Stop all pending emails for this automation run?"
@@ -224,22 +257,22 @@ export const AutomationProgressView: React.FC<AutomationProgressViewProps> = ({
           </Card>
         </Col>
         <Col xs={12} sm={6}>
+          <Card size="small" className="border border-gray-200 dark:border-gray-800 shadow-sm text-center bg-blue-50/40 dark:bg-blue-950/20">
+            <Statistic
+              title={<span className="text-xs text-blue-700 dark:text-blue-400">Pending / Queue</span>}
+              value={pending + processing}
+              valueStyle={{ fontWeight: 700, color: "#2563eb" }}
+              prefix={<SyncOutlined spin={isRunning} />}
+            />
+          </Card>
+        </Col>
+        <Col xs={12} sm={6}>
           <Card size="small" className="border border-gray-200 dark:border-gray-800 shadow-sm text-center bg-red-50/40 dark:bg-red-950/20">
             <Statistic
               title={<span className="text-xs text-red-700 dark:text-red-400">Failed</span>}
               value={failed}
               valueStyle={{ fontWeight: 700, color: failed > 0 ? "#ef4444" : "#6b7280" }}
               prefix={<CloseCircleOutlined />}
-            />
-          </Card>
-        </Col>
-        <Col xs={12} sm={6}>
-          <Card size="small" className="border border-gray-200 dark:border-gray-800 shadow-sm text-center bg-amber-50/40 dark:bg-amber-950/20">
-            <Statistic
-              title={<span className="text-xs text-amber-700 dark:text-amber-400">Skipped (No Email)</span>}
-              value={ineligibleLeadsCount}
-              valueStyle={{ fontWeight: 700, color: "#f59e0b" }}
-              prefix={<StopOutlined />}
             />
           </Card>
         </Col>
@@ -252,7 +285,7 @@ export const AutomationProgressView: React.FC<AutomationProgressViewProps> = ({
       >
         <Row gutter={[16, 16]}>
           {["A", "B", "C", "D"].map((grade) => {
-            const g = report.grade_breakdown?.[grade] || { total: 0, sent: 0, failed: 0, pending: 0 };
+            const g = report.grade_breakdown?.[grade] || { total: 0, sent: 0, failed: 0, pending: 0, processing: 0 };
             return (
               <Col xs={24} sm={12} md={6} key={grade}>
                 <div className="p-3.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-900/60 space-y-2">
@@ -271,12 +304,12 @@ export const AutomationProgressView: React.FC<AutomationProgressViewProps> = ({
                       <span className="font-semibold text-emerald-600">{g.sent}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Failed:</span>
-                      <span className="font-semibold text-red-500">{g.failed}</span>
+                      <span>Pending:</span>
+                      <span className="font-semibold text-blue-600">{g.pending + (g.processing || 0)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Pending:</span>
-                      <span className="font-semibold text-gray-500">{g.pending}</span>
+                      <span>Failed:</span>
+                      <span className="font-semibold text-red-500">{g.failed}</span>
                     </div>
                   </div>
                 </div>

@@ -158,6 +158,21 @@ async function mockCityAutomationRoutes(page: Page) {
       return;
     }
 
+    if (pathname === "/integrations/gmail/status" && method === "GET") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          is_connected: true,
+          email: "connected@example.com",
+          daily_quota_used: 10,
+          daily_quota_limit: 400,
+        }),
+      });
+      return;
+    }
+
     if (pathname === "/automations/cities" && method === "GET") {
       await route.fulfill({
         status: 200,
