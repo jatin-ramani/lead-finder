@@ -4,6 +4,8 @@ import {
   CheckCircleFilled,
   CloseCircleFilled,
   LoadingOutlined,
+  PauseCircleOutlined,
+  StopOutlined,
 } from "@ant-design/icons";
 import { Skeleton, Table, Tag, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
@@ -14,7 +16,7 @@ import ErrorState from "@/components/feedback/ErrorState";
 import Panel from "@/components/Panel";
 import type { ScanJob } from "@/types/api";
 
-import { isRunning } from "../hooks/useScanJobs";
+import { isPaused, isRunning } from "../hooks/useScanJobs";
 
 const { Text } = Typography;
 
@@ -28,38 +30,43 @@ interface ScanHistoryProps {
 function StatusTag({ status }: { status: string }) {
   if (isRunning(status)) {
     return (
-      <Tag color="processing" icon={<LoadingOutlined />} className="lf-tag">
-        Running
+      <Tag color="processing" icon={<LoadingOutlined />} className="lf-tag font-medium">
+        Scanning
+      </Tag>
+    );
+  }
+
+  if (isPaused(status)) {
+    return (
+      <Tag color="warning" icon={<PauseCircleOutlined />} className="lf-tag font-medium">
+        Paused
       </Tag>
     );
   }
 
   if (status === "Completed") {
     return (
-      <Tag color="success" icon={<CheckCircleFilled />} className="lf-tag">
+      <Tag color="success" icon={<CheckCircleFilled />} className="lf-tag font-medium">
         Completed
       </Tag>
     );
   }
 
+  if (status === "Cancelled") {
+    return (
+      <Tag color="default" icon={<StopOutlined />} className="lf-tag font-medium">
+        Cancelled
+      </Tag>
+    );
+  }
+
   return (
-    <Tag color="error" icon={<CloseCircleFilled />} className="lf-tag">
+    <Tag color="error" icon={<CloseCircleFilled />} className="lf-tag font-medium">
       {status}
     </Tag>
   );
 }
 
-/**
- * Every scan ever run, newest first.
- *
- * **Ordered by id, not by time.** Scan jobs carry no timestamp of any kind, so
- * there is no "3 minutes ago" column and none is invented. Job number is the
- * only ordering the backend actually provides.
- *
- * Paginated in the browser, unusually for this app: `GET /scan/jobs` returns
- * every job in one response and offers no page parameters, so there is nothing
- * to ask the server for.
- */
 export default function ScanHistory({
   jobs,
   isLoading,
@@ -72,8 +79,8 @@ export default function ScanHistory({
         title: "Job",
         dataIndex: "id",
         key: "id",
-        width: 88,
-        render: (id: number) => <Text className="lf-mono">#{id}</Text>,
+        width: 80,
+        render: (id: number) => <Text className="lf-mono font-medium">#{id}</Text>,
       },
       {
         title: "City",
@@ -84,41 +91,74 @@ export default function ScanHistory({
           city ? <strong>{city}</strong> : <Text type="secondary">—</Text>,
       },
       {
-        title: "Category",
+        title: "Category Family",
         dataIndex: "category",
         key: "category",
         ellipsis: true,
-        render: (category: string | null) =>
-          category ?? <Text type="secondary">—</Text>,
+        render: (category: string | null, record: ScanJob) => (
+          <div className="flex flex-col">
+            <span className="capitalize font-medium">{record.categoryFamily ?? category ?? "—"}</span>
+            {record.scanRadiusKm && (
+              <span className="text-[11px] text-[var(--lf-text-muted)]">{record.scanRadiusKm} km radius</span>
+            )}
+          </div>
+        ),
       },
       {
         title: "Status",
         dataIndex: "status",
         key: "status",
-        width: 140,
+        width: 130,
         render: (status: string) => <StatusTag status={status} />,
       },
       {
-        title: "Results",
-        dataIndex: "total_businesses",
-        key: "total_businesses",
-        width: 110,
-        align: "end",
-        render: (value: number) => (
-          <span className="lf-num">{value.toLocaleString()}</span>
+        title: "Cells / Progress",
+        key: "progress",
+        width: 140,
+        render: (_, record: ScanJob) => (
+          <div className="flex flex-col text-xs">
+            <span className="font-mono">{record.progress}%</span>
+            {record.totalCells ? (
+              <span className="text-[11px] text-[var(--lf-text-muted)]">
+                {record.completedCells} / {record.totalCells} cells
+              </span>
+            ) : null}
+          </div>
         ),
       },
       {
-        title: "New",
-        dataIndex: "new_businesses",
-        key: "new_businesses",
-        width: 100,
+        title: "Found",
+        key: "found",
+        width: 90,
         align: "end",
-        render: (value: number) => (
-          <span className={`lf-num ${value > 0 ? "lf-num--accent" : ""}`}>
-            {value.toLocaleString()}
-          </span>
-        ),
+        render: (_, record: ScanJob) => {
+          const val = record.businessesFound ?? record.total_businesses ?? 0;
+          return <span className="lf-num">{val.toLocaleString()}</span>;
+        },
+      },
+      {
+        title: "Stored Leads",
+        key: "stored",
+        width: 110,
+        align: "end",
+        render: (_, record: ScanJob) => {
+          const val = record.businessesStored ?? record.new_businesses ?? 0;
+          return (
+            <span className={`lf-num font-bold ${val > 0 ? "text-[var(--lf-success)]" : ""}`}>
+              {val.toLocaleString()}
+            </span>
+          );
+        },
+      },
+      {
+        title: "Skipped",
+        key: "skipped",
+        width: 90,
+        align: "end",
+        render: (_, record: ScanJob) => {
+          const val = record.businessesSkippedNoContact ?? 0;
+          return <span className="lf-num text-[var(--lf-text-muted)]">{val.toLocaleString()}</span>;
+        },
       },
     ],
     [],
@@ -126,8 +166,8 @@ export default function ScanHistory({
 
   return (
     <Panel
-      title="Scan history"
-      description="Every scan run so far, newest first"
+      title="Continuous Scan History"
+      description="Record of multi-cell geographic continuous scans"
       flush
     >
       {isLoading ? (
@@ -151,13 +191,12 @@ export default function ScanHistory({
           size="middle"
           className="lf-table"
           rowClassName={() => "lf-table-row lf-table-row--static"}
-          scroll={{ x: 720 }}
+          scroll={{ x: 800 }}
           pagination={
             jobs.length > 10
               ? {
                   pageSize: 10,
                   showSizeChanger: false,
-                  className: "lf-pagination",
                   showTotal: (total) => `${total} scans`,
                 }
               : false
@@ -166,8 +205,8 @@ export default function ScanHistory({
             emptyText: (
               <EmptyState
                 compact
-                title="No scans yet"
-                description="Run your first scan to start discovering businesses."
+                title="No scans executed yet"
+                description="Run your first scan above to start continuous multi-cell business discovery."
               />
             ),
           }}
@@ -176,3 +215,4 @@ export default function ScanHistory({
     </Panel>
   );
 }
+

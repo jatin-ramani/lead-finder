@@ -4,14 +4,15 @@ import { App } from "antd";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { ErrorCode, errorTitle, isApiError, queryKeys, scanningApi } from "@/services";
+import { errorTitle, isApiError, queryKeys, scanningApi } from "@/services";
 import type { ScanRequest } from "@/types/api";
 
-import { isRunning, useLatestScanJob } from "./useScanJobs";
+import { isPaused, isRunning, useLatestScanJob } from "./useScanJobs";
 
 export interface ScanAttempt {
   city: string;
   category: string;
+  radius_km?: number;
 }
 
 export function useScanRunner() {
@@ -31,54 +32,123 @@ export function useScanRunner() {
     void queryClient.invalidateQueries({ queryKey: queryKeys.scanJobs.latest() });
   }, [queryClient]);
 
+  // Start continuous scan mutation
   const mutation = useMutation({
     mutationFn: (body: ScanRequest) => scanningApi.startScan(body),
 
     onMutate: (body) => {
       setLastAttempt(body);
-      setWatching(false);
+      setWatching(true);
       void queryClient.invalidateQueries({ queryKey: queryKeys.scanJobs.all });
       void queryClient.invalidateQueries({ queryKey: queryKeys.scanJobs.latest() });
     },
 
-    onSuccess: () => {
-      notification.success({
-        message: "Scan completed",
-        description: "Any new businesses have been added to your workspace.",
-        duration: 5,
+    onSuccess: (data) => {
+      notification.info({
+        message: "Continuous scan started",
+        description: `Scanning ${data.city} across ${data.total_cells} multi-cell geographic areas...`,
+        duration: 4,
       });
       invalidateAfterScan();
     },
 
     onError: (error) => {
-      if (isApiError(error) && error.code === ErrorCode.TIMEOUT) {
-        setWatching(true);
-
-        notification.info({
-          message: "Still scanning",
-          description:
-            "This is taking longer than usual. Progress is shown below and the result will appear when it finishes.",
-          duration: 6,
-        });
-
-        void queryClient.invalidateQueries({ queryKey: queryKeys.scanJobs.all });
-        void queryClient.invalidateQueries({ queryKey: queryKeys.scanJobs.latest() });
-        return;
-      }
-
       const apiError = isApiError(error) ? error : null;
 
-      notification.error({
-        message: apiError ? errorTitle(apiError) : "Scan failed",
-        description: apiError?.requestId
-          ? `${apiError.message}\n\nReference: ${apiError.requestId}`
-          : (apiError?.message ?? "The scan could not be completed."),
-        duration: 8,
-        style: { whiteSpace: "pre-line" },
-      });
+      if (apiError?.code === "TIMEOUT") {
+        notification.info({
+          message: "Still scanning in background",
+          description: "The scan is taking longer than usual, but continues running. Results will update automatically.",
+          duration: 8,
+        });
+        setWatching(true);
+      } else {
+        notification.error({
+          message: apiError ? errorTitle(apiError) : "Scan initiation failed",
+          description: apiError?.message ?? "The scan could not be started.",
+          duration: 8,
+        });
+        setWatching(false);
+      }
 
       void queryClient.invalidateQueries({ queryKey: queryKeys.scanJobs.all });
       void queryClient.invalidateQueries({ queryKey: queryKeys.scanJobs.latest() });
+    },
+  });
+
+  // Pause mutation
+  const pauseMutation = useMutation({
+    mutationFn: (jobId: number) => scanningApi.pauseScan(jobId),
+    onSuccess: () => {
+      notification.info({
+        message: "Scan paused",
+        description: "Scanning paused. You can resume at any time.",
+        duration: 3,
+      });
+      invalidateAfterScan();
+    },
+    onError: (err) => {
+      notification.error({
+        message: "Failed to pause scan",
+        description: isApiError(err) ? err.message : "An error occurred.",
+      });
+    },
+  });
+
+  // Resume mutation
+  const resumeMutation = useMutation({
+    mutationFn: (jobId: number) => scanningApi.resumeScan(jobId),
+    onSuccess: () => {
+      notification.success({
+        message: "Scan resumed",
+        description: "Continuous scan resumed from next pending cell.",
+        duration: 3,
+      });
+      invalidateAfterScan();
+    },
+    onError: (err) => {
+      notification.error({
+        message: "Failed to resume scan",
+        description: isApiError(err) ? err.message : "An error occurred.",
+      });
+    },
+  });
+
+  // Cancel mutation
+  const cancelMutation = useMutation({
+    mutationFn: (jobId: number) => scanningApi.cancelScan(jobId),
+    onSuccess: () => {
+      notification.warning({
+        message: "Scan cancelled",
+        description: "Scan cancelled. All discovered leads remain safely stored.",
+        duration: 4,
+      });
+      invalidateAfterScan();
+    },
+    onError: (err) => {
+      notification.error({
+        message: "Failed to cancel scan",
+        description: isApiError(err) ? err.message : "An error occurred.",
+      });
+    },
+  });
+
+  // Clear all scanned data mutation
+  const clearDataMutation = useMutation({
+    mutationFn: (confirm: boolean) => scanningApi.clearScannedData(confirm),
+    onSuccess: (data) => {
+      notification.success({
+        message: "Scanned leads cleared",
+        description: `Successfully removed ${data.deleted_count} leads and reset search history.`,
+        duration: 5,
+      });
+      invalidateAfterScan();
+    },
+    onError: (err) => {
+      notification.error({
+        message: "Failed to clear data",
+        description: isApiError(err) ? err.message : "Could not clear data.",
+      });
     },
   });
 
@@ -88,29 +158,26 @@ export function useScanRunner() {
 
     previousStatus.current = status;
 
-    if (!watching) return;
-    if (!wasRunning || isRunning(status)) return;
-
-    setWatching(false);
+    if (!wasRunning || isRunning(status) || isPaused(status)) return;
 
     if (status === "Completed") {
       notification.success({
-        message: "Scan completed",
-        description: `${job?.totalBusinesses ?? 0} results returned, ${job?.newBusinesses ?? 0} new.`,
-        duration: 5,
+        message: "Continuous scan completed",
+        description: `Finished scanning ${job?.city}! Stored: ${job?.businesses_stored ?? job?.new_businesses ?? 0}, Skipped (no contact): ${job?.businesses_skipped_no_contact ?? 0}.`,
+        duration: 6,
       });
       invalidateAfterScan();
     } else if (status === "Failed") {
       notification.error({
         message: "Scan failed",
-        description:
-          "The scan did not finish. See the history below for the job that failed.",
+        description: job?.error_message || "The scan encountered an issue.",
         duration: 8,
       });
     }
-  }, [job, watching, notification, invalidateAfterScan]);
+  }, [job, notification, invalidateAfterScan]);
 
-  const scanning = mutation.isPending || watching || isRunning(job?.status);
+  const scanning = mutation.isPending || isRunning(job?.status);
+  const paused = isPaused(job?.status);
 
   const retry = useCallback(() => {
     if (lastAttempt) mutation.mutate(lastAttempt);
@@ -119,10 +186,19 @@ export function useScanRunner() {
   return {
     start: mutation.mutate,
     retry,
-    canRetry: lastAttempt !== null && !scanning,
+    canRetry: lastAttempt !== null && !scanning && !paused,
     lastAttempt,
     scanning,
+    paused,
     watching,
     error: mutation.error,
+    pauseScan: (jobId: number) => pauseMutation.mutate(jobId),
+    resumeScan: (jobId: number) => resumeMutation.mutate(jobId),
+    cancelScan: (jobId: number) => cancelMutation.mutate(jobId),
+    clearData: (confirm: boolean) => clearDataMutation.mutateAsync(confirm),
+    isClearing: clearDataMutation.isPending,
+    isPausing: pauseMutation.isPending,
+    isResuming: resumeMutation.isPending,
+    isCancelling: cancelMutation.isPending,
   };
 }

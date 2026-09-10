@@ -158,7 +158,7 @@ export default function LatestActivity({
           <Row
             icon={<RadarChartOutlined />}
             title={`Scanned ${scanJob.city ?? "an unknown city"}`}
-            meta={`${scanJob.total_businesses.toLocaleString()} results · ${scanJob.new_businesses.toLocaleString()} new`}
+            meta={`${(scanJob.businesses_found ?? scanJob.total_businesses ?? 0).toLocaleString()} results · ${(scanJob.businesses_stored ?? scanJob.new_businesses ?? 0).toLocaleString()} new`}
             // Scan jobs have no timestamp. The job number is the only ordering
             // the backend provides, so that is what is shown.
             when={<span className="lf-mono">#{scanJob.id}</span>}

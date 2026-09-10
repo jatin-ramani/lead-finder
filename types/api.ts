@@ -347,47 +347,104 @@ export type WebsiteDataResponse = DetailResponse<WebsiteData>;
 // ===========================================================================
 
 /** Job lifecycle values written by the backend. */
-export type JobStatus = "Pending" | "Running" | "Completed" | "Failed";
+export type JobStatus = "Pending" | "Running" | "Paused" | "Completed" | "Failed" | "Cancelled";
+
+export interface ScanRecentLead {
+  id: number;
+  name: string;
+  city: string | null;
+  category: string | null;
+  has_email: boolean;
+  has_phone: boolean;
+  has_website: boolean;
+  lead_grade?: string | null;
+  lead_score?: number | null;
+}
 
 /**
  * A scan job, as `GET /scan/jobs` returns it.
- *
- * Note what is **absent**: there is no timestamp of any kind. Scan jobs cannot
- * be dated, so history is ordered by id and nothing may claim to show when a
- * scan ran. (Scrape jobs do carry `started_at` / `completed_at`.)
  */
 export interface ScanJob {
   id: number;
   city: string | null;
   category: string | null;
+  categoryFamily?: string | null;
   status: JobStatus | string;
   progress: number;
-  total_businesses: number;
-  new_businesses: number;
-
-  /**
-   * Dead columns. Present in the model and the migration, written by no code
-   * — always `0`, `0` and `null`. They appear to be the remains of an
-   * unimplemented grid scan.
-   *
-   * Modelled so nobody rediscovers them in a payload and assumes they mean
-   * something. **Do not render these.**
-   */
+  scanRadiusKm?: number;
+  total_businesses?: number;
+  new_businesses?: number;
+  totalBusinesses?: number;
+  newBusinesses?: number;
   total_cells?: number;
   completed_cells?: number;
   current_cell?: string | null;
+  totalCells?: number;
+  completedCells?: number;
+  total_search_units?: number;
+  completed_search_units?: number;
+  failed_search_units?: number;
+  totalSearchUnits?: number;
+  completedSearchUnits?: number;
+  failedSearchUnits?: number;
+  coverage_progress?: number;
+  processed_progress?: number;
+  coverageProgress?: number;
+  processedProgress?: number;
+  businesses_found?: number;
+  businesses_stored?: number;
+  businesses_skipped_no_contact?: number;
+  businesses_duplicates?: number;
+  businessesFound?: number;
+  businessesStored?: number;
+  businessesSkippedNoContact?: number;
+  businessesDuplicates?: number;
+  startedAt?: string | null;
+  completedAt?: string | null;
+  pausedAt?: string | null;
+  errorMessage?: string | null;
+  createdAt?: string | null;
 }
 
-/** `GET /scan/jobs/latest` renames its counters; the list endpoint does not. */
+/** `GET /scan/jobs/latest` and detailed scan job metrics */
 export interface LatestScanJob {
   id: number;
   city: string | null;
   category: string | null;
+  category_family?: string | null;
   status: JobStatus | string;
   progress: number;
-  totalBusinesses: number;
-  newBusinesses: number;
+  coverage_progress?: number;
+  processed_progress?: number;
+  coverageProgress?: number;
+  processedProgress?: number;
+  scan_radius_km?: number;
+  total_cells?: number;
+  completed_cells?: number;
+  current_cell?: string | null;
+  total_search_units?: number;
+  completed_search_units?: number;
+  failed_search_units?: number;
+  totalSearchUnits?: number;
+  completedSearchUnits?: number;
+  failedSearchUnits?: number;
+  businesses_found?: number;
+  businesses_stored?: number;
+  businesses_skipped_no_contact?: number;
+  businesses_duplicates?: number;
+  totalBusinesses?: number;
+  newBusinesses?: number;
+  total_businesses?: number;
+  new_businesses?: number;
+  started_at?: string | null;
+  completed_at?: string | null;
+  paused_at?: string | null;
+  error_message?: string | null;
+  recent_leads?: ScanRecentLead[];
 }
+
+export type ScanJobDetail = LatestScanJob;
+
 
 export interface ScrapeJob {
   id: number;
@@ -476,10 +533,44 @@ export interface ScrapeJobResultsQuery {
 // SCANNING
 // ===========================================================================
 
+export interface CategorySubcategory {
+  label: string;
+  key: string;
+}
+
+export interface CategoryFamily {
+  id: string;
+  label: string;
+  subcategories: CategorySubcategory[];
+}
+
+export interface CategoryFamiliesResponse {
+  success: boolean;
+  families: CategoryFamily[];
+}
+
 export interface ScanRequest {
   city: string;
   category: string;
+  radius_km?: number;
 }
+
+export interface ScanStartResponse {
+  success: boolean;
+  message: string;
+  job_id: number;
+  city: string;
+  category: string;
+  total_cells: number;
+  total_search_units: number;
+}
+
+export interface ClearDataResponse {
+  success: boolean;
+  message: string;
+  deleted_count: number;
+}
+
 
 // ===========================================================================
 // DASHBOARD

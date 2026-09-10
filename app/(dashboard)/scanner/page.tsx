@@ -23,14 +23,33 @@ export default function ScannerPage() {
     refetch: refetchLatest,
   } = useLatestScanJob();
 
-  const { start, retry, canRetry, scanning, watching } = useScanRunner();
+  const {
+    start,
+    retry,
+    canRetry,
+    scanning,
+    watching,
+    pauseScan,
+    resumeScan,
+    cancelScan,
+    clearData,
+    isClearing,
+    isPausing,
+    isResuming,
+    isCancelling,
+  } = useScanRunner();
 
   return (
     <PageContainer>
       <ScanStats stats={stats} isLoading={historyLoading} />
 
       <div className="lf-grid-2">
-        <ScanForm onSubmit={start} scanning={scanning} />
+        <ScanForm
+          onSubmit={start}
+          scanning={scanning}
+          onClearData={clearData}
+          isClearing={isClearing}
+        />
 
         <ScanProgress
           job={latest}
@@ -41,6 +60,12 @@ export default function ScannerPage() {
           onRunAgain={retry}
           canRunAgain={canRetry}
           watching={watching}
+          onPause={pauseScan}
+          onResume={resumeScan}
+          onCancel={cancelScan}
+          isPausing={isPausing}
+          isResuming={isResuming}
+          isCancelling={isCancelling}
         />
       </div>
 
@@ -53,3 +78,4 @@ export default function ScannerPage() {
     </PageContainer>
   );
 }
+

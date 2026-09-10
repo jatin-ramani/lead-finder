@@ -17,31 +17,31 @@ interface Figure {
 }
 
 const FIGURES: Figure[] = [
-  { key: "totalScans", label: "Scans run" },
+  { key: "totalScans", label: "Scans Run" },
   { key: "completed", label: "Completed" },
-  { key: "failed", label: "Failed" },
   {
-    key: "resultsReturned",
-    label: "Results returned",
-    // Named precisely: this double-counts a business found by two scans, and
-    // calling it "businesses found" would imply a distinct count it is not.
-    hint: "Total results Geoapify returned across every scan. A business found by two scans is counted twice.",
+    key: "businessesFound",
+    label: "Total Found",
+    hint: "Total places retrieved across all geographic search cells.",
   },
   {
-    key: "newBusinesses",
-    label: "New businesses",
-    hint: "Rows actually added — results already in your workspace are skipped.",
+    key: "businessesStored",
+    label: "Stored Leads",
+    hint: "Verified leads stored in CRM with valid email or phone number.",
     accent: true,
+  },
+  {
+    key: "businessesSkippedNoContact",
+    label: "Skipped (No Contact)",
+    hint: "Places without an email address or phone number (filtered out).",
+  },
+  {
+    key: "businessesDuplicates",
+    label: "Enriched Duplicates",
+    hint: "Pre-existing leads enriched with new contact info.",
   },
 ];
 
-/**
- * Totals across the whole scan history.
- *
- * Derived in the browser, which is sound here for one specific reason:
- * `GET /scan/jobs` is unpaginated, so the array really is every job. This is
- * not the partial-page aggregation the business list had to abandon.
- */
 export default function ScanStats({ stats, isLoading }: ScanStatsProps) {
   return (
     <div className="lf-scan-stats">
@@ -71,7 +71,7 @@ export default function ScanStats({ stats, isLoading }: ScanStatsProps) {
                   figure.accent ? "lf-scan-stat-value--accent" : ""
                 }`}
               >
-                {stats[figure.key].toLocaleString()}
+                {(stats[figure.key] ?? 0).toLocaleString()}
               </dd>
             </>
           )}
@@ -80,3 +80,4 @@ export default function ScanStats({ stats, isLoading }: ScanStatsProps) {
     </div>
   );
 }
+

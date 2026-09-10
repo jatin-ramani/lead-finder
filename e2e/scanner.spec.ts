@@ -145,7 +145,7 @@ test.describe("Frontend Scanner Experience (Mocked Deterministic Suite)", () => 
     await categoryInput.fill("catering");
     await page.keyboard.press("Escape");
 
-    const submitBtn = page.getByRole("button", { name: /start scan/i });
+    const submitBtn = page.getByRole("button", { name: /launch continuous|start scan/i });
     await expect(submitBtn).toBeEnabled();
     await submitBtn.click();
 
@@ -240,7 +240,7 @@ test.describe("Frontend Scanner Experience (Mocked Deterministic Suite)", () => 
     await page.locator("#category").fill("commercial");
     await page.keyboard.press("Escape");
 
-    await page.getByRole("button", { name: /start scan/i }).click();
+    await page.getByRole("button", { name: /launch continuous|start scan/i }).click();
 
     // Verify safe user error message in alert or notification
     await expect(page.getByText("The scan could not be completed because Geoapify is unavailable.").first()).toBeVisible();
@@ -321,9 +321,97 @@ test.describe("Frontend Scanner Experience (Mocked Deterministic Suite)", () => 
     await page.locator("#category").fill("healthcare");
     await page.keyboard.press("Escape");
 
-    await page.getByRole("button", { name: /start scan/i }).click();
+    await page.getByRole("button", { name: /launch continuous|start scan/i }).click();
 
     // Verify timeout status notification banner (NOT "Scan failed")
     await expect(page.getByText(/still scanning|taking longer than usual/i).first()).toBeVisible();
   });
+
+  test("category family selection displays subcategory tags preview", async ({ page }) => {
+    await page.route("**/*", async (route) => {
+      const urlString = route.request().url();
+      if (urlString.includes("/auth/me")) {
+        await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ authenticated: true }) });
+        return;
+      }
+      if (urlString.endsWith("/scan/jobs/latest")) {
+        await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(null) });
+        return;
+      }
+      if (urlString.endsWith("/scan/jobs")) {
+        await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([]) });
+        return;
+      }
+      await route.continue();
+    });
+
+    await page.goto("/scanner");
+
+    // By default healthcare is selected
+    await expect(page.getByText("Subcategories included in this continuous scan:")).toBeVisible();
+    await expect(page.getByText("Dentists").first()).toBeVisible();
+    await expect(page.getByText("Clinics & Doctors").first()).toBeVisible();
+    await expect(page.getByText("Pharmacies").first()).toBeVisible();
+    await expect(page.getByText("Hospitals").first()).toBeVisible();
+
+    // Verify Geographic Scan Radius dropdown exists
+    await expect(page.getByText("Geographic Scan Radius")).toBeVisible();
+  });
+
+  test("safe clear scanned leads modal opens and requires typing DELETE", async ({ page }) => {
+    let clearCalled = false;
+
+    await page.route("**/*", async (route) => {
+      const urlString = route.request().url();
+      if (urlString.includes("/auth/me")) {
+        await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ authenticated: true }) });
+        return;
+      }
+      if (urlString.endsWith("/scan/jobs/latest")) {
+        await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(null) });
+        return;
+      }
+      if (urlString.endsWith("/scan/jobs")) {
+        await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([]) });
+        return;
+      }
+      if (urlString.endsWith("/scan/clear-data")) {
+        clearCalled = true;
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            success: true,
+            deleted_count: 42,
+            deleted_jobs_count: 5,
+            message: "Successfully deleted 42 scanned businesses.",
+          }),
+        });
+        return;
+      }
+      await route.continue();
+    });
+
+    await page.goto("/scanner");
+
+    // Click "Clear Scanned Leads"
+    await page.getByRole("button", { name: /clear scanned leads/i }).click();
+
+    // Modal appears
+    await expect(page.getByText(/clear all scanned business/i)).toBeVisible();
+    await expect(page.getByText("Admin user accounts and login sessions")).toBeVisible();
+    await expect(page.getByText("Cold email templates & automation configurations")).toBeVisible();
+
+    const deleteBtn = page.getByRole("button", { name: /confirm & delete/i });
+    await expect(deleteBtn).toBeDisabled();
+
+    // Type clear
+    const confirmInput = page.getByPlaceholder("Type 'clear' to confirm");
+    await confirmInput.fill("clear");
+    await expect(deleteBtn).toBeEnabled();
+
+    await deleteBtn.click();
+    expect(clearCalled).toBe(true);
+  });
 });
+
