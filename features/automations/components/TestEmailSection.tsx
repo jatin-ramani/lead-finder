@@ -5,7 +5,6 @@ import {
   Alert,
   Button,
   Card,
-  Checkbox,
   Col,
   Input,
   Row,
@@ -13,7 +12,6 @@ import {
   Tooltip,
   Typography,
 } from "antd";
-import type { CheckboxChangeEvent } from "antd/es/checkbox";
 import {
   CheckCircleFilled,
   ClockCircleFilled,
@@ -35,15 +33,6 @@ import { TestEmailConfirmModal } from "./TestEmailConfirmModal";
 
 const { Text, Title } = Typography;
 
-const ALL_GRADES = ["A", "B", "C", "D"];
-
-const GRADE_COLORS: Record<string, string> = {
-  A: "#10b981",
-  B: "#3b82f6",
-  C: "#f59e0b",
-  D: "#8b5cf6",
-};
-
 interface TestEmailSectionProps {
   gmailStatus: GmailStatusResponse | undefined;
   isLoadingStatus: boolean;
@@ -63,7 +52,6 @@ export const TestEmailSection: React.FC<TestEmailSectionProps> = ({
 }) => {
   const [recipientEmail, setRecipientEmail] = useState("");
   const [emailError, setEmailError] = useState<string | null>(null);
-  const [selectedGrades, setSelectedGrades] = useState<string[]>(ALL_GRADES);
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [lastResponse, setLastResponse] = useState<GmailTestSendResponse | null>(null);
 
@@ -86,22 +74,8 @@ export const TestEmailSection: React.FC<TestEmailSectionProps> = ({
     return true;
   };
 
-  const handleGradeToggle = (grade: string, checked: boolean) => {
-    setSelectedGrades((prev) =>
-      checked ? [...prev, grade].sort() : prev.filter((g) => g !== grade)
-    );
-  };
-
-  const handleSelectAll = (e: CheckboxChangeEvent) => {
-    setSelectedGrades(e.target.checked ? ALL_GRADES : []);
-  };
-
   const handleOpenConfirm = () => {
     if (!validateEmail(recipientEmail)) {
-      return;
-    }
-    if (selectedGrades.length === 0) {
-      setEmailError("Please select at least one template grade to test");
       return;
     }
     setConfirmModalOpen(true);
@@ -113,7 +87,7 @@ export const TestEmailSection: React.FC<TestEmailSectionProps> = ({
     try {
       const response = await onSendTestEmails({
         recipient_email: trimmedEmail,
-        template_grades: selectedGrades,
+        template_grades: ["Universal"],
       });
       setLastResponse(response);
       setConfirmModalOpen(false);
@@ -143,7 +117,7 @@ export const TestEmailSection: React.FC<TestEmailSectionProps> = ({
               Test Email Sending
             </Title>
             <Text type="secondary" className="text-xs">
-              Verify live Gmail API delivery with safe sample variables before launching campaigns to real leads.
+              Verify live Gmail API delivery with safe sample variables using the Universal Master Cold Email before launching to real leads.
             </Text>
           </div>
         </div>
@@ -191,10 +165,10 @@ export const TestEmailSection: React.FC<TestEmailSectionProps> = ({
       <div className="bg-gray-50 dark:bg-gray-900/40 p-4 rounded-xl border border-gray-200 dark:border-gray-800 mb-5">
         <Row gutter={[16, 16]} align="top">
           {/* Recipient Input */}
-          <Col xs={24} md={12}>
+          <Col xs={24} md={14}>
             <div>
               <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
-                Test Recipient Email <span className="text-red-500">*</span>
+                Test Destination Email <span className="text-red-500">*</span>
               </label>
               <Input
                 prefix={<MailOutlined className="text-gray-400 mr-1" />}
@@ -213,57 +187,26 @@ export const TestEmailSection: React.FC<TestEmailSectionProps> = ({
                 <div className="text-xs text-red-500 mt-1 font-medium">{emailError}</div>
               ) : (
                 <div className="text-[11px] text-gray-400 mt-1">
-                  Real emails will be sent strictly to this address. No database leads are contacted.
+                  Real emails will be sent strictly to this address. No CRM leads or campaigns are modified.
                 </div>
               )}
             </div>
           </Col>
 
-          {/* Grade Template Checkboxes */}
-          <Col xs={24} md={12}>
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">
-                  Templates to Test <span className="text-red-500">*</span>
-                </label>
-                <Checkbox
-                  indeterminate={
-                    selectedGrades.length > 0 && selectedGrades.length < ALL_GRADES.length
-                  }
-                  checked={selectedGrades.length === ALL_GRADES.length}
-                  onChange={handleSelectAll}
-                  disabled={!isConnected || isSending}
-                  className="text-xs text-gray-500"
-                >
-                  Select All
-                </Checkbox>
+          {/* Template Info Card */}
+          <Col xs={24} md={10}>
+            <div className="p-3 bg-white dark:bg-gray-950 rounded-lg border border-gray-200 dark:border-gray-800 space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] uppercase tracking-wider font-semibold text-gray-400">
+                  Active Template
+                </span>
+                <Tag color="purple" className="text-xs m-0">Universal Master</Tag>
               </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {ALL_GRADES.map((grade) => {
-                  const isChecked = selectedGrades.includes(grade);
-                  return (
-                    <label
-                      key={grade}
-                      className={`flex items-center gap-2 p-2 rounded-lg border text-xs cursor-pointer transition-colors ${
-                        isChecked
-                          ? "bg-white dark:bg-gray-800 border-blue-400 dark:border-blue-600 shadow-xs font-medium text-gray-900 dark:text-gray-100"
-                          : "bg-transparent border-gray-200 dark:border-gray-700 text-gray-400"
-                      } ${!isConnected || isSending ? "opacity-50 cursor-not-allowed" : ""}`}
-                    >
-                      <Checkbox
-                        checked={isChecked}
-                        onChange={(e) => handleGradeToggle(grade, e.target.checked)}
-                        disabled={!isConnected || isSending}
-                      />
-                      <span
-                        className="w-2.5 h-2.5 rounded-full inline-block"
-                        style={{ backgroundColor: GRADE_COLORS[grade] }}
-                      />
-                      <span>Grade {grade}</span>
-                    </label>
-                  );
-                })}
+              <div className="text-xs font-semibold text-gray-800 dark:text-gray-200">
+                A free website mockup for {"{{business_name}}"}?
+              </div>
+              <div className="text-[11px] text-gray-500">
+                Rendered with clean HTML paragraphs & plain-text fallback.
               </div>
             </div>
           </Col>
@@ -273,8 +216,7 @@ export const TestEmailSection: React.FC<TestEmailSectionProps> = ({
           <div className="text-xs text-gray-500 flex items-center gap-1.5">
             <InfoCircleOutlined className="text-blue-500" />
             <span>
-              Selected: <strong>{selectedGrades.length}</strong> template(s) • Quota remaining today:{" "}
-              <strong>{quotaRemaining}</strong>
+              1 test email • Quota remaining today: <strong>{quotaRemaining}</strong>
             </span>
           </div>
 
@@ -284,10 +226,10 @@ export const TestEmailSection: React.FC<TestEmailSectionProps> = ({
             icon={<SendOutlined />}
             onClick={handleOpenConfirm}
             loading={isSending}
-            disabled={!isConnected || selectedGrades.length === 0}
+            disabled={!isConnected}
             className="bg-indigo-600 hover:bg-indigo-700 font-semibold px-6 rounded-lg shadow-sm"
           >
-            Send Test Emails
+            Send Test Email
           </Button>
         </div>
       </div>
@@ -325,15 +267,15 @@ export const TestEmailSection: React.FC<TestEmailSectionProps> = ({
           </div>
 
           {/* Per-Template Status List */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {lastResponse.results.map((item) => {
+          <div className="grid grid-cols-1 gap-3">
+            {lastResponse.results.map((item, idx) => {
               const isSent = item.status === "sent";
               const isFailed = item.status === "failed";
               const isSkipped = item.status === "skipped";
 
               return (
                 <div
-                  key={item.grade}
+                  key={idx}
                   className={`p-3.5 rounded-xl border transition-all ${
                     isSent
                       ? "bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800/60"
@@ -344,17 +286,10 @@ export const TestEmailSection: React.FC<TestEmailSectionProps> = ({
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <Tag
-                        style={{
-                          backgroundColor: `${GRADE_COLORS[item.grade]}15`,
-                          borderColor: GRADE_COLORS[item.grade],
-                          color: GRADE_COLORS[item.grade],
-                        }}
-                        className="font-bold text-xs px-2 py-0.5 rounded-md"
-                      >
-                        Grade {item.grade}
+                      <Tag color="purple" className="font-bold text-xs px-2 py-0.5 rounded-md">
+                        Universal Master
                       </Tag>
-                      <span className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate max-w-[200px]">
+                      <span className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate max-w-[320px]">
                         {item.subject}
                       </span>
                     </div>
@@ -392,7 +327,7 @@ export const TestEmailSection: React.FC<TestEmailSectionProps> = ({
                     <div className="space-y-1 text-[11px] text-gray-500 font-mono mt-1">
                       {item.message_id && (
                         <div className="flex items-center justify-between bg-white/70 dark:bg-gray-900/50 px-2 py-1 rounded border border-gray-100 dark:border-gray-800">
-                          <span className="truncate max-w-[240px]">ID: {item.message_id}</span>
+                          <span className="truncate max-w-[320px]">ID: {item.message_id}</span>
                           <Tooltip title="Provider Message ID generated by Gmail API">
                             <InfoCircleOutlined className="text-gray-400" />
                           </Tooltip>
@@ -422,7 +357,7 @@ export const TestEmailSection: React.FC<TestEmailSectionProps> = ({
       <TestEmailConfirmModal
         open={confirmModalOpen}
         recipientEmail={recipientEmail.trim()}
-        selectedGrades={selectedGrades}
+        selectedGrades={["Universal"]}
         quotaRemaining={quotaRemaining}
         quotaLimit={quotaLimit}
         onCancel={() => setConfirmModalOpen(false)}

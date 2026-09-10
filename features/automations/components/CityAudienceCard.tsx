@@ -68,6 +68,7 @@ export const CityAudienceCard: React.FC<CityAudienceCardProps> = ({
   const totalLeads = stats?.total_leads ?? 0;
   const eligibleLeads = stats?.email_eligible_leads ?? 0;
   const ineligibleLeads = stats?.ineligible_leads ?? 0;
+  const alreadySentLeads = stats?.already_sent_leads ?? 0;
   const grades = stats?.grades;
 
   return (
@@ -92,7 +93,7 @@ export const CityAudienceCard: React.FC<CityAudienceCardProps> = ({
             value={selectedCity}
             onChange={onSelectCity}
             loading={isLoadingCities}
-            style={{ width: "100%", maxWidth: 420 }}
+            style={{ width: "100%", maxWidth: 460 }}
             size="large"
             optionFilterProp="children"
             className="shadow-sm"
@@ -103,8 +104,13 @@ export const CityAudienceCard: React.FC<CityAudienceCardProps> = ({
                   <span className="font-medium text-gray-800 dark:text-gray-200">{c.city}</span>
                   <Space size="small">
                     <Tag color="blue" className="text-xs">
-                      {c.eligible_leads} email{c.eligible_leads === 1 ? "" : "s"}
+                      {c.eligible_leads} eligible
                     </Tag>
+                    {c.already_sent_leads ? (
+                      <Tag color="purple" className="text-xs">
+                        {c.already_sent_leads} sent
+                      </Tag>
+                    ) : null}
                     <span className="text-xs text-gray-400">({c.total_leads} total)</span>
                   </Space>
                 </div>
@@ -119,41 +125,54 @@ export const CityAudienceCard: React.FC<CityAudienceCardProps> = ({
               <Skeleton active paragraph={{ rows: 3 }} />
             ) : (
               <div className="space-y-4 pt-2">
-                {/* Metrics Row */}
-                <Row gutter={[16, 16]}>
-                  <Col xs={24} sm={8}>
+                {/* Metrics Row (4 Metrics) */}
+                <Row gutter={[12, 12]}>
+                  <Col xs={24} sm={12} md={6}>
                     <Card
                       size="small"
                       className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg text-center"
                     >
                       <Statistic
-                        title={<span className="text-xs text-gray-500">Total Leads Found</span>}
+                        title={<span className="text-xs text-gray-500 font-medium">Total Leads</span>}
                         value={totalLeads}
                         valueStyle={{ color: "#374151", fontWeight: 700 }}
                         prefix={<EnvironmentOutlined />}
                       />
                     </Card>
                   </Col>
-                  <Col xs={24} sm={8}>
+                  <Col xs={24} sm={12} md={6}>
                     <Card
                       size="small"
                       className="bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 rounded-lg text-center"
                     >
                       <Statistic
-                        title={<span className="text-xs text-emerald-700 dark:text-emerald-400">Email-Eligible Leads</span>}
+                        title={<span className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">Email-Eligible Leads</span>}
                         value={eligibleLeads}
                         valueStyle={{ color: "#10b981", fontWeight: 700 }}
                         prefix={<CheckCircleOutlined />}
                       />
                     </Card>
                   </Col>
-                  <Col xs={24} sm={8}>
+                  <Col xs={24} sm={12} md={6}>
+                    <Card
+                      size="small"
+                      className="bg-purple-50/60 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-lg text-center"
+                    >
+                      <Statistic
+                        title={<span className="text-xs text-purple-700 dark:text-purple-400 font-medium">Already Sent</span>}
+                        value={alreadySentLeads}
+                        valueStyle={{ color: "#8b5cf6", fontWeight: 700 }}
+                        prefix={<CheckCircleOutlined />}
+                      />
+                    </Card>
+                  </Col>
+                  <Col xs={24} sm={12} md={6}>
                     <Card
                       size="small"
                       className="bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg text-center"
                     >
                       <Statistic
-                        title={<span className="text-xs text-amber-700 dark:text-amber-400">Missing Email (Skipped)</span>}
+                        title={<span className="text-xs text-amber-700 dark:text-amber-400 font-medium">Missing Email / Skipped</span>}
                         value={ineligibleLeads}
                         valueStyle={{ color: "#f59e0b", fontWeight: 700 }}
                         prefix={<StopOutlined />}
@@ -162,10 +181,21 @@ export const CityAudienceCard: React.FC<CityAudienceCardProps> = ({
                   </Col>
                 </Row>
 
-                {/* Email Safety Notice */}
-                {ineligibleLeads > 0 && (
+                {/* Already Sent Informational Alert */}
+                {alreadySentLeads > 0 && (
                   <Alert
                     type="info"
+                    showIcon
+                    icon={<InfoCircleOutlined className="text-purple-600" />}
+                    message={`${alreadySentLeads} leads in ${selectedCity} have already been emailed and are excluded from this automation.`}
+                    className="text-xs py-1.5 bg-purple-50/50 border-purple-200 text-purple-900 dark:bg-purple-950/20 dark:border-purple-900 dark:text-purple-200"
+                  />
+                )}
+
+                {/* Missing Email Safety Notice */}
+                {ineligibleLeads > 0 && (
+                  <Alert
+                    type="warning"
                     showIcon
                     icon={<InfoCircleOutlined />}
                     message={`${ineligibleLeads} leads in ${selectedCity} do not have a valid email address and will be safely skipped.`}
@@ -177,17 +207,17 @@ export const CityAudienceCard: React.FC<CityAudienceCardProps> = ({
                 <div className="pt-2">
                   <div className="flex items-center justify-between mb-2.5">
                     <Text strong className="text-xs uppercase tracking-wider text-gray-500">
-                      Lead Grade Distribution & Targeting
+                      Lead Grade Qualification Breakdown
                     </Text>
-                    <Text type="secondary" className="text-xs">
-                      Each grade receives a dedicated tailored email template
+                    <Text type="secondary" className="text-xs font-medium text-blue-600 dark:text-blue-400">
+                      All eligible leads receive the Universal Master Cold Email
                     </Text>
                   </div>
 
                   <Row gutter={[12, 12]}>
                     {["A", "B", "C", "D"].map((grade) => {
                       const cfg = GRADE_CONFIG[grade];
-                      const gStat = grades?.[grade] || { total: 0, eligible: 0, ineligible: 0 };
+                      const gStat = grades?.[grade] || { total: 0, eligible: 0, ineligible: 0, already_sent: 0 };
                       return (
                         <Col xs={24} sm={12} md={6} key={grade}>
                           <div
@@ -201,24 +231,34 @@ export const CityAudienceCard: React.FC<CityAudienceCardProps> = ({
                                 {grade}
                               </span>
                               <Tag color={gStat.eligible > 0 ? "success" : "default"} className="m-0 text-xs">
-                                {gStat.eligible} recipient{gStat.eligible === 1 ? "" : "s"}
+                                {gStat.eligible} eligible
                               </Tag>
                             </div>
 
                             <div className="space-y-1">
                               <div className={`font-semibold text-sm ${cfg.textClass}`}>
-                                Grade {grade}
+                                Grade {grade} Leads
                               </div>
                               <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 !mb-0">
                                 {cfg.desc}
                               </p>
                             </div>
 
-                            <div className="mt-3 pt-2 border-t border-gray-200/50 dark:border-gray-700/50 flex items-center justify-between text-xs text-gray-500">
-                              <span>Total in city:</span>
-                              <span className="font-semibold text-gray-700 dark:text-gray-300">
-                                {gStat.total}
-                              </span>
+                            <div className="mt-3 pt-2 border-t border-gray-200/50 dark:border-gray-700/50 flex flex-col gap-1 text-xs text-gray-500">
+                              <div className="flex items-center justify-between">
+                                <span>Total in city:</span>
+                                <span className="font-semibold text-gray-700 dark:text-gray-300">
+                                  {gStat.total}
+                                </span>
+                              </div>
+                              {gStat.already_sent ? (
+                                <div className="flex items-center justify-between text-purple-600 dark:text-purple-400">
+                                  <span>Already sent:</span>
+                                  <span className="font-semibold">
+                                    {gStat.already_sent}
+                                  </span>
+                                </div>
+                              ) : null}
                             </div>
                           </div>
                         </Col>

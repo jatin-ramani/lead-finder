@@ -749,6 +749,7 @@ export interface CityStatItem {
   total_leads: number;
   eligible_leads: number;
   ineligible_leads: number;
+  already_sent_leads?: number;
 }
 
 export interface CityStatListResponse {
@@ -760,6 +761,7 @@ export interface GradeStatDetail {
   total: number;
   eligible: number;
   ineligible: number;
+  already_sent?: number;
 }
 
 export interface CityGradeStatsResponse {
@@ -768,6 +770,7 @@ export interface CityGradeStatsResponse {
   total_leads: number;
   email_eligible_leads: number;
   ineligible_leads: number;
+  already_sent_leads?: number;
   grades: {
     A: GradeStatDetail;
     B: GradeStatDetail;
@@ -1152,7 +1155,7 @@ export interface GmailAuthUrlResponse {
 
 export interface GmailTestSendRequest {
   recipient_email: string;
-  template_grades: string[];
+  template_grades?: string[];
 }
 
 export interface GmailTestItemResult {

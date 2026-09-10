@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Alert, Button, Modal, Space, Tag, Typography } from "antd";
+import { Alert, Button, Modal, Tag, Typography } from "antd";
 import {
   ExclamationCircleOutlined,
   MailOutlined,
@@ -13,7 +13,7 @@ const { Text, Paragraph } = Typography;
 interface TestEmailConfirmModalProps {
   open: boolean;
   recipientEmail: string;
-  selectedGrades: string[];
+  selectedGrades?: string[];
   quotaRemaining: number;
   quotaLimit: number;
   onCancel: () => void;
@@ -21,25 +21,15 @@ interface TestEmailConfirmModalProps {
   isSending: boolean;
 }
 
-const GRADE_BADGE_COLORS: Record<string, string> = {
-  A: "emerald",
-  B: "blue",
-  C: "gold",
-  D: "purple",
-};
-
 export const TestEmailConfirmModal: React.FC<TestEmailConfirmModalProps> = ({
   open,
   recipientEmail,
-  selectedGrades,
   quotaRemaining,
   quotaLimit,
   onCancel,
   onConfirm,
   isSending,
 }) => {
-  const count = selectedGrades.length;
-
   return (
     <Modal
       open={open}
@@ -62,7 +52,7 @@ export const TestEmailConfirmModal: React.FC<TestEmailConfirmModalProps> = ({
           onClick={onConfirm}
           className="bg-blue-600 hover:bg-blue-700 font-semibold"
         >
-          Send {count} Test Email{count === 1 ? "" : "s"}
+          Send Test Email
         </Button>,
       ]}
       className="rounded-xl"
@@ -71,7 +61,7 @@ export const TestEmailConfirmModal: React.FC<TestEmailConfirmModalProps> = ({
     >
       <div className="space-y-4 py-2">
         <Paragraph className="!mb-2">
-          You are about to dispatch real test email{count === 1 ? "" : "s"} to:
+          You are about to dispatch a real test cold email to:
         </Paragraph>
 
         <div className="bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 p-3 rounded-lg flex items-center justify-between">
@@ -85,19 +75,11 @@ export const TestEmailConfirmModal: React.FC<TestEmailConfirmModalProps> = ({
 
         <div>
           <Text type="secondary" className="text-xs block mb-2 font-medium">
-            Templates to test ({count}):
+            Active Template:
           </Text>
-          <Space wrap size={[6, 8]}>
-            {selectedGrades.map((grade) => (
-              <Tag
-                key={grade}
-                color={GRADE_BADGE_COLORS[grade] || "default"}
-                className="font-semibold text-xs px-2.5 py-0.5"
-              >
-                Grade {grade} Template
-              </Tag>
-            ))}
-          </Space>
+          <Tag color="purple" className="font-semibold text-xs px-2.5 py-0.5">
+            Universal Master Cold Email
+          </Tag>
         </div>
 
         <Alert
@@ -108,8 +90,8 @@ export const TestEmailConfirmModal: React.FC<TestEmailConfirmModalProps> = ({
           description={
             <div className="text-xs space-y-1">
               <p className="!mb-0">
-                These test emails will be delivered via your connected Gmail API account and
-                <strong> count toward the daily {quotaLimit}-email safety quota</strong>.
+                This test email will be delivered via your connected Gmail API account and
+                <strong> counts toward the daily {quotaLimit}-email safety quota</strong>.
               </p>
               <p className="!mb-0 text-gray-500">
                 Remaining quota today: <strong>{quotaRemaining}</strong> sends.
@@ -120,7 +102,7 @@ export const TestEmailConfirmModal: React.FC<TestEmailConfirmModalProps> = ({
         />
 
         <div className="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/40 p-2.5 rounded-lg border border-dashed border-gray-200 dark:border-gray-700">
-          🔒 <strong>Safe Mock Lead Data:</strong> Template variables will be populated with realistic sample data. No fake CRM leads or campaign records will be written to the database.
+          🔒 <strong>Safe Mock Lead Data:</strong> Template variables will be populated with realistic sample data. No CRM leads or campaign records will be written to the database.
         </div>
       </div>
     </Modal>

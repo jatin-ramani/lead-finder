@@ -251,17 +251,18 @@ test.describe("City-First Email Automation End-to-End Workflow", () => {
 
     // 1. Step 1: City & Audience Verification
     await expect(page.getByText("Step 1: Select City & Review Lead Audience").first()).toBeVisible();
-    await expect(page.getByText("Total Leads Found").first()).toBeVisible();
+    await expect(page.getByText("Total Leads", { exact: true }).first()).toBeVisible();
     await expect(page.getByText("248").first()).toBeVisible();
     await expect(page.getByText("Email-Eligible Leads", { exact: true })).toBeVisible();
     await expect(page.getByText("221").first()).toBeVisible();
     await expect(page.getByText("27 leads in Ahmedabad do not have a valid email address and will be safely skipped.").first()).toBeVisible();
 
     // Verify Grade Distribution
-    await expect(page.getByText("Grade A").first()).toBeVisible();
-    await expect(page.getByText("Grade B").first()).toBeVisible();
-    await expect(page.getByText("Grade C").first()).toBeVisible();
-    await expect(page.getByText("Grade D").first()).toBeVisible();
+    await expect(page.getByText("Grade A Leads").first()).toBeVisible();
+    await expect(page.getByText("Grade B Leads").first()).toBeVisible();
+    await expect(page.getByText("Grade C Leads").first()).toBeVisible();
+    await expect(page.getByText("Grade D Leads").first()).toBeVisible();
+    await expect(page.getByText("All eligible leads receive the Universal Master Cold Email").first()).toBeVisible();
 
     // 2. Step 2: Universal Master Cold Email Template
     await expect(page.getByText("Step 2: Universal Master Cold Email").first()).toBeVisible();

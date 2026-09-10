@@ -238,9 +238,12 @@ export const TemplateEditorModal: React.FC<TemplateEditorModalProps> = ({
                     <div className="mb-3 text-xs text-gray-400 border-b pb-2">
                       To: <span className="font-mono text-gray-600 dark:text-gray-300">{sampleData.email}</span>
                     </div>
-                    <div className="whitespace-pre-wrap font-sans text-sm text-gray-700 dark:text-gray-200 leading-relaxed min-h-[140px]">
-                      {renderPreviewText(bodyVal || "(Empty body)")}
-                    </div>
+                    <div
+                      className="font-sans text-sm text-gray-700 dark:text-gray-200 leading-relaxed min-h-[140px] [&_p]:mb-3 [&_p:last-child]:mb-0 [&_strong]:font-bold [&_strong]:text-gray-900 dark:[&_strong]:text-white"
+                      dangerouslySetInnerHTML={{
+                        __html: renderPreviewText(bodyVal || "(Empty body)"),
+                      }}
+                    />
                   </Card>
                 </div>
               ),

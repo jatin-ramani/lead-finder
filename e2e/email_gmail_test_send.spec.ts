@@ -139,38 +139,17 @@ async function setupMockRoutes(
       const defaultSendResult: GmailTestSendResponse = {
         success: true,
         recipient_email: "test.verifier@example.com",
-        total: 4,
-        sent: 4,
+        total: 1,
+        sent: 1,
         failed: 0,
         skipped: 0,
         results: [
           {
-            grade: "A",
+            grade: "Universal",
             status: "sent",
-            subject: "Exclusive Growth Partnership for Test Business",
+            subject: "[TEST] A free website mockup for Test Business?",
             message_id: "gmail_msg_101",
             sent_at: "2026-09-08T14:30:00Z",
-          },
-          {
-            grade: "B",
-            status: "sent",
-            subject: "B2B Expansion Solutions for Test Business",
-            message_id: "gmail_msg_102",
-            sent_at: "2026-09-08T14:30:01Z",
-          },
-          {
-            grade: "C",
-            status: "sent",
-            subject: "Complimentary Digital Audit for Test Business",
-            message_id: "gmail_msg_103",
-            sent_at: "2026-09-08T14:30:02Z",
-          },
-          {
-            grade: "D",
-            status: "sent",
-            subject: "Quick introduction for Test Business",
-            message_id: "gmail_msg_104",
-            sent_at: "2026-09-08T14:30:03Z",
           },
         ],
       };
@@ -219,13 +198,13 @@ test.describe("Gmail Test Email Sending Feature (Phase 5)", () => {
     await expect(page.getByRole("button", { name: /Connect Gmail First/i })).toBeVisible();
   });
 
-  test("3. Validates recipient email input and grade selection", async ({ page }) => {
+  test("3. Validates recipient email input and active universal template", async ({ page }) => {
     await setupMockRoutes(page, mockGmailConnected);
     await page.goto("/automations");
 
     await expect(page.getByText("Test Email Sending")).toBeVisible({ timeout: 10_000 });
 
-    const sendBtn = page.getByRole("button", { name: /Send Test Emails/i });
+    const sendBtn = page.getByRole("button", { name: "Send Test Email" }).first();
     await expect(sendBtn).toBeVisible();
 
     // Click without entering email
@@ -242,16 +221,9 @@ test.describe("Gmail Test Email Sending Feature (Phase 5)", () => {
     await emailInput.fill("test.verifier@example.com");
     await expect(page.getByText("Please enter a valid email address")).not.toBeVisible();
 
-    // Uncheck all grade checkboxes
-    const selectAllCheckbox = page.getByText("Select All");
-    await selectAllCheckbox.click(); // Unchecks all
-
-    // Send button is disabled when 0 templates are selected
-    await expect(sendBtn).toBeDisabled();
-
-    // Recheck Grade A
-    await page.locator("label:has-text('Grade A')").click();
-    await expect(sendBtn).toBeEnabled();
+    // Verify Active Template display
+    await expect(page.getByText("Universal Master").first()).toBeVisible();
+    await expect(page.getByText("A free website mockup for {{business_name}}?").first()).toBeVisible();
   });
 
   test("4. Opens confirmation modal with quota warning and executes successful test send", async ({
@@ -264,7 +236,7 @@ test.describe("Gmail Test Email Sending Feature (Phase 5)", () => {
     const emailInput = page.getByPlaceholder("e.g. yourname@example.com");
     await emailInput.fill("test.verifier@example.com");
 
-    const sendBtn = page.getByRole("button", { name: /Send Test Emails/i });
+    const sendBtn = page.getByRole("button", { name: "Send Test Email" }).first();
     await sendBtn.click();
 
     // Check confirmation modal
@@ -273,44 +245,30 @@ test.describe("Gmail Test Email Sending Feature (Phase 5)", () => {
     await expect(page.getByText("Daily Safety Quota Notice")).toBeVisible();
 
     // Confirm send
-    const modalConfirmBtn = page.getByRole("button", { name: /Send 4 Test Emails/i });
+    const modalConfirmBtn = page.locator(".ant-modal-footer").getByRole("button", { name: /Send Test Email/i });
     await modalConfirmBtn.click();
 
     // Check result display
     await expect(page.getByText("Test Summary:")).toBeVisible({ timeout: 5_000 });
-    await expect(page.getByText("Total: 4")).toBeVisible();
-    await expect(page.getByText("Sent: 4")).toBeVisible();
+    await expect(page.getByText("Total: 1")).toBeVisible();
+    await expect(page.getByText("Sent: 1")).toBeVisible();
     await expect(page.getByText("ID: gmail_msg_101")).toBeVisible();
-    await expect(page.getByText("ID: gmail_msg_104")).toBeVisible();
   });
 
   test("5. Displays partial failures and quota limit reached appropriately", async ({ page }) => {
     const mockPartialResult: GmailTestSendResponse = {
-      success: true,
+      success: false,
       recipient_email: "test.verifier@example.com",
-      total: 3,
-      sent: 1,
+      total: 1,
+      sent: 0,
       failed: 1,
-      skipped: 1,
+      skipped: 0,
       results: [
         {
-          grade: "A",
-          status: "sent",
-          subject: "Exclusive Partnership for Test Business",
-          message_id: "gmail_msg_201",
-          sent_at: "2026-09-08T14:32:00Z",
-        },
-        {
-          grade: "B",
+          grade: "Universal",
           status: "failed",
-          subject: "B2B Solutions for Test Business",
+          subject: "[TEST] A free website mockup for Test Business?",
           error: "Gmail API 429: Rate limit exceeded",
-        },
-        {
-          grade: "C",
-          status: "skipped",
-          subject: "Audit for Test Business",
-          error: "Daily Gmail safety limit of 400 emails reached.",
         },
       ],
     };
@@ -320,18 +278,15 @@ test.describe("Gmail Test Email Sending Feature (Phase 5)", () => {
     const emailInput = page.getByPlaceholder("e.g. yourname@example.com");
     await emailInput.fill("test.verifier@example.com");
 
-    const sendBtn = page.getByRole("button", { name: /Send Test Emails/i });
+    const sendBtn = page.getByRole("button", { name: "Send Test Email" }).first();
     await sendBtn.click();
 
-    const modalConfirmBtn = page.getByRole("button", { name: /Send 4 Test Emails/i });
+    const modalConfirmBtn = page.locator(".ant-modal-footer").getByRole("button", { name: /Send Test Email/i });
     await modalConfirmBtn.click();
 
     await expect(page.getByText("Test Summary:")).toBeVisible({ timeout: 5_000 });
-    await expect(page.getByText("Sent: 1")).toBeVisible();
+    await expect(page.getByText("Total: 1")).toBeVisible();
     await expect(page.getByText("Failed: 1")).toBeVisible();
-    await expect(page.getByText("Skipped (Limit): 1")).toBeVisible();
-
     await expect(page.getByText("Gmail API 429: Rate limit exceeded")).toBeVisible();
-    await expect(page.getByText("Daily Gmail safety limit of 400 emails reached.")).toBeVisible();
   });
 });

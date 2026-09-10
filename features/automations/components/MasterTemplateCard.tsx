@@ -1,18 +1,15 @@
 "use client";
 
 import React from "react";
-import { Button, Card, Space, Tag, Typography } from "antd";
+import { Button, Card, Space, Tag } from "antd";
 import {
   EditOutlined,
   FileTextOutlined,
   MailOutlined,
   ReloadOutlined,
-  ThunderboltOutlined,
 } from "@ant-design/icons";
 
 import type { MasterTemplateItem } from "@/types/api";
-
-const { Text, Paragraph } = Typography;
 
 interface MasterTemplateCardProps {
   city: string;
@@ -92,9 +89,12 @@ export const MasterTemplateCard: React.FC<MasterTemplateCardProps> = ({
             <div className="text-[11px] uppercase tracking-wider font-semibold text-gray-400 mb-1">
               Email Body Preview:
             </div>
-            <div className="text-xs text-gray-600 dark:text-gray-300 font-sans leading-relaxed whitespace-pre-wrap max-h-48 overflow-y-auto">
-              {template?.body || "(No template content)"}
-            </div>
+            <div
+              className="text-xs text-gray-600 dark:text-gray-300 font-sans leading-relaxed max-h-48 overflow-y-auto [&_p]:mb-2.5 [&_p:last-child]:mb-0 [&_strong]:font-bold [&_strong]:text-gray-900 dark:[&_strong]:text-white"
+              dangerouslySetInnerHTML={{
+                __html: template?.body || "(No template content)",
+              }}
+            />
           </div>
 
           {/* Variables and Delivery Info */}
