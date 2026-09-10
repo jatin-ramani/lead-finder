@@ -15,16 +15,15 @@ import {
 } from "@ant-design/icons";
 
 import type {
-  AIGradeTemplateItem,
   CityAutomationStartInput,
+  MasterTemplateItem,
 } from "@/types/api";
 import {
   useAvailableCities,
   useCancelCityAutomation,
   useCityAutomationReport,
   useCityStats,
-  useGenerateAITemplates,
-  useGenerateSingleTemplate,
+  useMasterTemplate,
   useResumeCityAutomation,
   useStartCityAutomation,
 } from "@/features/automations/hooks/useCityAutomations";
@@ -37,7 +36,7 @@ import {
 import { GmailConnectionBanner } from "@/features/automations/components/GmailConnectionBanner";
 import { TestEmailSection } from "@/features/automations/components/TestEmailSection";
 import { CityAudienceCard } from "@/features/automations/components/CityAudienceCard";
-import { AITemplateCards } from "@/features/automations/components/AITemplateCards";
+import { MasterTemplateCard } from "@/features/automations/components/MasterTemplateCard";
 import { TemplateEditorModal } from "@/features/automations/components/TemplateEditorModal";
 import { AutomationConfirmModal } from "@/features/automations/components/AutomationConfirmModal";
 import { AutomationProgressView } from "@/features/automations/components/AutomationProgressView";
@@ -96,24 +95,31 @@ export default function EmailAutomationPage() {
 
   const { data: stats, isLoading: isLoadingStats } = useCityStats(selectedCity);
 
-  // 3. AI Grade Templates state
-  const [gradeTemplates, setGradeTemplates] = useState<Record<string, AIGradeTemplateItem> | null>(null);
-  const [generatingGrade, setGeneratingGrade] = useState<string | null>(null);
+  // 3. Universal Master Template query & local state
+  const {
+    data: masterTemplateData,
+    isLoading: isLoadingMasterTemplate,
+    refetch: refetchMasterTemplate,
+  } = useMasterTemplate(selectedCity);
 
-  // Clear templates when city changes
+  const [customMasterTemplate, setCustomMasterTemplate] = useState<MasterTemplateItem | null>(null);
+
+  // Sync default template from server if not locally edited
+  const masterTemplate: MasterTemplateItem | null =
+    customMasterTemplate || masterTemplateData?.data || null;
+
+  // Clear local custom edits when city changes
   const handleCityChange = (city: string) => {
     setSelectedCityState(city);
-    setGradeTemplates(null);
+    setCustomMasterTemplate(null);
   };
 
-  const generateAllMutation = useGenerateAITemplates();
-  const generateSingleMutation = useGenerateSingleTemplate();
   const startAutomationMutation = useStartCityAutomation();
   const cancelAutomationMutation = useCancelCityAutomation();
   const resumeAutomationMutation = useResumeCityAutomation();
 
   // Template Editor Modal
-  const [editingGrade, setEditingGrade] = useState<string | null>(null);
+  const [isEditingTemplate, setIsEditingTemplate] = useState(false);
 
   // Confirm Launch Modal
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
@@ -157,74 +163,27 @@ export default function EmailAutomationPage() {
     },
   });
 
-  const handleGenerateAll = async () => {
-    if (!selectedCity) return;
-    try {
-      const res = await generateAllMutation.mutateAsync({ city: selectedCity });
-      if (res.success && res.data) {
-        setGradeTemplates(res.data);
-        message.success(`Generated 4 tailored AI email templates for ${selectedCity}!`);
-      }
-    } catch {
-      // Handled by hook error toast
-    }
+  const handleResetTemplate = async () => {
+    setCustomMasterTemplate(null);
+    await refetchMasterTemplate();
+    message.success("Reset cold email template to default master copy");
   };
 
-  const handleRegenerateSingle = async (grade: string) => {
-    if (!selectedCity) return;
-    setGeneratingGrade(grade);
-    try {
-      const res = await generateSingleMutation.mutateAsync({
-        grade,
-        city: selectedCity,
-      });
-      if (res.success && res.data) {
-        setGradeTemplates((prev) => ({
-          ...(prev || {}),
-          [grade]: res.data,
-        }));
-        message.success(`Regenerated Grade ${grade} template!`);
-      }
-    } finally {
-      setGeneratingGrade(null);
-    }
-  };
-
-  const handleSaveEditedTemplate = (grade: string, updated: AIGradeTemplateItem) => {
-    setGradeTemplates((prev) => ({
-      ...(prev || {}),
-      [grade]: updated,
-    }));
-    message.success(`Grade ${grade} template updated!`);
+  const handleSaveEditedTemplate = (updated: MasterTemplateItem) => {
+    setCustomMasterTemplate(updated);
+    message.success("Master cold email template updated!");
   };
 
   const handleStartAutomation = async () => {
-    if (!selectedCity || !gradeTemplates) return;
+    if (!selectedCity || !masterTemplate) return;
 
     const payload: CityAutomationStartInput = {
       city: selectedCity,
       name: `Email Automation — ${selectedCity}`,
-      templates: {
-        A: {
-          subject: gradeTemplates.A?.subject || `Partnership for {{business_name}}`,
-          body: gradeTemplates.A?.body || `Hello {{contact_name}},\n\nConnecting from ${selectedCity}.`,
-          name: `Email Automation — ${selectedCity} (Grade A)`,
-        },
-        B: {
-          subject: gradeTemplates.B?.subject || `Solutions for {{business_name}}`,
-          body: gradeTemplates.B?.body || `Hello {{contact_name}},\n\nConnecting from ${selectedCity}.`,
-          name: `Email Automation — ${selectedCity} (Grade B)`,
-        },
-        C: {
-          subject: gradeTemplates.C?.subject || `Consultation for {{business_name}}`,
-          body: gradeTemplates.C?.body || `Hello {{contact_name}},\n\nConnecting from ${selectedCity}.`,
-          name: `Email Automation — ${selectedCity} (Grade C)`,
-        },
-        D: {
-          subject: gradeTemplates.D?.subject || `Intro for {{business_name}}`,
-          body: gradeTemplates.D?.body || `Hello {{contact_name}},\n\nConnecting from ${selectedCity}.`,
-          name: `Email Automation — ${selectedCity} (Grade D)`,
-        },
+      template: {
+        subject: masterTemplate.subject,
+        body: masterTemplate.body,
+        name: masterTemplate.name || `Universal Master Cold Email — ${selectedCity}`,
       },
     };
 
@@ -250,7 +209,7 @@ export default function EmailAutomationPage() {
   };
 
   const eligibleCount = stats?.email_eligible_leads ?? 0;
-  const hasTemplates = Boolean(gradeTemplates && Object.keys(gradeTemplates).length > 0);
+  const hasTemplate = Boolean(masterTemplate && masterTemplate.subject && masterTemplate.body);
 
   // If viewing an active run report
   if (activeReportId && reportData?.data) {
@@ -280,7 +239,7 @@ export default function EmailAutomationPage() {
             <span>Email Automation</span>
           </Title>
           <Paragraph type="secondary" className="!mb-0 text-sm">
-            Launch grade-tailored outreach campaigns for leads across target cities with Gmail API delivery.
+            Launch cold outreach campaigns for leads across target cities with Gmail API delivery and one universal high-converting master email.
           </Paragraph>
         </div>
 
@@ -313,16 +272,14 @@ export default function EmailAutomationPage() {
         isLoadingStats={isLoadingStats}
       />
 
-      {/* Workflow Step 2: AI Email Templates by Grade */}
+      {/* Workflow Step 2: Universal Master Cold Email */}
       {selectedCity && (
-        <AITemplateCards
+        <MasterTemplateCard
           city={selectedCity}
-          templates={gradeTemplates}
-          isGeneratingAll={generateAllMutation.isPending}
-          generatingGrade={generatingGrade}
-          onGenerateAll={handleGenerateAll}
-          onRegenerateGrade={handleRegenerateSingle}
-          onEditGrade={(g) => setEditingGrade(g)}
+          template={masterTemplate}
+          onEdit={() => setIsEditingTemplate(true)}
+          onReset={handleResetTemplate}
+          isResetting={isLoadingMasterTemplate}
         />
       )}
 
@@ -346,9 +303,9 @@ export default function EmailAutomationPage() {
                 <span>Ready to Launch Automation for {selectedCity}?</span>
               </div>
               <p className="text-xs text-gray-500 !mb-0 mt-0.5">
-                {hasTemplates
-                  ? `${eligibleCount} email-eligible lead${eligibleCount === 1 ? "" : "s"} will receive personalized grade-tailored emails.`
-                  : "Generate AI email templates above to enable campaign launch."}
+                {hasTemplate
+                  ? `${eligibleCount} email-eligible lead${eligibleCount === 1 ? "" : "s"} across Grades A, B, C, and D will receive this universal master cold email.`
+                  : "Loading cold email template..."}
               </p>
             </div>
 
@@ -357,7 +314,7 @@ export default function EmailAutomationPage() {
                 type="primary"
                 size="large"
                 icon={<RocketOutlined />}
-                disabled={!hasTemplates || eligibleCount === 0 || !gmailStatus?.is_connected}
+                disabled={!hasTemplate || eligibleCount === 0 || !gmailStatus?.is_connected}
                 onClick={() => setConfirmModalOpen(true)}
                 className="bg-emerald-600 hover:bg-emerald-700 border-none shadow-md font-semibold px-8 h-11"
               >
@@ -369,23 +326,22 @@ export default function EmailAutomationPage() {
       )}
 
       {/* Modals & Drawers */}
-      {editingGrade && selectedCity && (
+      {isEditingTemplate && selectedCity && (
         <TemplateEditorModal
-          open={Boolean(editingGrade)}
-          grade={editingGrade}
+          open={isEditingTemplate}
           cityName={selectedCity}
-          template={gradeTemplates?.[editingGrade] || null}
-          onCancel={() => setEditingGrade(null)}
+          template={masterTemplate}
+          onCancel={() => setIsEditingTemplate(false)}
           onSave={handleSaveEditedTemplate}
         />
       )}
 
-      {confirmModalOpen && selectedCity && gradeTemplates && (
+      {confirmModalOpen && selectedCity && masterTemplate && (
         <AutomationConfirmModal
           open={confirmModalOpen}
           city={selectedCity}
           stats={stats}
-          templates={gradeTemplates}
+          template={masterTemplate}
           onCancel={() => setConfirmModalOpen(false)}
           onConfirm={handleStartAutomation}
           isStarting={startAutomationMutation.isPending}
@@ -400,3 +356,4 @@ export default function EmailAutomationPage() {
     </div>
   );
 }
+

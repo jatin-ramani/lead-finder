@@ -130,6 +130,16 @@ export function getCityStats(
   });
 }
 
+export function getMasterTemplate(
+  city?: string,
+  signal?: AbortSignal,
+): Promise<import("@/types/api").MasterTemplateResponse> {
+  return get<import("@/types/api").MasterTemplateResponse>("/automations/master-template", {
+    params: city ? { city } : undefined,
+    signal,
+  });
+}
+
 export function generateAITemplates(
   city: string,
   industry?: string,

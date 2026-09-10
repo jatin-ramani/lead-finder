@@ -21,7 +21,7 @@ import {
   SaveOutlined,
 } from "@ant-design/icons";
 
-import type { AIGradeTemplateItem, SupportedVariable } from "@/types/api";
+import type { MasterTemplateItem, SupportedVariable } from "@/types/api";
 import { useTemplateVariables } from "./../hooks/useAutomations";
 
 const { Text } = Typography;
@@ -29,11 +29,11 @@ const { TextArea } = Input;
 
 interface TemplateEditorModalProps {
   open: boolean;
-  grade: string;
   cityName: string;
-  template: AIGradeTemplateItem | null;
+  template: MasterTemplateItem | null;
   onCancel: () => void;
-  onSave: (grade: string, updated: AIGradeTemplateItem) => void;
+  onSave: (updated: MasterTemplateItem) => void;
+  grade?: string | null;
 }
 
 interface FormValues {
@@ -43,11 +43,11 @@ interface FormValues {
 
 export const TemplateEditorModal: React.FC<TemplateEditorModalProps> = ({
   open,
-  grade,
   cityName,
   template,
   onCancel,
   onSave,
+  grade,
 }) => {
   const [form] = Form.useForm<FormValues>();
   const [activeTab, setActiveTab] = useState<"compose" | "preview">("compose");
@@ -66,11 +66,11 @@ export const TemplateEditorModal: React.FC<TemplateEditorModalProps> = ({
   }, [open, template, form]);
 
   const handleFinish = (values: FormValues) => {
-    onSave(grade, {
+    onSave({
       subject: values.subject.trim(),
       body: values.body.trim(),
       rationale: template?.rationale,
-      name: `Email Automation — ${cityName} (Grade ${grade})`,
+      name: template?.name || `Universal Master Cold Email — ${cityName}`,
     });
     onCancel();
   };
@@ -90,7 +90,7 @@ export const TemplateEditorModal: React.FC<TemplateEditorModalProps> = ({
     phone: "+91 98765 43210",
     website: "https://healthpatel.example",
     lead_status: "New",
-    lead_score: grade === "A" ? "95" : grade === "B" ? "80" : grade === "C" ? "60" : "35",
+    lead_score: "95",
     follow_up_title: "Initial Outreach",
     follow_up_due_at: "2026-09-12 10:00 UTC",
   };
@@ -107,7 +107,7 @@ export const TemplateEditorModal: React.FC<TemplateEditorModalProps> = ({
       title={
         <Space>
           <MailOutlined className="text-blue-600" />
-          <span>Edit Grade {grade} Template — {cityName}</span>
+          <span>Edit Cold Email Template — {cityName}</span>
         </Space>
       }
       width={780}

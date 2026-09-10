@@ -802,6 +802,20 @@ export interface AISingleTemplateResponse {
   data: AIGradeTemplateItem;
 }
 
+export interface MasterTemplateItem {
+  subject: string;
+  body: string;
+  name?: string;
+  rationale?: string;
+  variables?: string[];
+}
+
+export interface MasterTemplateResponse {
+  success: boolean;
+  city?: string;
+  data: MasterTemplateItem;
+}
+
 export interface GradeTemplatePayload {
   subject: string;
   body: string;
@@ -810,12 +824,13 @@ export interface GradeTemplatePayload {
 
 export interface CityAutomationStartInput {
   city: string;
-  templates: {
-    A: GradeTemplatePayload;
-    B: GradeTemplatePayload;
-    C: GradeTemplatePayload;
-    D: GradeTemplatePayload;
-    [key: string]: GradeTemplatePayload;
+  template?: MasterTemplateItem;
+  templates?: {
+    A?: GradeTemplatePayload;
+    B?: GradeTemplatePayload;
+    C?: GradeTemplatePayload;
+    D?: GradeTemplatePayload;
+    [key: string]: GradeTemplatePayload | undefined;
   };
   name?: string;
   scheduled_at?: string | null;
@@ -853,6 +868,7 @@ export interface CityAutomationReportData {
   failed_count: number;
   pending_count: number;
   processing_count?: number;
+  remaining_count?: number;
   cancelled_count: number;
   skipped_count?: number;
   percentage?: number;
@@ -868,6 +884,7 @@ export interface CityAutomationReportData {
     D: GradeBreakdownStats;
     [key: string]: GradeBreakdownStats;
   };
+  remaining_recipients?: RecipientExecutionLogItem[];
   recipient_logs: RecipientExecutionLogItem[];
 }
 

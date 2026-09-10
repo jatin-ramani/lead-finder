@@ -23,6 +23,14 @@ export function useCityStats(city?: string) {
   });
 }
 
+export function useMasterTemplate(city?: string) {
+  return useQuery({
+    queryKey: ["automations", "master-template", city ?? ""],
+    queryFn: ({ signal }) => automationsApi.getMasterTemplate(city, signal),
+    staleTime: 60_000,
+  });
+}
+
 export function useGenerateAITemplates() {
   const { message } = App.useApp();
 

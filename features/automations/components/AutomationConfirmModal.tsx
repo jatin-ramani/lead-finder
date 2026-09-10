@@ -8,7 +8,7 @@ import {
   SendOutlined,
 } from "@ant-design/icons";
 
-import type { AIGradeTemplateItem, CityGradeStatsResponse } from "@/types/api";
+import type { CityGradeStatsResponse, MasterTemplateItem } from "@/types/api";
 
 const { Text, Paragraph } = Typography;
 
@@ -16,7 +16,7 @@ interface AutomationConfirmModalProps {
   open: boolean;
   city: string;
   stats: CityGradeStatsResponse | undefined;
-  templates: Record<string, AIGradeTemplateItem>;
+  template: MasterTemplateItem | null;
   onCancel: () => void;
   onConfirm: () => void;
   isStarting: boolean;
@@ -26,7 +26,7 @@ export const AutomationConfirmModal: React.FC<AutomationConfirmModalProps> = ({
   open,
   city,
   stats,
-  templates,
+  template,
   onCancel,
   onConfirm,
   isStarting,
@@ -78,45 +78,52 @@ export const AutomationConfirmModal: React.FC<AutomationConfirmModalProps> = ({
             </Tag>
           </div>
           <Paragraph type="secondary" className="!mb-0 text-xs text-gray-600 dark:text-gray-400">
-            Emails will be automatically personalized and dispatched with grade-specific templates.
+            All eligible leads will receive this universal master cold email with dynamic personalization.
           </Paragraph>
         </div>
 
-        {/* Grade Breakdown with Templates */}
+        {/* Universal Template Preview Box */}
         <div className="space-y-2">
           <Text strong className="text-xs uppercase tracking-wider text-gray-500">
-            Grade Routing & Assigned Templates:
+            Assigned Email Template:
           </Text>
 
-          <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+          <div className="p-3.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-xs text-gray-800 dark:text-gray-200">
+                {template?.name || "Universal Master Cold Email"}
+              </span>
+              <Tag color="purple" className="text-[11px] m-0 font-semibold">
+                Universal (All Grades)
+              </Tag>
+            </div>
+
+            <div className="text-xs text-gray-700 dark:text-gray-300 font-medium">
+              <span className="text-gray-400 font-normal mr-1">Subject:</span>
+              {template?.subject || `A free website mockup for {{business_name}}?`}
+            </div>
+          </div>
+        </div>
+
+        {/* Lead Grade Distribution Overview */}
+        <div className="space-y-2">
+          <Text strong className="text-xs uppercase tracking-wider text-gray-500">
+            Audience Breakdown by Lead Grade:
+          </Text>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {["A", "B", "C", "D"].map((grade) => {
               const gStat = grades?.[grade] || { total: 0, eligible: 0, ineligible: 0 };
-              const tpl = templates[grade];
-
               return (
                 <div
                   key={grade}
-                  className="p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg flex flex-col gap-1.5"
+                  className="p-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg text-center"
                 >
-                  <div className="flex items-center justify-between">
-                    <Space size={6}>
-                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-700 text-white font-bold text-[10px]">
-                        {grade}
-                      </span>
-                      <span className="font-semibold text-xs text-gray-800 dark:text-gray-200">
-                        Grade {grade}
-                      </span>
-                    </Space>
-                    <Tag color={gStat.eligible > 0 ? "blue" : "default"} className="text-xs m-0">
-                      {gStat.eligible} recipient{gStat.eligible === 1 ? "" : "s"}
-                    </Tag>
+                  <div className="font-bold text-xs text-gray-700 dark:text-gray-300">
+                    Grade {grade}
                   </div>
-
-                  <div className="text-xs text-gray-500 flex items-center gap-1">
-                    <span className="font-semibold text-gray-600 dark:text-gray-400">Subject:</span>
-                    <span className="truncate text-gray-700 dark:text-gray-300">
-                      {tpl?.subject || "(Default template)"}
-                    </span>
+                  <div className="text-sm font-semibold text-blue-600 dark:text-blue-400 mt-0.5">
+                    {gStat.eligible} leads
                   </div>
                 </div>
               );
@@ -128,7 +135,7 @@ export const AutomationConfirmModal: React.FC<AutomationConfirmModalProps> = ({
 
         {/* Dispatch Estimation */}
         <div className="flex items-center justify-between text-sm px-1">
-          <span className="font-medium text-gray-600 dark:text-gray-400">Estimated Total Emails:</span>
+          <span className="font-medium text-gray-600 dark:text-gray-400">Total Emails to Dispatch:</span>
           <span className="font-bold text-lg text-emerald-600 dark:text-emerald-400">
             {eligibleLeads}
           </span>

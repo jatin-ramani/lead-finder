@@ -70,20 +70,94 @@ export const AutomationProgressView: React.FC<AutomationProgressViewProps> = ({
   const failed = report.failed_count;
   const pending = report.pending_count;
   const processing = report.processing_count || 0;
+  const remaining = report.remaining_count ?? (pending + processing);
   const processed = sent + failed + report.cancelled_count + (report.skipped_count || 0);
   const percent = report.percentage ?? (total > 0 ? Math.round((processed / total) * 100) : 100);
   const isRunning = report.status === "running";
   const isPaused = report.status === "paused";
   const isScheduled = report.status === "scheduled";
+  const isFinished = report.status === "completed" || report.status === "completed_with_errors" || report.status === "cancelled";
   const statusBadge = STATUS_TAG_MAP[report.status] || {
     color: "default",
     label: report.status,
   };
 
   const recipientLogs = report.recipient_logs || [];
+  const remainingRecipients = report.remaining_recipients || recipientLogs.filter((r) => r.status === "pending" || r.status === "processing");
+  const sentRecipients = recipientLogs.filter((r) => r.status === "sent");
   const displayedLogs = filterFailedOnly
     ? recipientLogs.filter((r) => r.status === "failed")
     : recipientLogs;
+
+  const [activeTab, setActiveTab] = useState<string>(isFinished && remaining === 0 ? "sent" : "remaining");
+
+  const remainingColumns = [
+    {
+      title: "Business / Lead",
+      key: "business",
+      render: (_: unknown, record: RecipientExecutionLogItem) => (
+        <div className="space-y-0.5">
+          <div className="font-semibold text-xs text-gray-900 dark:text-gray-100">
+            {record.business_name}
+          </div>
+          <div className="font-mono text-[11px] text-gray-500">
+            {record.recipient_email}
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: "Grade",
+      dataIndex: "lead_grade",
+      key: "lead_grade",
+      width: 90,
+      render: (g: string) => (
+        <Tag color="blue" className="text-xs font-semibold">
+          Grade {g || "D"}
+        </Tag>
+      ),
+    },
+    {
+      title: "Queue Status",
+      dataIndex: "status",
+      key: "status",
+      width: 140,
+      render: (st: string, record: RecipientExecutionLogItem) => {
+        if (st === "processing") {
+          return (
+            <Tag color="processing" icon={<SyncOutlined spin />}>
+              Processing Now
+            </Tag>
+          );
+        }
+        if (record.error_message && record.error_message.includes("Retrying")) {
+          return (
+            <Tag color="warning" icon={<SyncOutlined />}>
+              Retry Scheduled
+            </Tag>
+          );
+        }
+        return <Tag color="default">Queued Pending</Tag>;
+      },
+    },
+    {
+      title: "Status Details",
+      key: "details",
+      render: (_: unknown, record: RecipientExecutionLogItem) => (
+        <div className="text-xs text-gray-500">
+          {record.error_message ? (
+            <span className="text-amber-600 dark:text-amber-400 font-mono text-[11px]">
+              {record.error_message}
+            </span>
+          ) : record.status === "processing" ? (
+            <span className="text-blue-600 dark:text-blue-400">Currently generating & dispatching...</span>
+          ) : (
+            <span className="text-gray-400">Awaiting queue dispatch at 20/min</span>
+          )}
+        </div>
+      ),
+    },
+  ];
 
   const logColumns = [
     {
@@ -124,7 +198,7 @@ export const AutomationProgressView: React.FC<AutomationProgressViewProps> = ({
       },
     },
     {
-      title: "Details / Error",
+      title: "Details / Delivery Info",
       key: "details",
       render: (_: unknown, record: RecipientExecutionLogItem) => (
         <div className="text-xs">
@@ -132,8 +206,12 @@ export const AutomationProgressView: React.FC<AutomationProgressViewProps> = ({
             <span className="text-red-500 font-mono text-[11px]">
               {record.error_message}
             </span>
+          ) : record.sent_at ? (
+            <span className="text-emerald-600 dark:text-emerald-400">
+              Delivered at {new Date(record.sent_at).toLocaleTimeString()}
+            </span>
           ) : (
-            <span className="text-gray-400">Successfully delivered</span>
+            <span className="text-gray-400">In queue / processing</span>
           )}
         </div>
       ),
@@ -220,7 +298,10 @@ export const AutomationProgressView: React.FC<AutomationProgressViewProps> = ({
         {/* Progress Bar */}
         <div className="mt-5 space-y-1.5">
           <div className="flex justify-between text-xs font-semibold text-gray-600 dark:text-gray-300">
-            <span>Progress: {processed} of {total} recipients processed</span>
+            <span>
+              Progress: {sent} of {total} sent • {remaining} remaining unsent
+              {failed > 0 ? ` • ${failed} failed` : ""}
+            </span>
             <span>{percent}%</span>
           </div>
           <Progress
@@ -259,8 +340,8 @@ export const AutomationProgressView: React.FC<AutomationProgressViewProps> = ({
         <Col xs={12} sm={6}>
           <Card size="small" className="border border-gray-200 dark:border-gray-800 shadow-sm text-center bg-blue-50/40 dark:bg-blue-950/20">
             <Statistic
-              title={<span className="text-xs text-blue-700 dark:text-blue-400">Pending / Queue</span>}
-              value={pending + processing}
+              title={<span className="text-xs text-blue-700 dark:text-blue-400">Remaining Unsent</span>}
+              value={remaining}
               valueStyle={{ fontWeight: 700, color: "#2563eb" }}
               prefix={<SyncOutlined spin={isRunning} />}
             />
@@ -304,7 +385,7 @@ export const AutomationProgressView: React.FC<AutomationProgressViewProps> = ({
                       <span className="font-semibold text-emerald-600">{g.sent}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Pending:</span>
+                      <span>Remaining:</span>
                       <span className="font-semibold text-blue-600">{g.pending + (g.processing || 0)}</span>
                     </div>
                     <div className="flex justify-between">
@@ -319,32 +400,109 @@ export const AutomationProgressView: React.FC<AutomationProgressViewProps> = ({
         </Row>
       </Card>
 
-      {/* Recipient Logs & Failure Inspector */}
+      {/* Live Recipient Views & History Inspector */}
       <Card
         className="border border-gray-200 dark:border-gray-800 shadow-sm rounded-xl"
         title={
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <span className="font-semibold text-base">Recipient Dispatch Logs</span>
-            {failed > 0 && (
-              <Button
-                size="small"
-                type={filterFailedOnly ? "primary" : "default"}
-                danger={filterFailedOnly}
-                onClick={() => setFilterFailedOnly(!filterFailedOnly)}
-              >
-                {filterFailedOnly ? "Show All Recipients" : `Inspect ${failed} Failed`}
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              <Space size="small">
+                <Button
+                  size="small"
+                  type={activeTab === "remaining" ? "primary" : "default"}
+                  onClick={() => {
+                    setActiveTab("remaining");
+                    setFilterFailedOnly(false);
+                  }}
+                  className={activeTab === "remaining" ? "bg-blue-600" : ""}
+                >
+                  Remaining Unsent ({remaining})
+                </Button>
+                <Button
+                  size="small"
+                  type={activeTab === "sent" ? "primary" : "default"}
+                  onClick={() => {
+                    setActiveTab("sent");
+                    setFilterFailedOnly(false);
+                  }}
+                  className={activeTab === "sent" ? "bg-emerald-600" : ""}
+                >
+                  Delivered ({sent})
+                </Button>
+                <Button
+                  size="small"
+                  type={activeTab === "all" && !filterFailedOnly ? "primary" : "default"}
+                  onClick={() => {
+                    setActiveTab("all");
+                    setFilterFailedOnly(false);
+                  }}
+                >
+                  All Logs ({recipientLogs.length})
+                </Button>
+                {failed > 0 && (
+                  <Button
+                    size="small"
+                    type={filterFailedOnly ? "primary" : "default"}
+                    danger={filterFailedOnly}
+                    onClick={() => {
+                      setActiveTab("all");
+                      setFilterFailedOnly(!filterFailedOnly);
+                    }}
+                  >
+                    {filterFailedOnly ? "Show All" : `Inspect ${failed} Failed`}
+                  </Button>
+                )}
+              </Space>
+            </div>
           </div>
         }
       >
-        <Table
-          dataSource={displayedLogs}
-          columns={logColumns}
-          rowKey="id"
-          size="small"
-          pagination={{ pageSize: 10 }}
-        />
+        {activeTab === "remaining" ? (
+          <Table
+            dataSource={remainingRecipients}
+            columns={remainingColumns}
+            rowKey="id"
+            size="small"
+            pagination={{ pageSize: 10 }}
+            locale={{
+              emptyText: (
+                <div className="py-8 text-center">
+                  <CheckCircleOutlined className="text-emerald-500 text-3xl mb-2" />
+                  <div className="font-semibold text-gray-800 dark:text-gray-200">
+                    No remaining unsent leads in queue
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    All eligible prospects have been processed or delivered. Check &quot;Delivered&quot; or &quot;All Logs&quot; to review history.
+                  </div>
+                </div>
+              ),
+            }}
+          />
+        ) : activeTab === "sent" ? (
+          <Table
+            dataSource={sentRecipients}
+            columns={logColumns}
+            rowKey="id"
+            size="small"
+            pagination={{ pageSize: 10 }}
+            locale={{
+              emptyText: (
+                <div className="py-8 text-center text-gray-400">
+                  No emails have been delivered yet.
+                </div>
+              ),
+            }}
+          />
+        ) : (
+          <Table
+            dataSource={displayedLogs}
+            columns={logColumns}
+            rowKey="id"
+            size="small"
+            pagination={{ pageSize: 10 }}
+          />
+        )}
       </Card>
     </div>
   );

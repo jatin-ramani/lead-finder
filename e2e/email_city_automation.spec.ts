@@ -1,11 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
 import type {
-  AIGradeTemplatesResponse,
-  AISingleTemplateResponse,
   CityAutomationListResponse,
   CityAutomationReportResponse,
   CityGradeStatsResponse,
   CityStatListResponse,
+  MasterTemplateResponse,
 } from "@/types/api";
 import { authenticatePlaywright } from "./support/auth";
 
@@ -32,30 +31,14 @@ const mockAhmedabadStats: CityGradeStatsResponse = {
   },
 };
 
-const mockAITemplates: AIGradeTemplatesResponse = {
+const mockMasterTemplate: MasterTemplateResponse = {
   success: true,
   city: "Ahmedabad",
   data: {
-    A: {
-      subject: "Exclusive Growth Partnership for {{business_name}}",
-      body: "Hello {{contact_name}},\n\nWe evaluated {{business_name}} in Ahmedabad and would love to propose a VIP growth collaboration.",
-      rationale: "High conversion VIP messaging with deep personalization.",
-    },
-    B: {
-      subject: "B2B Expansion Solutions for {{business_name}}",
-      body: "Hi {{contact_name}},\n\nConnecting from Ahmedabad regarding your operations at {{business_name}}.",
-      rationale: "Professional B2B outreach with value proposition.",
-    },
-    C: {
-      subject: "Complimentary Digital Audit for {{business_name}}",
-      body: "Hello {{contact_name}},\n\nWe reviewed {{business_name}}'s web presence and prepared an initial audit overview.",
-      rationale: "Low-pressure consultative advice.",
-    },
-    D: {
-      subject: "Quick introduction for {{business_name}}",
-      body: "Hi {{contact_name}},\n\nReaching out to see if {{business_name}} is currently exploring new partnerships in Ahmedabad.",
-      rationale: "Simple discovery inquiry.",
-    },
+    name: "Universal Master Cold Email — Ahmedabad",
+    subject: "A free website mockup for {{business_name}}?",
+    body: "Hi {{business_name}} team,\n\nA strong website can completely change how a potential customer sees a business before they ever make a call.\n\nWe're Codebait, a web design studio helping local businesses build modern, high-converting websites.\n\nReply to this email and we'll create a free, no-obligation website mockup for {{business_name}}.\n\nBest,\nJatin Ramani\nFounder, Codebait\n7861035002\njatinrmn@gmail.com",
+    variables: ["business_name", "contact_name"],
   },
 };
 
@@ -70,6 +53,8 @@ const mockReportRunning: CityAutomationReportResponse = {
     sent_count: 215,
     failed_count: 6,
     pending_count: 0,
+    processing_count: 0,
+    remaining_count: 0,
     cancelled_count: 0,
     created_at: new Date().toISOString(),
     completed_at: new Date().toISOString(),
@@ -79,6 +64,7 @@ const mockReportRunning: CityAutomationReportResponse = {
       C: { total: 76, sent: 72, failed: 4, pending: 0, cancelled: 0 },
       D: { total: 25, sent: 25, failed: 0, pending: 0, cancelled: 0 },
     },
+    remaining_recipients: [],
     recipient_logs: [
       {
         id: 1,
@@ -191,6 +177,15 @@ async function mockCityAutomationRoutes(page: Page) {
       return;
     }
 
+    if (pathname === "/automations/master-template" && method === "GET") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(mockMasterTemplate),
+      });
+      return;
+    }
+
     if (pathname === "/automations/variables" && method === "GET") {
       await route.fulfill({
         status: 200,
@@ -202,32 +197,6 @@ async function mockCityAutomationRoutes(page: Page) {
           { key: "lead_status", label: "Lead Status", description: "Pipeline status" },
           { key: "lead_score", label: "Lead Score", description: "Lead qualification score" },
         ]),
-      });
-      return;
-    }
-
-    if (pathname === "/automations/generate-templates" && method === "POST") {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify(mockAITemplates),
-      });
-      return;
-    }
-
-    if (pathname === "/automations/generate-single-template" && method === "POST") {
-      const singleResp: AISingleTemplateResponse = {
-        success: true,
-        grade: "A",
-        data: {
-          subject: "Updated VIP Strategy for {{business_name}}",
-          body: "Hello {{contact_name}},\n\nRegenerated custom template for Grade A.",
-        },
-      };
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify(singleResp),
       });
       return;
     }
@@ -274,19 +243,19 @@ test.describe("City-First Email Automation End-to-End Workflow", () => {
     await mockCityAutomationRoutes(page);
   });
 
-  test("completes full workflow: City -> Leads/Grades -> AI Templates -> Review -> Start -> Progress Report", async ({
+  test("completes full workflow: City -> Leads/Grades -> Universal Master Cold Email -> Review -> Start -> Progress Report", async ({
     page,
   }) => {
     await page.goto("/automations");
     await expect(page.locator("h2")).toContainText("Email Automation");
 
     // 1. Step 1: City & Audience Verification
-    await expect(page.getByText("Step 1: Select City & Review Lead Audience")).toBeVisible();
-    await expect(page.getByText("Total Leads Found")).toBeVisible();
+    await expect(page.getByText("Step 1: Select City & Review Lead Audience").first()).toBeVisible();
+    await expect(page.getByText("Total Leads Found").first()).toBeVisible();
     await expect(page.getByText("248").first()).toBeVisible();
-    await expect(page.getByText("Email-Eligible Leads")).toBeVisible();
+    await expect(page.getByText("Email-Eligible Leads", { exact: true })).toBeVisible();
     await expect(page.getByText("221").first()).toBeVisible();
-    await expect(page.getByText("27 leads in Ahmedabad do not have a valid email address and will be safely skipped.")).toBeVisible();
+    await expect(page.getByText("27 leads in Ahmedabad do not have a valid email address and will be safely skipped.").first()).toBeVisible();
 
     // Verify Grade Distribution
     await expect(page.getByText("Grade A").first()).toBeVisible();
@@ -294,30 +263,23 @@ test.describe("City-First Email Automation End-to-End Workflow", () => {
     await expect(page.getByText("Grade C").first()).toBeVisible();
     await expect(page.getByText("Grade D").first()).toBeVisible();
 
-    // 2. Step 2: AI Email Templates Generation
-    await expect(page.getByText("Step 2: AI Email Templates by Lead Grade")).toBeVisible();
-    const generateAiBtn = page.getByRole("button", { name: /Generate with AI|Generate AI Email Templates/i }).first();
-    await expect(generateAiBtn).toBeVisible();
-    await generateAiBtn.click();
+    // 2. Step 2: Universal Master Cold Email Template
+    await expect(page.getByText("Step 2: Universal Master Cold Email").first()).toBeVisible();
+    await expect(page.getByText("Universal Template").first()).toBeVisible();
+    await expect(page.getByText("A free website mockup for {{business_name}}?").first()).toBeVisible();
 
-    // Verify templates generated for all 4 grades
-    await expect(page.getByText("Grade A: VIP / High Conversion")).toBeVisible();
-    await expect(page.getByText("Grade B: Professional B2B")).toBeVisible();
-    await expect(page.getByText("Grade C: Consultative / Audit")).toBeVisible();
-    await expect(page.getByText("Grade D: Simple Discovery")).toBeVisible();
-
-    // 3. Preview & Edit a Grade Template
+    // 3. Preview & Edit Master Template
     const previewEditBtn = page.getByRole("button", { name: "Preview / Edit" }).first();
     await previewEditBtn.click();
-    await expect(page.getByText("Edit Grade A Template — Ahmedabad")).toBeVisible();
-    await expect(page.getByText("Allowlisted Template Variables:")).toBeVisible();
+    await expect(page.getByText("Edit Cold Email Template — Ahmedabad").first()).toBeVisible();
+    await expect(page.getByText("Allowlisted Template Variables:").first()).toBeVisible();
 
     // Test Live Preview tab in modal
     await page.getByRole("tab", { name: /Live Sample Preview/i }).click();
-    await expect(page.getByText("Sample Preview for Grade A Prospect")).toBeVisible();
+    await expect(page.getByText("Sample Preview for Grade").first()).toBeVisible();
 
     // Close modal
-    await page.getByRole("button", { name: "Cancel" }).click();
+    await page.getByRole("button", { name: "Cancel" }).first().click();
 
     // 4. Step 3: Start Automation Action
     const startBtn = page.getByRole("button", { name: "Start Automation" }).first();
@@ -325,40 +287,180 @@ test.describe("City-First Email Automation End-to-End Workflow", () => {
     await startBtn.click();
 
     // Review Modal
-    await expect(page.getByText("Review & Start Email Automation")).toBeVisible();
-    await expect(page.getByText("221 Eligible Leads")).toBeVisible();
+    await expect(page.getByText("Review & Start Email Automation").first()).toBeVisible();
+    await expect(page.getByText("221 Eligible Leads").first()).toBeVisible();
+    await expect(page.getByText("Universal (All Grades)").first()).toBeVisible();
 
     // Confirm Start
     const confirmStartBtn = page.locator(".ant-modal-footer").getByRole("button", { name: "Start Automation" });
     await confirmStartBtn.click();
 
     // 5. Progress Report View
-    await expect(page.getByText("Ahmedabad Email Automation")).toBeVisible();
-    await expect(page.getByText("Completed")).toBeVisible();
-    await expect(page.getByText("Emails Sent")).toBeVisible();
+    await expect(page.getByText("Ahmedabad Email Automation").first()).toBeVisible();
+    await expect(page.getByText("Completed").first()).toBeVisible();
+    await expect(page.getByText("Emails Sent").first()).toBeVisible();
     await expect(page.getByText("215").first()).toBeVisible();
     await expect(page.getByText("Failed").first()).toBeVisible();
     await expect(page.getByText("6").first()).toBeVisible();
 
     // Verify Grade-Wise Performance Cards
-    await expect(page.getByText("Grade-Wise Performance")).toBeVisible();
-    await expect(page.getByText("Recipient Dispatch Logs")).toBeVisible();
+    await expect(page.getByText("Grade-Wise Performance").first()).toBeVisible();
+    await expect(page.getByText("Recipient Dispatch Logs").first()).toBeVisible();
 
     // 6. Test Previous Automations Drawer
     const startNewBtn = page.getByRole("button", { name: "Start New City Run" });
     await startNewBtn.click();
-
     const historyBtn = page.getByRole("button", { name: "Previous Automations" });
     await historyBtn.click();
-    await expect(page.getByText("Automation History & Reports")).toBeVisible();
-    await expect(page.getByText("Ahmedabad Automation")).toBeVisible();
-    await expect(page.getByText("Surat Automation")).toBeVisible();
+    await expect(page.getByText("Automation History & Reports").first()).toBeVisible();
+    await expect(page.getByText("Ahmedabad Automation").first()).toBeVisible();
+    await expect(page.getByText("Surat Automation").first()).toBeVisible();
+  });
+
+  test("active automation displays only remaining unsent leads and decreases dynamically", async ({ page }) => {
+    let pollCount = 0;
+
+    const report1 = {
+      success: true,
+      data: {
+        id: 101,
+        name: "Email Automation — Ahmedabad",
+        city: "Ahmedabad",
+        status: "running",
+        recipient_count: 2,
+        sent_count: 0,
+        failed_count: 0,
+        pending_count: 2,
+        processing_count: 0,
+        remaining_count: 2,
+        cancelled_count: 0,
+        skipped_count: 0,
+        percentage: 0,
+        created_at: new Date().toISOString(),
+        grade_breakdown: {
+          A: { total: 1, sent: 0, failed: 0, pending: 1, processing: 0, cancelled: 0, skipped: 0 },
+          B: { total: 1, sent: 0, failed: 0, pending: 1, processing: 0, cancelled: 0, skipped: 0 },
+          C: { total: 0, sent: 0, failed: 0, pending: 0, processing: 0, cancelled: 0, skipped: 0 },
+          D: { total: 0, sent: 0, failed: 0, pending: 0, processing: 0, cancelled: 0, skipped: 0 },
+        },
+        remaining_recipients: [
+          {
+            id: 101,
+            business_id: 1,
+            business_name: "Ahmedabad Prime Dental",
+            recipient_email: "contact@primedental.example",
+            lead_grade: "A",
+            status: "pending",
+          },
+          {
+            id: 102,
+            business_id: 2,
+            business_name: "Gujarat Auto Hub",
+            recipient_email: "info@gujhub.example",
+            lead_grade: "B",
+            status: "pending",
+          },
+        ],
+        recipient_logs: [],
+      },
+    };
+
+    const report2 = {
+      success: true,
+      data: {
+        id: 101,
+        name: "Email Automation — Ahmedabad",
+        city: "Ahmedabad",
+        status: "running",
+        recipient_count: 2,
+        sent_count: 1,
+        failed_count: 0,
+        pending_count: 1,
+        processing_count: 0,
+        remaining_count: 1,
+        cancelled_count: 0,
+        skipped_count: 0,
+        percentage: 50,
+        created_at: new Date().toISOString(),
+        grade_breakdown: {
+          A: { total: 1, sent: 1, failed: 0, pending: 0, processing: 0, cancelled: 0, skipped: 0 },
+          B: { total: 1, sent: 0, failed: 0, pending: 1, processing: 0, cancelled: 0, skipped: 0 },
+          C: { total: 0, sent: 0, failed: 0, pending: 0, processing: 0, cancelled: 0, skipped: 0 },
+          D: { total: 0, sent: 0, failed: 0, pending: 0, processing: 0, cancelled: 0, skipped: 0 },
+        },
+        remaining_recipients: [
+          {
+            id: 102,
+            business_id: 2,
+            business_name: "Gujarat Auto Hub",
+            recipient_email: "info@gujhub.example",
+            lead_grade: "B",
+            status: "pending",
+          },
+        ],
+        recipient_logs: [
+          {
+            id: 101,
+            business_id: 1,
+            business_name: "Ahmedabad Prime Dental",
+            recipient_email: "contact@primedental.example",
+            lead_grade: "A",
+            status: "sent",
+            sent_at: new Date().toISOString(),
+          },
+        ],
+      },
+    };
+
+    await page.route("**/automations/start-city-automation", async (route) => {
+      await route.fulfill({
+        status: 201,
+        contentType: "application/json",
+        body: JSON.stringify(report1),
+      });
+    });
+
+    await page.route("**/automations/runs/101", async (route) => {
+      pollCount++;
+      const resp = pollCount === 1 ? report1 : report2;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(resp),
+      });
+    });
+
+    await page.goto("/automations");
+
+    // Master template is ready automatically; click Start Automation
+    const startActionBtn = page.getByRole("button", { name: "Start Automation" }).first();
+    await startActionBtn.scrollIntoViewIfNeeded();
+    await startActionBtn.click();
+    const modalStartBtn = page.locator(".ant-modal-footer").getByRole("button", { name: "Start Automation" });
+    await modalStartBtn.click();
+
+    // Verify Remaining Unsent tab is active and shows initially
+    await expect(page.getByText("Remaining Unsent (2)").first()).toBeVisible();
+    await expect(page.getByText("Ahmedabad Prime Dental").first()).toBeVisible();
+    await expect(page.getByText("Gujarat Auto Hub").first()).toBeVisible();
+
+    // Trigger refresh / advance poll to get report2
+    await page.getByRole("button", { name: "Refresh" }).first().click();
+
+    // Now remaining is 1: Ahmedabad Prime Dental left the remaining list!
+    await expect(page.getByText("Remaining Unsent (1)").first()).toBeVisible();
+    await expect(page.getByText("Gujarat Auto Hub").first()).toBeVisible();
+    await expect(page.getByText("Ahmedabad Prime Dental")).not.toBeVisible();
+
+    // Delivered tab shows Ahmedabad Prime Dental
+    await page.getByRole("button", { name: /Delivered \(1\)/i }).click({ force: true });
+    await expect(page.getByText("Ahmedabad Prime Dental").first()).toBeVisible();
   });
 
   test("renders responsively on mobile viewport", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto("/automations");
     await expect(page.getByText("Email Automation").first()).toBeVisible();
-    await expect(page.getByText("Step 1: Select City & Review Lead Audience")).toBeVisible();
+    await expect(page.getByText("Step 1: Select City & Review Lead Audience").first()).toBeVisible();
   });
 });
