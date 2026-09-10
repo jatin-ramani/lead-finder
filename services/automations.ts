@@ -1,4 +1,4 @@
-import { del, get, patch, post } from "./http";
+import { del, download, get, patch, post } from "./http";
 import type {
   AutomationCreateInput,
   AutomationFilterParams,
@@ -208,5 +208,14 @@ export function resumeCityAutomation(
     undefined,
   );
 }
+
+export function exportCityMobileNumbersXlsx(
+  city: string,
+): Promise<{ blob: Blob; filename: string }> {
+  return download("/automations/export-mobile-numbers", {
+    params: { city },
+  });
+}
+
 
 

@@ -203,7 +203,7 @@ export const TestEmailSection: React.FC<TestEmailSectionProps> = ({
                 <Tag color="purple" className="text-xs m-0">Universal Master</Tag>
               </div>
               <div className="text-xs font-semibold text-gray-800 dark:text-gray-200">
-                A free website mockup for {"{{business_name}}"}?
+                Quick idea for {"{{Business Name}}"}
               </div>
               <div className="text-[11px] text-gray-500">
                 Rendered with clean HTML paragraphs & plain-text fallback.

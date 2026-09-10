@@ -36,9 +36,9 @@ const mockMasterTemplate: MasterTemplateResponse = {
   city: "Ahmedabad",
   data: {
     name: "Universal Master Cold Email — Ahmedabad",
-    subject: "A free website mockup for {{business_name}}?",
-    body: "Hi {{business_name}} team,\n\nA strong website can completely change how a potential customer sees a business before they ever make a call.\n\nWe're Codebait, a web design studio helping local businesses build modern, high-converting websites.\n\nReply to this email and we'll create a free, no-obligation website mockup for {{business_name}}.\n\nBest,\nJatin Ramani\nFounder, Codebait\n7861035002\njatinrmn@gmail.com",
-    variables: ["business_name", "contact_name"],
+    subject: "Quick idea for {{Business Name}}",
+    body: "<p>Hi {{Contact Name}},</p>\n\n<p>I came across {{Business Name}} in {{City}}.</p>\n\n<p>We build modern websites and AI-powered systems that help businesses <strong>look more credible, capture more leads and turn visitors into customers.</strong></p>\n\n<p>These days, a website isn't just an online presence — it can become one of the strongest channels for <strong>new customers, enquiries and appointments.</strong></p>\n\n<p>Would you be interested in seeing a quick demo?</p>\n\n<p>Best,<br>\n<strong>Jatin Ramani</strong><br>\nFounder, Codebait<br>\n7861035002</p>",
+    variables: ["business_name", "contact_name", "city"],
   },
 };
 
@@ -219,6 +219,19 @@ async function mockCityAutomationRoutes(page: Page) {
       return;
     }
 
+    if (pathname === "/automations/export-mobile-numbers" && method === "GET") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers: {
+          "Content-Disposition": 'attachment; filename="Ahmedabad.xlsx"',
+          "Access-Control-Expose-Headers": "Content-Disposition",
+        },
+        body: Buffer.from("PK\x03\x04mockxlsx"),
+      });
+      return;
+    }
+
     if (pathname === "/automations/runs" && method === "GET") {
       await route.fulfill({
         status: 200,
@@ -267,7 +280,7 @@ test.describe("City-First Email Automation End-to-End Workflow", () => {
     // 2. Step 2: Universal Master Cold Email Template
     await expect(page.getByText("Step 2: Universal Master Cold Email").first()).toBeVisible();
     await expect(page.getByText("Universal Template").first()).toBeVisible();
-    await expect(page.getByText("A free website mockup for {{business_name}}?").first()).toBeVisible();
+    await expect(page.getByText("Quick idea for {{Business Name}}").first()).toBeVisible();
 
     // 3. Preview & Edit Master Template
     const previewEditBtn = page.getByRole("button", { name: "Preview / Edit" }).first();
@@ -456,6 +469,17 @@ test.describe("City-First Email Automation End-to-End Workflow", () => {
     // Delivered tab shows Ahmedabad Prime Dental
     await page.getByRole("button", { name: /Delivered \(1\)/i }).click({ force: true });
     await expect(page.getByText("Ahmedabad Prime Dental").first()).toBeVisible();
+  });
+
+  test("renders and triggers Export Mobile Numbers for selected city", async ({ page }) => {
+    await page.goto("/automations");
+    const exportBtn = page.getByRole("button", { name: "Export Mobile Numbers" }).first();
+    await expect(exportBtn).toBeVisible({ timeout: 10_000 });
+
+    const downloadPromise = page.waitForEvent("download");
+    await exportBtn.click();
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe("Ahmedabad.xlsx");
   });
 
   test("renders responsively on mobile viewport", async ({ page }) => {

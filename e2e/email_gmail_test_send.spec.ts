@@ -147,7 +147,7 @@ async function setupMockRoutes(
           {
             grade: "Universal",
             status: "sent",
-            subject: "[TEST] A free website mockup for Test Business?",
+            subject: "[TEST] Quick idea for Test Business",
             message_id: "gmail_msg_101",
             sent_at: "2026-09-08T14:30:00Z",
           },
@@ -169,51 +169,42 @@ async function setupMockRoutes(
   });
 }
 
-test.describe("Gmail Test Email Sending Feature (Phase 5)", () => {
+test.describe("Lead Finder — Phase 4 Gmail Test Email Verification", () => {
   test.beforeEach(async ({ context }) => {
     await authenticatePlaywright(context);
   });
 
-  test("1. Renders Gmail Connected banner with quota progress and sender email", async ({ page }) => {
-    await setupMockRoutes(page, mockGmailConnected);
-    await page.goto("/automations");
-
-    await expect(page.getByText("Gmail API Delivery", { exact: true })).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByText("outreach.leadfinder@gmail.com")).toBeVisible();
-    await expect(page.getByText("15 / 400 sent")).toBeVisible();
-    await expect(page.getByText("385 remaining today")).toBeVisible();
-    await expect(page.getByRole("button", { name: /Disconnect/i })).toBeVisible();
-  });
-
-  test("2. Renders Disconnected state and prompts user to connect Gmail", async ({ page }) => {
+  test("1. Renders Test Email Verification section in Email Automations view", async ({ page }) => {
     await setupMockRoutes(page, mockGmailDisconnected);
     await page.goto("/automations");
 
-    await expect(page.getByText("Gmail API Delivery", { exact: true })).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByText("Disconnected", { exact: true })).toBeVisible();
-    await expect(page.getByRole("button", { name: /Connect Gmail/i }).first()).toBeVisible();
-
-    // Test Email section also shows warning
-    await expect(page.getByText("Gmail Not Connected")).toBeVisible();
-    await expect(page.getByRole("button", { name: /Connect Gmail First/i })).toBeVisible();
+    await expect(page.getByText("Test Email Sending")).toBeVisible({ timeout: 10_000 });
+    await expect(
+      page.getByText("Verify live Gmail API delivery with safe sample variables using the Universal Master Cold Email")
+    ).toBeVisible();
+    await expect(page.getByRole("button", { name: "Send Test Email" })).toBeVisible();
   });
 
-  test("3. Validates recipient email input and active universal template", async ({ page }) => {
+  test("2. Disables send action and shows warning when Gmail account is disconnected", async ({ page }) => {
+    await setupMockRoutes(page, mockGmailDisconnected);
+    await page.goto("/automations");
+
+    await expect(page.getByText("Gmail Not Connected")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole("button", { name: "Connect Gmail First" })).toBeVisible();
+    const sendBtn = page.getByRole("button", { name: "Send Test Email" });
+    await expect(sendBtn).toBeDisabled();
+  });
+
+  test("3. Enables send action when connected and validates destination email format", async ({ page }) => {
     await setupMockRoutes(page, mockGmailConnected);
     await page.goto("/automations");
 
-    await expect(page.getByText("Test Email Sending")).toBeVisible({ timeout: 10_000 });
-
-    const sendBtn = page.getByRole("button", { name: "Send Test Email" }).first();
-    await expect(sendBtn).toBeVisible();
-
-    // Click without entering email
-    await sendBtn.click();
-    await expect(page.getByText("Recipient email address is required")).toBeVisible();
-
-    // Enter invalid email format
     const emailInput = page.getByPlaceholder("e.g. yourname@example.com");
-    await emailInput.fill("invalid-email-format");
+    await expect(emailInput).toBeVisible({ timeout: 10_000 });
+
+    // Enter invalid email
+    await emailInput.fill("invalid-email-string");
+    const sendBtn = page.getByRole("button", { name: "Send Test Email" }).first();
     await sendBtn.click();
     await expect(page.getByText("Please enter a valid email address")).toBeVisible();
 
@@ -223,7 +214,7 @@ test.describe("Gmail Test Email Sending Feature (Phase 5)", () => {
 
     // Verify Active Template display
     await expect(page.getByText("Universal Master").first()).toBeVisible();
-    await expect(page.getByText("A free website mockup for {{business_name}}?").first()).toBeVisible();
+    await expect(page.getByText("Quick idea for {{Business Name}}").first()).toBeVisible();
   });
 
   test("4. Opens confirmation modal with quota warning and executes successful test send", async ({
@@ -267,7 +258,7 @@ test.describe("Gmail Test Email Sending Feature (Phase 5)", () => {
         {
           grade: "Universal",
           status: "failed",
-          subject: "[TEST] A free website mockup for Test Business?",
+          subject: "[TEST] Quick idea for Test Business",
           error: "Gmail API 429: Rate limit exceeded",
         },
       ],

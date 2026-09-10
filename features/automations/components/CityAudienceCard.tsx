@@ -1,15 +1,17 @@
 "use client";
 
 import React from "react";
-import { Alert, Card, Col, Row, Select, Skeleton, Space, Statistic, Tag, Typography } from "antd";
+import { Alert, Button, Card, Col, Row, Select, Skeleton, Space, Statistic, Tag, Tooltip, Typography } from "antd";
 import {
   CheckCircleOutlined,
   EnvironmentOutlined,
   InfoCircleOutlined,
   StopOutlined,
+  WhatsAppOutlined,
 } from "@ant-design/icons";
 
 import type { CityGradeStatsResponse, CityStatItem } from "@/types/api";
+import { useExportCityMobileNumbers } from "../hooks/useCityAutomations";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -71,6 +73,13 @@ export const CityAudienceCard: React.FC<CityAudienceCardProps> = ({
   const alreadySentLeads = stats?.already_sent_leads ?? 0;
   const grades = stats?.grades;
 
+  const exportMobileNumbersMutation = useExportCityMobileNumbers();
+
+  const handleExportMobileNumbers = () => {
+    if (!selectedCity) return;
+    exportMobileNumbersMutation.mutate(selectedCity);
+  };
+
   return (
     <Card
       className="border border-gray-200 dark:border-gray-800 shadow-sm rounded-xl overflow-hidden"
@@ -80,43 +89,71 @@ export const CityAudienceCard: React.FC<CityAudienceCardProps> = ({
           <span>Step 1: Select City & Review Lead Audience</span>
         </div>
       }
+      extra={
+        selectedCity ? (
+          <Tooltip title={`Export 3-column XLSX (Business Type, Business Name, Mobile Number) for manual WhatsApp outreach in ${selectedCity}`}>
+            <Button
+              icon={<WhatsAppOutlined className="text-emerald-500" />}
+              onClick={handleExportMobileNumbers}
+              loading={exportMobileNumbersMutation.isPending}
+              className="font-medium text-xs border-emerald-500/40 text-emerald-700 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/30 hover:!border-emerald-500"
+            >
+              Export Mobile Numbers
+            </Button>
+          </Tooltip>
+        ) : null
+      }
     >
       <div className="space-y-5">
-        {/* City Selector */}
-        <div>
-          <Text strong className="block mb-1.5 text-xs uppercase tracking-wider text-gray-500">
-            Target City
-          </Text>
-          <Select
-            showSearch
-            placeholder="Select a city from discovered CRM leads..."
-            value={selectedCity}
-            onChange={onSelectCity}
-            loading={isLoadingCities}
-            style={{ width: "100%", maxWidth: 460 }}
-            size="large"
-            optionFilterProp="children"
-            className="shadow-sm"
-          >
-            {cities.map((c) => (
-              <Option key={c.city} value={c.city}>
-                <div className="flex items-center justify-between py-0.5">
-                  <span className="font-medium text-gray-800 dark:text-gray-200">{c.city}</span>
-                  <Space size="small">
-                    <Tag color="blue" className="text-xs">
-                      {c.eligible_leads} eligible
-                    </Tag>
-                    {c.already_sent_leads ? (
-                      <Tag color="purple" className="text-xs">
-                        {c.already_sent_leads} sent
+        {/* City Selector & Action Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+          <div className="flex-1 max-w-lg">
+            <Text strong className="block mb-1.5 text-xs uppercase tracking-wider text-gray-500">
+              Target City
+            </Text>
+            <Select
+              showSearch
+              placeholder="Select a city from discovered CRM leads..."
+              value={selectedCity}
+              onChange={onSelectCity}
+              loading={isLoadingCities}
+              style={{ width: "100%" }}
+              size="large"
+              optionFilterProp="children"
+              className="shadow-sm"
+            >
+              {cities.map((c) => (
+                <Option key={c.city} value={c.city}>
+                  <div className="flex items-center justify-between py-0.5">
+                    <span className="font-medium text-gray-800 dark:text-gray-200">{c.city}</span>
+                    <Space size="small">
+                      <Tag color="blue" className="text-xs">
+                        {c.eligible_leads} eligible
                       </Tag>
-                    ) : null}
-                    <span className="text-xs text-gray-400">({c.total_leads} total)</span>
-                  </Space>
-                </div>
-              </Option>
-            ))}
-          </Select>
+                      {c.already_sent_leads ? (
+                        <Tag color="purple" className="text-xs">
+                          {c.already_sent_leads} sent
+                        </Tag>
+                      ) : null}
+                      <span className="text-xs text-gray-400">({c.total_leads} total)</span>
+                    </Space>
+                  </div>
+                </Option>
+              ))}
+            </Select>
+          </div>
+
+          {selectedCity && (
+            <Button
+              icon={<WhatsAppOutlined className="text-emerald-500 text-base" />}
+              size="large"
+              onClick={handleExportMobileNumbers}
+              loading={exportMobileNumbersMutation.isPending}
+              className="font-semibold text-xs sm:text-sm border-emerald-500/40 text-emerald-700 dark:text-emerald-400 bg-emerald-50/60 dark:bg-emerald-950/30 hover:!border-emerald-500 h-10 px-4 shrink-0 shadow-sm"
+            >
+              Export Mobile Numbers
+            </Button>
+          )}
         </div>
 
         {selectedCity && (

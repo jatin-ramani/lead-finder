@@ -100,7 +100,7 @@ export const AutomationConfirmModal: React.FC<AutomationConfirmModalProps> = ({
 
             <div className="text-xs text-gray-700 dark:text-gray-300 font-medium">
               <span className="text-gray-400 font-normal mr-1">Subject:</span>
-              {template?.subject || `A free website mockup for {{business_name}}?`}
+              {template?.subject || "Quick idea for {{Business Name}}"}
             </div>
           </div>
         </div>

@@ -143,3 +143,22 @@ export function useResumeCityAutomation() {
   });
 }
 
+import { saveBlob } from "@/lib/download";
+
+export function useExportCityMobileNumbers() {
+  const { message } = App.useApp();
+
+  return useMutation({
+    mutationFn: (city: string) => automationsApi.exportCityMobileNumbersXlsx(city),
+    onSuccess: ({ blob, filename }) => {
+      saveBlob(blob, filename);
+      message.success(`Mobile numbers exported for ${filename}`);
+    },
+    onError: (err) => {
+      const msg = isApiError(err) ? err.message : "Failed to export mobile numbers";
+      message.error(msg);
+    },
+  });
+}
+
+

@@ -80,7 +80,7 @@ export const MasterTemplateCard: React.FC<MasterTemplateCardProps> = ({
               Subject:
             </div>
             <div className="font-semibold text-sm text-gray-800 dark:text-gray-200 truncate">
-              {template?.subject || `A free website mockup for {{business_name}}?`}
+              {template?.subject || "Quick idea for {{Business Name}}"}
             </div>
           </div>
 
@@ -102,10 +102,13 @@ export const MasterTemplateCard: React.FC<MasterTemplateCardProps> = ({
             <Space size={6} wrap>
               <span className="font-medium text-gray-600 dark:text-gray-400">Dynamic Variables:</span>
               <Tag className="bg-blue-50 text-blue-700 border-blue-200 text-[11px] m-0 font-mono">
-                {"{{business_name}}"}
+                {"{{Contact Name}}"}
               </Tag>
               <Tag className="bg-purple-50 text-purple-700 border-purple-200 text-[11px] m-0 font-mono">
-                {"{{contact_name}}"}
+                {"{{Business Name}}"}
+              </Tag>
+              <Tag className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[11px] m-0 font-mono">
+                {"{{City}}"}
               </Tag>
             </Space>
 
