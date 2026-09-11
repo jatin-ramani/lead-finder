@@ -41,6 +41,7 @@ import { TemplateEditorModal } from "@/features/automations/components/TemplateE
 import { AutomationConfirmModal } from "@/features/automations/components/AutomationConfirmModal";
 import { AutomationProgressView } from "@/features/automations/components/AutomationProgressView";
 import { AutomationHistoryDrawer } from "@/features/automations/components/AutomationHistoryDrawer";
+import { clearStored, readStored, writeStored } from "@/hooks/usePersistentState";
 
 const { Title, Paragraph } = Typography;
 
@@ -129,13 +130,11 @@ export default function EmailAutomationPage() {
 
   // Active Report View (if user launched or clicked a previous run)
   const [activeReportId, setActiveReportIdState] = useState<number | null>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("leadfinder_active_automation_id");
-      if (saved) {
-        const parsed = parseInt(saved, 10);
-        if (!isNaN(parsed) && parsed > 0) {
-          return parsed;
-        }
+    const saved = readStored("leadfinder_active_automation_id");
+    if (saved) {
+      const parsed = parseInt(saved, 10);
+      if (!isNaN(parsed) && parsed > 0) {
+        return parsed;
       }
     }
     return null;
@@ -143,12 +142,10 @@ export default function EmailAutomationPage() {
 
   const setActiveReportId = (id: number | null) => {
     setActiveReportIdState(id);
-    if (typeof window !== "undefined") {
-      if (id) {
-        localStorage.setItem("leadfinder_active_automation_id", id.toString());
-      } else {
-        localStorage.removeItem("leadfinder_active_automation_id");
-      }
+    if (id) {
+      writeStored("leadfinder_active_automation_id", id.toString());
+    } else {
+      clearStored(["leadfinder_active_automation_id"]);
     }
   };
 
@@ -158,6 +155,7 @@ export default function EmailAutomationPage() {
     refetch: refetchReport,
   } = useCityAutomationReport(activeReportId, {
     refetchInterval: (query: { state: { data?: { data?: { status?: string } } } }) => {
+      if (typeof document !== "undefined" && document.hidden) return false;
       const st = query.state.data?.data?.status;
       return st === "running" || st === "processing" ? 2500 : false;
     },

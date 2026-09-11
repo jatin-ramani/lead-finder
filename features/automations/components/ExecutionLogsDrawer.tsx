@@ -26,6 +26,7 @@ import {
 } from "@ant-design/icons";
 
 import type { EmailAutomation, EmailAutomationExecution, ExecutionStatus } from "@/types/api";
+import ErrorState from "@/components/feedback/ErrorState";
 import { useAutomationExecutions, useExecutions } from "../hooks/useAutomations";
 
 const { Text } = Typography;
@@ -90,7 +91,7 @@ export const ExecutionLogsDrawer: React.FC<ExecutionLogsDrawerProps> = ({
   );
 
   const activeQuery = automation ? specificQuery : globalQuery;
-  const { data, isLoading, isFetching, refetch } = activeQuery;
+  const { data, isLoading, isFetching, isError, error, refetch } = activeQuery;
 
   const items = data?.items ?? [];
   const total = data?.total ?? 0;
@@ -165,6 +166,15 @@ export const ExecutionLogsDrawer: React.FC<ExecutionLogsDrawerProps> = ({
         {isLoading ? (
           <div className="py-20 flex justify-center items-center">
             <Spin tip="Loading execution history..." />
+          </div>
+        ) : isError ? (
+          <div className="py-6">
+            <ErrorState
+              error={error}
+              onRetry={() => void refetch()}
+              variant="inline"
+              title="Could not load execution history"
+            />
           </div>
         ) : items.length === 0 ? (
           <Empty

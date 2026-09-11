@@ -6,7 +6,8 @@ import { useMemo } from "react";
 import { queryKeys, scrapingApi } from "@/services";
 import type { ScrapeJob } from "@/types/api";
 
-const RUNNING_POLL_MS = 1_500;
+const DETAIL_RUNNING_POLL_MS = 2_500;
+const HISTORY_RUNNING_POLL_MS = 4_000;
 
 export function isScrapeRunning(status: string | undefined): boolean {
   return status === "Running" || status === "Pending";
@@ -26,8 +27,9 @@ export function useScrapeJobs() {
     queryKey: queryKeys.scrapeJobs.list(),
     queryFn: ({ signal }) => scrapingApi.listScrapeJobs(signal),
     refetchInterval: (q) => {
+      if (typeof document !== "undefined" && document.hidden) return false;
       const jobs = q.state.data as ScrapeJob[] | undefined;
-      return jobs?.some((job) => isScrapeRunning(job.status)) ? RUNNING_POLL_MS : false;
+      return jobs?.some((job) => isScrapeRunning(job.status)) ? HISTORY_RUNNING_POLL_MS : false;
     },
   });
 
@@ -61,8 +63,9 @@ export function useScrapeJob(id: number | null) {
     queryFn: ({ signal }) => (id !== null ? scrapingApi.getScrapeJob(id, signal) : Promise.reject("No id")),
     enabled: id !== null,
     refetchInterval: (q) => {
+      if (typeof document !== "undefined" && document.hidden) return false;
       const job = q.state.data as ScrapeJob | undefined;
-      return isScrapeRunning(job?.status) ? RUNNING_POLL_MS : false;
+      return isScrapeRunning(job?.status) ? DETAIL_RUNNING_POLL_MS : false;
     },
     staleTime: 0,
   });

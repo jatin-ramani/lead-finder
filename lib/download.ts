@@ -23,5 +23,15 @@ export function saveBlob(blob: Blob, filename: string): void {
   link.click();
   link.remove();
 
-  URL.revokeObjectURL(url);
+  // On Android Chrome and mobile WebViews, revoking the object URL immediately
+  // can abort the underlying download stream before the system download manager
+  // begins saving the file. Delay cleanup to ensure the download completes cleanly.
+  setTimeout(() => {
+    try {
+      URL.revokeObjectURL(url);
+    } catch {
+      // Ignore cleanup error if already revoked or window closed
+    }
+  }, 3_000);
 }
+

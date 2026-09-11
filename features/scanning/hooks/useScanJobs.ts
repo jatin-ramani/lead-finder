@@ -7,9 +7,11 @@ import { ErrorCode, isApiError, queryKeys, scanningApi } from "@/services";
 import type { LatestScanJob, ScanJob } from "@/types/api";
 
 /**
- * How often a running or active scan is re-read.
+ * Polling cadence: detail view polls every 2.5s while active,
+ * history list refreshes every 4s to reduce mobile CPU and network contention.
  */
-const RUNNING_POLL_MS = 1_500;
+const DETAIL_RUNNING_POLL_MS = 2_500;
+const HISTORY_RUNNING_POLL_MS = 4_000;
 
 export function isRunning(status: string | undefined): boolean {
   return status === "Running" || status === "Pending";
@@ -37,8 +39,9 @@ export function useScanJobs() {
     queryKey: queryKeys.scanJobs.list(),
     queryFn: ({ signal }) => scanningApi.listScanJobs(signal),
     refetchInterval: (q) => {
+      if (typeof document !== "undefined" && document.hidden) return false;
       const jobs = q.state.data as ScanJob[] | undefined;
-      return jobs?.some((job) => isRunning(job.status)) ? RUNNING_POLL_MS : false;
+      return jobs?.some((job) => isRunning(job.status)) ? HISTORY_RUNNING_POLL_MS : false;
     },
   });
 
@@ -75,8 +78,9 @@ export function useLatestScanJob() {
     queryKey: queryKeys.scanJobs.latest(),
     queryFn: ({ signal }) => scanningApi.getLatestScanJob(signal),
     refetchInterval: (q) => {
+      if (typeof document !== "undefined" && document.hidden) return false;
       const job = q.state.data as LatestScanJob | undefined;
-      return isRunning(job?.status) || isPaused(job?.status) ? RUNNING_POLL_MS : false;
+      return isRunning(job?.status) || isPaused(job?.status) ? DETAIL_RUNNING_POLL_MS : false;
     },
     staleTime: 0,
   });

@@ -11,9 +11,19 @@ export default function LoginPage() {
   const { isAuthenticated, isLoading, login, authError, isSubmitting } = useAuth();
   const [secret, setSecret] = useState('');
 
+  const [tookTooLong, setTookTooLong] = useState(false);
+
   useEffect(() => { if (isAuthenticated) router.push('/'); }, [isAuthenticated, router]);
 
-  if (isLoading) {
+  useEffect(() => {
+    if (!isLoading) return;
+    const timer = setTimeout(() => {
+      setTookTooLong(true);
+    }, 3500);
+    return () => clearTimeout(timer);
+  }, [isLoading]);
+
+  if (isLoading && !tookTooLong) {
     return <div className="lf-boundary"><Spin size="large" description="Verifying administrative session…" /></div>;
   }
 

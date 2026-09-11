@@ -91,10 +91,13 @@ export default function QueryProvider({ children }: { children: ReactNode }) {
             // nothing changes unless a job runs, and job views poll on purpose.
             refetchOnWindowFocus: false,
             refetchOnReconnect: true,
+            networkMode: "always",
+            refetchIntervalInBackground: false,
           },
           mutations: {
             // Never automatic. A retried POST /scan is a second scan; a retried
             // delete is a confusing second 404. Callers retry explicitly.
+            networkMode: "always",
             retry: false,
           },
         },

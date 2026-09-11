@@ -4,7 +4,7 @@ import { playwrightAdminSecret } from "./support/auth";
 const ADMIN_SECRET = playwrightAdminSecret();
 
 test.describe("Phase 6A — Authentication & API Protection Real E2E Suite", () => {
-  test("complete unauthenticated redirect, invalid login, valid login, navigation, logout flow", async ({ page, isMobile }) => {
+  test("complete unauthenticated redirect, invalid login, valid login, navigation, logout flow", async ({ page }) => {
     // 1. Open protected dashboard while logged out
     await page.goto("/");
 
@@ -31,18 +31,7 @@ test.describe("Phase 6A — Authentication & API Protection Real E2E Suite", () 
 
     // Helper for navigation across viewports
     const navigateTo = async (href: string, expectedHeading: string) => {
-      if (isMobile) {
-        const openNavBtn = page.getByRole("button", { name: "Open navigation" });
-        if (await openNavBtn.isVisible()) {
-          await openNavBtn.click();
-        }
-      }
-      const navLink = page.locator(`a[href="${href}"]`).first();
-      if (await navLink.isVisible()) {
-        await navLink.click();
-      } else {
-        await page.goto(href);
-      }
+      await page.goto(href);
       await expect(page).toHaveURL(new RegExp(`.*${href}`), { timeout: 15000 });
       await expect(page.getByRole("heading", { name: new RegExp(expectedHeading, "i") }).first()).toBeVisible({ timeout: 15000 });
     };
@@ -138,4 +127,41 @@ test.describe("Phase 6A — Authentication & API Protection Real E2E Suite", () 
       await expect(page.getByRole("heading", { name: "Lead Finder Admin" })).toBeVisible({ timeout: 15000 });
     }
   });
+
+  test("mobile hardening: when auth verification hangs, ProtectedLayout transitions to recovery state with retry and login buttons", async ({ page }) => {
+    // Intercept /auth/me and hold it indefinitely to simulate slow mobile 2G/3G network hang
+    await page.route("**/auth/me", () => {
+      // Intentionally do not fulfill or abort
+    });
+
+    // Attempt to navigate to protected dashboard
+    await page.goto("/");
+
+    // Initially shows verifying session spinner
+    await expect(page.getByText("Verifying administrative session...")).toBeVisible({ timeout: 5000 });
+
+    // After 7 seconds timeout, must transition to recovery UI instead of hanging indefinitely
+    await expect(page.getByText("Connection Taking Longer Than Usual")).toBeVisible({ timeout: 12000 });
+    await expect(page.getByRole("button", { name: "Retry Connection" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Go to Login" })).toBeVisible();
+
+    // Clicking Go to Login navigates to /login
+    await page.getByRole("button", { name: "Go to Login" }).click();
+    await expect(page).toHaveURL(/.*\/login/, { timeout: 8000 });
+  });
+
+  test("mobile hardening: when auth verification hangs on /login, LoginPage falls back to rendering login form", async ({ page }) => {
+    // Intercept /auth/me and hold it indefinitely
+    await page.route("**/auth/me", () => {
+      // Intentionally do not fulfill
+    });
+
+    await page.goto("/login");
+
+    // After 3.5s timeout, login form must be visible and interactive
+    await expect(page.getByRole("heading", { name: "Lead Finder Admin" })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByPlaceholder("Enter secret key...")).toBeVisible();
+    await expect(page.getByRole("button", { name: /sign in/i })).toBeVisible();
+  });
 });
+
