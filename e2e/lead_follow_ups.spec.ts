@@ -45,14 +45,17 @@ let nextFollowUpId = 500;
 async function mockFollowUpRoutes(page: Page) {
   await page.route("**/*", async (route) => {
     const request = route.request();
-    const urlString = request.url();
-    if (!urlString.includes("8000")) {
+    const url = new URL(request.url());
+    const isProxyApiRequest = url.pathname === "/api" || url.pathname.startsWith("/api/");
+    const isDirectApiRequest =
+      (url.hostname === "127.0.0.1" || url.hostname === "localhost") &&
+      url.port === "8000";
+    if (!isProxyApiRequest && !isDirectApiRequest) {
       await route.continue();
       return;
     }
 
-    const url = new URL(urlString);
-    const pathname = url.pathname;
+    const pathname = isProxyApiRequest ? url.pathname.slice("/api".length) || "/" : url.pathname;
     const method = request.method();
 
     if (pathname === "/auth/me") {

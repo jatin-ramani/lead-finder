@@ -126,13 +126,15 @@ async function mockCityAutomationRoutes(page: Page) {
   await page.route("**/*", async (route) => {
     const request = route.request();
     const urlString = request.url();
-    if (!urlString.includes("8000")) {
+    if (!urlString.includes("8000") && !urlString.includes("/api/")) {
       await route.continue();
       return;
     }
 
     const url = new URL(urlString);
-    const pathname = url.pathname;
+    const pathname = url.pathname.startsWith("/api/")
+      ? url.pathname.replace(/^\/api/, "")
+      : url.pathname;
     const method = request.method();
 
     if (pathname === "/auth/me") {
@@ -250,6 +252,14 @@ async function mockCityAutomationRoutes(page: Page) {
   });
 }
 
+function visibleRecipientItem(page: Page, businessName: string) {
+  return page
+    .locator(".lf-workspace-card")
+    .filter({ hasText: "Recipient Dispatch Logs" })
+    .locator("tr:visible, article.lf-mobile-data-item:visible")
+    .filter({ hasText: businessName });
+}
+
 test.describe("City-First Email Automation End-to-End Workflow", () => {
   test.beforeEach(async ({ page }) => {
     await authenticatePlaywright(page.context());
@@ -260,7 +270,7 @@ test.describe("City-First Email Automation End-to-End Workflow", () => {
     page,
   }) => {
     await page.goto("/automations");
-    await expect(page.locator("h2")).toContainText("Email Automation");
+    await expect(page.getByRole("heading", { name: "Email Automation", level: 1 })).toBeVisible();
 
     // 1. Step 1: City & Audience Verification
     await expect(page.getByText("Step 1: Select City & Review Lead Audience").first()).toBeVisible();
@@ -293,7 +303,11 @@ test.describe("City-First Email Automation End-to-End Workflow", () => {
     await expect(page.getByText("Sample Preview for Grade").first()).toBeVisible();
 
     // Close modal
-    await page.getByRole("button", { name: "Cancel" }).first().click();
+    const cancelTemplateEdit = page
+      .getByRole("dialog", { name: /Edit Cold Email Template/i })
+      .getByRole("button", { name: "Cancel" });
+    await cancelTemplateEdit.focus();
+    await cancelTemplateEdit.press("Enter");
 
     // 4. Step 3: Start Automation Action
     const startBtn = page.getByRole("button", { name: "Start Automation" }).first();
@@ -455,20 +469,20 @@ test.describe("City-First Email Automation End-to-End Workflow", () => {
 
     // Verify Remaining Unsent tab is active and shows initially
     await expect(page.getByText("Remaining Unsent (2)").first()).toBeVisible();
-    await expect(page.getByText("Ahmedabad Prime Dental").first()).toBeVisible();
-    await expect(page.getByText("Gujarat Auto Hub").first()).toBeVisible();
+    await expect(visibleRecipientItem(page, "Ahmedabad Prime Dental")).toBeVisible();
+    await expect(visibleRecipientItem(page, "Gujarat Auto Hub")).toBeVisible();
 
     // Trigger refresh / advance poll to get report2
     await page.getByRole("button", { name: "Refresh" }).first().click();
 
     // Now remaining is 1: Ahmedabad Prime Dental left the remaining list!
     await expect(page.getByText("Remaining Unsent (1)").first()).toBeVisible();
-    await expect(page.getByText("Gujarat Auto Hub").first()).toBeVisible();
-    await expect(page.getByText("Ahmedabad Prime Dental")).not.toBeVisible();
+    await expect(visibleRecipientItem(page, "Gujarat Auto Hub")).toBeVisible();
+    await expect(visibleRecipientItem(page, "Ahmedabad Prime Dental")).not.toBeVisible();
 
     // Delivered tab shows Ahmedabad Prime Dental
     await page.getByRole("button", { name: /Delivered \(1\)/i }).click({ force: true });
-    await expect(page.getByText("Ahmedabad Prime Dental").first()).toBeVisible();
+    await expect(visibleRecipientItem(page, "Ahmedabad Prime Dental")).toBeVisible();
   });
 
   test("renders and triggers Export Mobile Numbers for selected city", async ({ page }) => {

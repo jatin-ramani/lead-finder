@@ -35,6 +35,7 @@ export const queryKeys = {
     all: ["scanJobs"] as const,
     list: () => [...queryKeys.scanJobs.all, "list"] as const,
     latest: () => [...queryKeys.scanJobs.all, "latest"] as const,
+    detail: (id: number) => [...queryKeys.scanJobs.all, "detail", id] as const,
   },
 
   scrapeJobs: {

@@ -133,7 +133,7 @@ function DetailRow({
   const present = isPresent(value);
 
   return (
-    <div className="lf-detail-row">
+    <div className="lf-detail-row lf-business-detail-row">
       <span className="lf-detail-icon" aria-hidden>
         {icon}
       </span>
@@ -510,41 +510,45 @@ export default function BusinessDrawer({
       className="lf-drawer"
       destroyOnHidden
       extra={
-        <div className="flex items-center gap-2">
+        <div className="lf-drawer-header-actions">
           {business && (
             <Button
               size="small"
-              className={isFavorite ? "lf-btn-favorite-active" : "lf-btn-favorite"}
+              className={`lf-drawer-header-action ${isFavorite ? "lf-btn-favorite-active" : "lf-btn-favorite"}`}
               aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
               icon={
                 isFavorite ? (
-                  <StarFilled style={{ color: "#f59e0b" }} />
+                  <StarFilled style={{ color: "var(--lf-warning)" }} />
                 ) : (
                   <StarOutlined />
                 )
               }
               onClick={handleToggleFavorite}
             >
-              {isFavorite ? "Favorited" : "Favorite"}
+              <span className="lf-drawer-header-action-label">
+                {isFavorite ? "Favorited" : "Favorite"}
+              </span>
             </Button>
           )}
           {websiteHref && (
             <Button
               type="primary"
               size="small"
+              className="lf-drawer-header-action"
               icon={<ExportOutlined aria-hidden />}
               href={websiteHref}
               target="_blank"
               rel="noopener noreferrer"
+              aria-label="Visit business website"
             >
-              Visit site
+              <span className="lf-drawer-header-action-label">Visit site</span>
             </Button>
           )}
         </div>
       }
     >
       {business && (
-        <div className="flex flex-col gap-6">
+        <div className="lf-drawer-sections">
           <header className="flex items-start gap-3">
             <Avatar
               size={52}
@@ -577,7 +581,7 @@ export default function BusinessDrawer({
                   <Tag className="lf-tag">{business.category}</Tag>
                 )}
                 {isFavorite && (
-                  <Tag color="warning" icon={<StarFilled style={{ color: "#f59e0b" }} />} className="lf-tag">
+                  <Tag color="warning" icon={<StarFilled style={{ color: "var(--lf-warning)" }} />} className="lf-tag">
                     Favorite
                   </Tag>
                 )}
@@ -600,7 +604,7 @@ export default function BusinessDrawer({
                 size="middle"
                 value={currentStatus}
                 className={`lf-status-select lf-status-select--${currentStatus} min-w-[135px]`}
-                popupClassName="lf-status-select-popup"
+                classNames={{ popup: { root: "lf-status-select-popup" } }}
                 onChange={handleStatusChange}
                 options={LEAD_STATUS_OPTIONS}
                 aria-label="Change lead status in drawer"
@@ -630,12 +634,12 @@ export default function BusinessDrawer({
               showInfo={false}
               strokeColor={
                 leadScore >= 80
-                  ? "#10B981"
+                  ? "var(--lf-success)"
                   : leadScore >= 60
-                  ? "#3B82F6"
+                  ? "var(--lf-info)"
                   : leadScore >= 40
-                  ? "#F59E0B"
-                  : "#64748B"
+                  ? "var(--lf-warning)"
+                  : "var(--lf-text-muted)"
               }
               size={["100%", 6]}
             />

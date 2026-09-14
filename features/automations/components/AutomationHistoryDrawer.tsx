@@ -99,7 +99,7 @@ export const AutomationHistoryDrawer: React.FC<AutomationHistoryDrawerProps> = (
       }
       open={open}
       onClose={onClose}
-      width={720}
+      size={720}
     >
       <Table
         dataSource={runs}

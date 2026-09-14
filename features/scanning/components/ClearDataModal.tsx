@@ -67,7 +67,7 @@ export default function ClearDataModal({
         <Alert
           type="warning"
           showIcon
-          message="Destructive Action"
+          title="Destructive Action"
           description="This will delete all discovered business leads and their associated activity logs and follow-ups."
         />
 

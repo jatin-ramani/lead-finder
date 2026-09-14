@@ -6,6 +6,7 @@ import type {
   BulkFavoriteRequest,
   BulkFavoriteResponse,
   Business,
+  BusinessMapResponse,
   BusinessListResponse,
   BusinessQuery,
   CitySummary,
@@ -32,6 +33,14 @@ export function listBusinesses(
 }
 
 /** `GET /businesses/cities` — aggregated counts and stats per discovered city. */
+/** GET /businesses/map - every filtered lead with valid stored coordinates. */
+export function listMappableBusinesses(
+  query: BusinessQuery,
+  signal?: AbortSignal,
+): Promise<BusinessMapResponse> {
+  return get<BusinessMapResponse>("/businesses/map", { params: query, signal });
+}
+
 export function getCitySummaries(
   signal?: AbortSignal,
 ): Promise<CitySummary[]> {

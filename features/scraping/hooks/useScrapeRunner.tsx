@@ -36,7 +36,7 @@ export function useScrapeRunner() {
         const jobId = error.conflictingJobId;
 
         notification.info({
-          message: "A scrape job is already running.",
+          title: "A scrape job is already running.",
           description: jobId
             ? `Job #${jobId} is currently processing businesses.`
             : "Another scraping process is currently active.",
@@ -66,7 +66,7 @@ export function useScrapeRunner() {
     onSuccess: (data) => {
       setSelectedJobId(data.job_id);
       notification.success({
-        message: "Scrape started",
+        title: "Scrape started",
         description: `Job #${data.job_id} has been queued.`,
         duration: 5,
       });
@@ -76,7 +76,7 @@ export function useScrapeRunner() {
       if (handleConflictError(error)) return;
       const apiErr = isApiError(error) ? error : null;
       notification.error({
-        message: apiErr ? errorTitle(apiErr) : "Scrape failed",
+        title: apiErr ? errorTitle(apiErr) : "Scrape failed",
         description: apiErr?.message ?? "Failed to start scrape.",
         duration: 8,
       });
@@ -88,7 +88,7 @@ export function useScrapeRunner() {
     onSuccess: (data) => {
       setSelectedJobId(data.job_id);
       notification.success({
-        message: "Scrape started",
+        title: "Scrape started",
         description: `Job #${data.job_id} queued for missing websites.`,
         duration: 5,
       });
@@ -98,7 +98,7 @@ export function useScrapeRunner() {
       if (handleConflictError(error)) return;
       const apiErr = isApiError(error) ? error : null;
       notification.error({
-        message: apiErr ? errorTitle(apiErr) : "Scrape failed",
+        title: apiErr ? errorTitle(apiErr) : "Scrape failed",
         description: apiErr?.message ?? "Failed to start scrape.",
         duration: 8,
       });
@@ -110,7 +110,7 @@ export function useScrapeRunner() {
     onSuccess: (data) => {
       setSelectedJobId(data.job_id);
       notification.success({
-        message: "Retry started",
+        title: "Retry started",
         description: `Job #${data.job_id} queued for failed scrapes.`,
         duration: 5,
       });
@@ -120,7 +120,7 @@ export function useScrapeRunner() {
       if (handleConflictError(error)) return;
       const apiErr = isApiError(error) ? error : null;
       notification.error({
-        message: apiErr ? errorTitle(apiErr) : "Retry failed",
+        title: apiErr ? errorTitle(apiErr) : "Retry failed",
         description: apiErr?.message ?? "Failed to retry scrapes.",
         duration: 8,
       });
@@ -132,7 +132,7 @@ export function useScrapeRunner() {
     onSuccess: (data) => {
       setSelectedJobId(data.job_id);
       notification.success({
-        message: "Selected scrape started",
+        title: "Selected scrape started",
         description: `Job #${data.job_id} queued for chosen businesses.`,
         duration: 5,
       });
@@ -142,7 +142,7 @@ export function useScrapeRunner() {
       if (handleConflictError(error)) return;
       const apiErr = isApiError(error) ? error : null;
       notification.error({
-        message: apiErr ? errorTitle(apiErr) : "Scrape failed",
+        title: apiErr ? errorTitle(apiErr) : "Scrape failed",
         description: apiErr?.message ?? "Failed to scrape selected businesses.",
         duration: 8,
       });
@@ -153,7 +153,7 @@ export function useScrapeRunner() {
     mutationFn: (businessId: number) => businessesApi.scrapeBusiness(businessId),
     onSuccess: (_, businessId) => {
       notification.success({
-        message: "Website scraped",
+        title: "Website scraped",
         description: "Extracted website information successfully.",
         duration: 5,
       });
@@ -165,7 +165,7 @@ export function useScrapeRunner() {
       if (handleConflictError(error)) return;
       const apiErr = isApiError(error) ? error : null;
       notification.error({
-        message: apiErr ? errorTitle(apiErr) : "Scrape failed",
+        title: apiErr ? errorTitle(apiErr) : "Scrape failed",
         description: apiErr?.requestId
           ? `${apiErr.message}\n\nReference: ${apiErr.requestId}`
           : (apiErr?.message ?? "Failed to scrape business website."),
@@ -178,7 +178,7 @@ export function useScrapeRunner() {
     mutationFn: (jobId: number) => scrapingApi.deleteScrapeJob(jobId),
     onSuccess: (_, jobId) => {
       notification.success({
-        message: "Job deleted",
+        title: "Job deleted",
         description: `Scrape job #${jobId} removed from history.`,
         duration: 4,
       });
@@ -188,7 +188,7 @@ export function useScrapeRunner() {
     onError: (error) => {
       const apiErr = isApiError(error) ? error : null;
       notification.error({
-        message: apiErr ? errorTitle(apiErr) : "Delete failed",
+        title: apiErr ? errorTitle(apiErr) : "Delete failed",
         description: apiErr?.message ?? "Could not delete scrape job.",
         duration: 8,
       });

@@ -144,13 +144,13 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
           {editingTemplate ? "Save Template" : "Create Template"}
         </Button>,
       ]}
-      destroyOnClose
+      destroyOnHidden
     >
       <Form form={form} layout="vertical" onFinish={handleFinish}>
         <Tabs
           activeKey={activeTab}
           onChange={(k) => setActiveTab(k as "compose" | "preview")}
-          destroyInactiveTabPane={false}
+          destroyOnHidden={false}
           items={[
             {
               key: "compose",
@@ -257,13 +257,13 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                   <Alert
                     type="info"
                     showIcon
-                    message="Live Sample Context Preview"
+                    title="Live Sample Context Preview"
                     description="Variables {{...}} are dynamically replaced using sample business attributes."
                   />
 
                   <Card
                     title={
-                      <Space direction="vertical" size={2} className="w-full">
+                      <Space orientation="vertical" size={2} className="w-full">
                         <Text type="secondary" className="text-xs">
                           SUBJECT:
                         </Text>

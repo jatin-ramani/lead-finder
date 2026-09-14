@@ -42,8 +42,9 @@ import { AutomationConfirmModal } from "@/features/automations/components/Automa
 import { AutomationProgressView } from "@/features/automations/components/AutomationProgressView";
 import { AutomationHistoryDrawer } from "@/features/automations/components/AutomationHistoryDrawer";
 import { clearStored, readStored, writeStored } from "@/hooks/usePersistentState";
+import PageContainer from "@/components/ui/PageContainer";
 
-const { Title, Paragraph } = Typography;
+const { Paragraph } = Typography;
 
 export default function EmailAutomationPage() {
   const { message } = App.useApp();
@@ -212,7 +213,7 @@ export default function EmailAutomationPage() {
   // If viewing an active run report
   if (activeReportId && reportData?.data) {
     return (
-      <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-6">
+      <PageContainer>
         <AutomationProgressView
           report={reportData.data}
           isLoading={isLoadingReport}
@@ -223,31 +224,29 @@ export default function EmailAutomationPage() {
           isResuming={resumeAutomationMutation.isPending}
           onStartNew={() => setActiveReportId(null)}
         />
-      </div>
+      </PageContainer>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-6">
+    <PageContainer>
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <Title level={2} className="!mb-1 flex items-center gap-2.5">
-            <MailOutlined className="text-blue-600" />
+      <div className="lf-page-intro">
+        <div className="lf-page-intro-copy">
+          <h1 className="lf-page-title flex items-center gap-2.5">
+            <MailOutlined className="text-[var(--lf-brand)]" />
             <span>Email Automation</span>
-          </Title>
-          <Paragraph type="secondary" className="!mb-0 text-sm">
+          </h1>
+          <Paragraph type="secondary" className="lf-page-subtitle !mb-0">
             Launch cold outreach campaigns for leads across target cities with Gmail API delivery and one universal high-converting master email.
           </Paragraph>
         </div>
 
-        <Button
-          icon={<HistoryOutlined />}
-          onClick={() => setHistoryDrawerOpen(true)}
-          className="shadow-sm"
-        >
-          Previous Automations
-        </Button>
+        <div className="lf-page-toolbar">
+          <Button icon={<HistoryOutlined />} onClick={() => setHistoryDrawerOpen(true)}>
+            Previous Automations
+          </Button>
+        </div>
       </div>
 
       {/* Gmail API Connection & Quota Status */}
@@ -293,14 +292,14 @@ export default function EmailAutomationPage() {
 
       {/* Workflow Step 3: Start Automation Action Bar */}
       {selectedCity && (
-        <Card className="border border-gray-200 dark:border-gray-800 shadow-sm rounded-xl bg-gradient-to-r from-gray-50 to-blue-50/30 dark:from-gray-900 dark:to-blue-950/20">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <Card className="lf-workspace-card">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <div className="font-bold text-base text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                <RocketOutlined className="text-blue-600" />
+              <div className="flex items-center gap-2 text-base font-bold text-[var(--lf-text)]">
+                <RocketOutlined className="text-[var(--lf-brand)]" />
                 <span>Ready to Launch Automation for {selectedCity}?</span>
               </div>
-              <p className="text-xs text-gray-500 !mb-0 mt-0.5">
+              <p className="!mb-0 mt-0.5 text-xs text-[var(--lf-text-muted)]">
                 {hasTemplate
                   ? `${eligibleCount} email-eligible lead${eligibleCount === 1 ? "" : "s"} across Grades A, B, C, and D will receive this universal master cold email.`
                   : "Loading cold email template..."}
@@ -314,7 +313,7 @@ export default function EmailAutomationPage() {
                 icon={<RocketOutlined />}
                 disabled={!hasTemplate || eligibleCount === 0 || !gmailStatus?.is_connected}
                 onClick={() => setConfirmModalOpen(true)}
-                className="bg-emerald-600 hover:bg-emerald-700 border-none shadow-md font-semibold px-8 h-11"
+                className="h-11 px-8 font-semibold"
               >
                 Start Automation
               </Button>
@@ -351,7 +350,7 @@ export default function EmailAutomationPage() {
         onClose={() => setHistoryDrawerOpen(false)}
         onSelectRun={(id) => setActiveReportId(id)}
       />
-    </div>
+    </PageContainer>
   );
 }
 

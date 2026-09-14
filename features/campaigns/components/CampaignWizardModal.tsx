@@ -92,7 +92,7 @@ export const CampaignWizardModal: React.FC<CampaignWizardModalProps> = ({
   };
 
   const getFilterCriteriaFromForm = (): CampaignFilterCriteria => {
-    const vals = form.getFieldsValue();
+    const vals = form.getFieldsValue(true);
     const criteria: CampaignFilterCriteria = {};
     if (vals.city) criteria.city = vals.city.trim();
     if (vals.category) criteria.category = vals.category.trim();
@@ -132,7 +132,7 @@ export const CampaignWizardModal: React.FC<CampaignWizardModalProps> = ({
   };
 
   const handleFinish = () => {
-    const values = form.getFieldsValue();
+    const values = form.getFieldsValue(true);
     const filterCriteria = getFilterCriteriaFromForm();
     const scheduledAtStr =
       values.launch_mode === "scheduled" && values.scheduled_at
@@ -199,7 +199,7 @@ export const CampaignWizardModal: React.FC<CampaignWizardModalProps> = ({
         </div>
       }
       afterClose={handleAfterClose}
-      destroyOnClose
+      destroyOnHidden
     >
       <div className="py-2">
         <Steps current={currentStep} items={steps} className="mb-6" />
@@ -263,7 +263,7 @@ export const CampaignWizardModal: React.FC<CampaignWizardModalProps> = ({
               <Alert
                 type="info"
                 showIcon
-                message="Targeting Criteria (Canonical Filters)"
+                title="Targeting Criteria (Canonical Filters)"
                 description="Leads matching these criteria will be snapshotted when the campaign launches. Only leads with non-empty emails will be contacted."
               />
 
@@ -383,9 +383,9 @@ export const CampaignWizardModal: React.FC<CampaignWizardModalProps> = ({
               {/* Launch & Schedule Options */}
               <Form.Item name="launch_mode" label="Dispatch Schedule">
                 <Radio.Group className="w-full">
-                  <Space direction="vertical" className="w-full">
+                  <Space orientation="vertical" className="w-full">
                     <Radio value="immediate" className="p-2 border rounded-lg w-full">
-                      <Space direction="vertical" size={0}>
+                      <Space orientation="vertical" size={0}>
                         <Text strong>Send Immediately</Text>
                         <Text type="secondary" className="text-xs">
                           Materialize recipient list and start dispatch right away
@@ -393,7 +393,7 @@ export const CampaignWizardModal: React.FC<CampaignWizardModalProps> = ({
                       </Space>
                     </Radio>
                     <Radio value="scheduled" className="p-2 border rounded-lg w-full">
-                      <Space direction="vertical" size={0}>
+                      <Space orientation="vertical" size={0}>
                         <Text strong>Schedule for Future Time</Text>
                         <Text type="secondary" className="text-xs">
                           Queue campaign for automatic dispatch by background worker
@@ -427,7 +427,7 @@ export const CampaignWizardModal: React.FC<CampaignWizardModalProps> = ({
               <Alert
                 type="success"
                 showIcon
-                message="Ready for Launch"
+                title="Ready for Launch"
                 description="Please review campaign configuration and audience summary before launching."
               />
 

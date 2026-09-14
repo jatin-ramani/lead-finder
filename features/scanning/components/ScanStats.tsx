@@ -44,9 +44,9 @@ const FIGURES: Figure[] = [
 
 export default function ScanStats({ stats, isLoading }: ScanStatsProps) {
   return (
-    <div className="lf-scan-stats">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
       {FIGURES.map((figure) => (
-        <div key={figure.key} className="lf-scan-stat">
+        <div key={figure.key} className="lf-scan-stat lf-metric-card">
           {isLoading ? (
             <Skeleton
               active

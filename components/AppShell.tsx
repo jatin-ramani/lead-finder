@@ -40,11 +40,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
       </Drawer>
 
       <Layout className="lf-main">
-        <Header
-          collapsed={false}
-          onToggleCollapse={() => {}}
-          onOpenMobileNav={() => setMobileNavOpen(true)}
-        />
+        <Header onOpenMobileNav={() => setMobileNavOpen(true)} />
         {/* `tabIndex={-1}` so the skip link can move focus here, not just
             scroll to it — otherwise the next Tab returns to the sidebar. */}
         <Content id="main-content" tabIndex={-1} className="lf-content">
@@ -55,7 +51,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
       {/* Drives the responsive offset without re-rendering on resize. */}
       <style>{`
         .lf-main { margin-inline-start: ${SIDEBAR_WIDTH}px; }
-        @media (max-width: 991px) {
+        @media (max-width: 1023px) {
           .lf-main { margin-inline-start: 0; }
         }
       `}</style>

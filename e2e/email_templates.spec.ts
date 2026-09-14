@@ -60,17 +60,24 @@ const mockVariables: SupportedVariable[] = [
 
 let nextTemplateId = 10;
 
+function visibleTemplateItem(page: Page, templateName: string) {
+  return page.locator("tr:visible, article.lf-mobile-data-item:visible").filter({ hasText: templateName });
+}
+
 async function mockTemplateRoutes(page: Page) {
   await page.route("**/*", async (route) => {
     const request = route.request();
-    const urlString = request.url();
-    if (!urlString.includes("8000")) {
+    const url = new URL(request.url());
+    const isProxyApiRequest = url.pathname === "/api" || url.pathname.startsWith("/api/");
+    const isDirectApiRequest =
+      (url.hostname === "127.0.0.1" || url.hostname === "localhost") &&
+      url.port === "8000";
+    if (!isProxyApiRequest && !isDirectApiRequest) {
       await route.continue();
       return;
     }
 
-    const url = new URL(urlString);
-    const pathname = url.pathname;
+    const pathname = isProxyApiRequest ? url.pathname.slice("/api".length) || "/" : url.pathname;
     const method = request.method();
 
     if (pathname === "/auth/me") {
@@ -284,7 +291,7 @@ test.describe("Phase 5: Email Templates E2E Suite", () => {
     await page.goto("/templates");
     await page.waitForLoadState("networkidle");
 
-    await expect(page.locator("h3")).toContainText("Email Templates");
+    await expect(page.getByRole("heading", { name: "Email Templates", level: 1 })).toBeVisible();
     await expect(page.locator("button:has-text('New Template')")).toBeVisible();
     await expect(page.locator("button:has-text('Refresh')")).toBeVisible();
   });
@@ -293,25 +300,25 @@ test.describe("Phase 5: Email Templates E2E Suite", () => {
     await page.goto("/templates");
     await page.waitForLoadState("networkidle");
 
-    await expect(page.locator("text=Total Templates")).toBeVisible();
-    await expect(page.locator("text=Filter View")).toBeVisible();
-    await expect(page.locator("text=Supported Placeholders")).toBeVisible();
+    await expect(page.getByText("Total templates", { exact: true })).toBeVisible();
+    await expect(page.getByText("Current view", { exact: true })).toBeVisible();
+    await expect(page.getByText("Supported placeholders", { exact: true })).toBeVisible();
   });
 
   test("Templates table lists default grade templates with grade badges", async ({ page }) => {
     await page.goto("/templates");
     await page.waitForLoadState("networkidle");
 
-    await expect(page.locator("text=Grade A — High Priority Lead")).toBeVisible();
-    await expect(page.locator("text=Grade B — Good Lead")).toBeVisible();
-    await expect(page.locator("text=Grade C — Potential Lead")).toBeVisible();
-    await expect(page.locator("text=Grade D — Low Priority Lead")).toBeVisible();
+    await expect(visibleTemplateItem(page, "Grade A — High Priority Lead")).toBeVisible();
+    await expect(visibleTemplateItem(page, "Grade B — Good Lead")).toBeVisible();
+    await expect(visibleTemplateItem(page, "Grade C — Potential Lead")).toBeVisible();
+    await expect(visibleTemplateItem(page, "Grade D — Low Priority Lead")).toBeVisible();
 
     // Verify Grade badges
-    await expect(page.locator(".ant-tag:has-text('Grade A')")).toBeVisible();
-    await expect(page.locator(".ant-tag:has-text('Grade B')")).toBeVisible();
-    await expect(page.locator(".ant-tag:has-text('Grade C')")).toBeVisible();
-    await expect(page.locator(".ant-tag:has-text('Grade D')")).toBeVisible();
+    await expect(visibleTemplateItem(page, "Grade A — High Priority Lead").getByText("Grade A", { exact: true })).toBeVisible();
+    await expect(visibleTemplateItem(page, "Grade B — Good Lead").getByText("Grade B", { exact: true })).toBeVisible();
+    await expect(visibleTemplateItem(page, "Grade C — Potential Lead").getByText("Grade C", { exact: true })).toBeVisible();
+    await expect(visibleTemplateItem(page, "Grade D — Low Priority Lead").getByText("Grade D", { exact: true })).toBeVisible();
   });
 
   test("Create new email template modal with variable helper and live preview", async ({ page }) => {
@@ -342,16 +349,15 @@ test.describe("Phase 5: Email Templates E2E Suite", () => {
     await modal.getByRole("button", { name: /Create Template/i }).click({ force: true });
 
     // Verify in table
-    await expect(page.getByText("VIP Healthcare Intro")).toBeVisible();
+    await expect(visibleTemplateItem(page, "VIP Healthcare Intro")).toBeVisible();
   });
 
   test("Preview modal renders template with sample context", async ({ page }) => {
     await page.goto("/templates");
     await page.waitForLoadState("networkidle");
 
-    const row = page.locator("tr:has-text('Grade A — High Priority Lead')");
-    const previewBtn = row.locator("button").first();
-    await previewBtn.click({ force: true });
+    const previewBtn = page.locator('button[aria-label^="Preview Grade A"]:visible');
+    await previewBtn.click();
 
     const previewModal = page.locator(".ant-modal");
     await expect(previewModal).toBeVisible();
@@ -362,14 +368,13 @@ test.describe("Phase 5: Email Templates E2E Suite", () => {
     await page.goto("/templates");
     await page.waitForLoadState("networkidle");
 
-    const row = page.locator("tr:has-text('Grade D — Low Priority Lead')");
-    const deleteBtn = row.locator("button.ant-btn-dangerous");
-    await deleteBtn.click({ force: true });
+    const deleteBtn = page.locator('button[aria-label^="Delete Grade D"]:visible');
+    await deleteBtn.click();
 
     const popconfirm = page.locator(".ant-popover, .ant-popconfirm");
     await expect(popconfirm).toBeVisible();
     await popconfirm.getByRole("button", { name: /Yes, Delete/i }).click({ force: true });
 
-    await expect(page.getByText("Grade D — Low Priority Lead")).not.toBeVisible();
+    await expect(visibleTemplateItem(page, "Grade D — Low Priority Lead")).not.toBeVisible();
   });
 });

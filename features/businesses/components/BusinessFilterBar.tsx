@@ -320,153 +320,173 @@ export default function BusinessFilterBar({
     <div className="lf-filter-card">
       {/* Desktop Primary Bar */}
       <div className="lf-filter-desktop flex flex-wrap items-center gap-3">
-        <span className="lf-filter-legend">
-          <FilterOutlined aria-hidden />
-          Filters
-          {activeCount > 0 && (
-            <Badge
-              count={activeCount}
-              color="var(--lf-accent)"
-              style={{ boxShadow: "none", color: "var(--lf-surface)" }}
-              aria-label={`${activeCount} active filters`}
-            />
-          )}
-        </span>
+        <div className="lf-filter-toolbar-primary flex flex-wrap items-center gap-3">
+          <span className="lf-filter-legend">
+            <FilterOutlined aria-hidden />
+            Filters
+            {activeCount > 0 && (
+              <Badge
+                count={activeCount}
+                color="var(--lf-accent)"
+                style={{ boxShadow: "none", color: "var(--lf-surface)" }}
+                aria-label={`${activeCount} active filters`}
+              />
+            )}
+          </span>
 
-        <DebouncedInput
-          value={search}
-          onCommit={(next) => setFilter("search", next)}
-          placeholder="Search name, phone, email…"
-          ariaLabel="Search businesses"
-          prefix={<SearchOutlined aria-hidden />}
-          disabled={disabled}
-          className="lf-filter-search"
-        />
-
-        <DebouncedInput
-          value={city}
-          onCommit={(next) => setFilter("city", next)}
-          placeholder="City"
-          ariaLabel="Filter by city (exact match)"
-          disabled={disabled}
-          className="lf-filter-control"
-        />
-
-        <DebouncedInput
-          value={category}
-          onCommit={(next) => setFilter("category", next)}
-          placeholder="Category"
-          ariaLabel="Filter by category (exact match)"
-          disabled={disabled}
-          className="lf-filter-control"
-        />
-
-        <Tooltip title={isFavorite ? "Showing favorites only" : "Filter by favorites"}>
-          <Button
-            className={isFavorite ? "lf-btn-favorite-active" : ""}
-            icon={
-              isFavorite ? (
-                <StarFilled style={{ color: "#f59e0b" }} />
-              ) : (
-                <StarOutlined />
-              )
-            }
-            onClick={() => setFilter("is_favorite", isFavorite ? undefined : true)}
+          <DebouncedInput
+            value={search}
+            onCommit={(next) => setFilter("search", next)}
+            placeholder="Search name, phone, email…"
+            ariaLabel="Search businesses"
+            prefix={<SearchOutlined aria-hidden />}
             disabled={disabled}
-            aria-label="Favorites only"
-          >
-            Favorites
-          </Button>
-        </Tooltip>
+            className="lf-filter-search"
+          />
 
-        {/* Website & Contact Quick Checkboxes */}
-        <div className="flex items-center gap-2" role="group" aria-label="Website availability">
-          <Checkbox
-            checked={hasWebsite === true}
+          <DebouncedInput
+            value={city}
+            onCommit={(next) => setFilter("city", next)}
+            placeholder="City"
+            ariaLabel="Filter by city (exact match)"
             disabled={disabled}
-            onChange={(event) => setFilter("has_website", event.target.checked ? true : undefined)}
-          >
-            Has website
-          </Checkbox>
-          <Checkbox
-            checked={hasWebsite === false}
-            disabled={disabled}
-            onChange={(event) => setFilter("has_website", event.target.checked ? false : undefined)}
-          >
-            No website
-          </Checkbox>
-        </div>
+            className="lf-filter-control"
+          />
 
-        <div className="flex items-center gap-2" role="group" aria-label="Contact availability">
-          <Checkbox
-            checked={hasEmail === true}
+          <DebouncedInput
+            value={category}
+            onCommit={(next) => setFilter("category", next)}
+            placeholder="Category"
+            ariaLabel="Filter by category (exact match)"
             disabled={disabled}
-            onChange={(event) => setFilter("has_email", event.target.checked ? true : undefined)}
-          >
-            Has email
-          </Checkbox>
-          <Checkbox
-            checked={hasPhone === true}
-            disabled={disabled}
-            onChange={(event) => setFilter("has_phone", event.target.checked ? true : undefined)}
-          >
-            Has phone
-          </Checkbox>
-        </div>
+            className="lf-filter-control"
+          />
 
-        {/* Advanced Filters Expand/Collapse Toggle */}
-        <Button
-          icon={<ControlOutlined aria-hidden />}
-          onClick={() => setAdvancedExpanded((prev) => !prev)}
-          className={hasAdvancedActive ? "border-[var(--lf-brand)] text-[var(--lf-brand)]" : ""}
-          aria-expanded={advancedExpanded}
-          aria-controls="lf-advanced-filters-panel"
-        >
-          <span>Advanced</span>
-          {advancedExpanded ? <UpOutlined style={{ fontSize: 10 }} /> : <DownOutlined style={{ fontSize: 10 }} />}
-        </Button>
-
-        {onManageTags && (
-          <Tooltip title="Manage custom tags">
+          <Tooltip title={isFavorite ? "Showing favorites only" : "Filter by favorites"}>
             <Button
-              icon={<TagsOutlined aria-hidden />}
-              onClick={onManageTags}
+              className={isFavorite ? "lf-btn-favorite-active" : ""}
+              icon={
+                isFavorite ? (
+                  <StarFilled style={{ color: "var(--lf-warning)" }} />
+                ) : (
+                  <StarOutlined />
+                )
+              }
+              onClick={() => setFilter("is_favorite", isFavorite ? undefined : true)}
               disabled={disabled}
+              aria-label="Favorites only"
             >
-              Tags
+              Favorites
             </Button>
           </Tooltip>
-        )}
 
-        <Tooltip title="Clear all filters">
-          <Button
-            icon={<ClearOutlined aria-hidden />}
-            onClick={resetFilters}
-            disabled={disabled || activeCount === 0}
-            aria-label="Clear filters"
-          >
-            Reset
-          </Button>
-        </Tooltip>
+        </div>
 
-        <Tooltip
-          title={
-            activeCount > 0
-              ? "Download every row matching these filters"
-              : "Download every business"
-          }
-        >
-          <Button
-            type="primary"
-            icon={<DownloadOutlined aria-hidden />}
-            onClick={onExport}
-            loading={isExporting}
-            disabled={disabled || isExporting || totalItems === 0}
-            className="ms-auto"
+        {/* Website & Contact Quick Checkboxes */}
+        <div className="lf-filter-qualifications flex flex-wrap items-center gap-3">
+          <div
+            className="lf-filter-qualification-group flex items-center gap-2"
+            role="group"
+            aria-label="Website availability"
           >
-            {isExporting ? "Preparing…" : "Export CSV"}
+            <span className="lf-filter-group-label">Website</span>
+            <div className="lf-filter-qualification-options flex items-center gap-2">
+              <Checkbox
+                checked={hasWebsite === true}
+                disabled={disabled}
+                onChange={(event) => setFilter("has_website", event.target.checked ? true : undefined)}
+              >
+                Has website
+              </Checkbox>
+              <Checkbox
+                checked={hasWebsite === false}
+                disabled={disabled}
+                onChange={(event) => setFilter("has_website", event.target.checked ? false : undefined)}
+              >
+                No website
+              </Checkbox>
+            </div>
+          </div>
+
+          <div
+            className="lf-filter-qualification-group flex items-center gap-2"
+            role="group"
+            aria-label="Contact availability"
+          >
+            <span className="lf-filter-group-label">Contact</span>
+            <div className="lf-filter-qualification-options flex items-center gap-2">
+              <Checkbox
+                checked={hasEmail === true}
+                disabled={disabled}
+                onChange={(event) => setFilter("has_email", event.target.checked ? true : undefined)}
+              >
+                Has email
+              </Checkbox>
+              <Checkbox
+                checked={hasPhone === true}
+                disabled={disabled}
+                onChange={(event) => setFilter("has_phone", event.target.checked ? true : undefined)}
+              >
+                Has phone
+              </Checkbox>
+            </div>
+          </div>
+        </div>
+        <div className="lf-filter-actions flex flex-wrap items-center gap-3">
+          {/* Advanced Filters Expand/Collapse Toggle */}
+          <Button
+            icon={<ControlOutlined aria-hidden />}
+            onClick={() => setAdvancedExpanded((prev) => !prev)}
+            className={hasAdvancedActive ? "border-[var(--lf-brand)] text-[var(--lf-brand)]" : ""}
+            aria-expanded={advancedExpanded}
+            aria-controls="lf-advanced-filters-panel"
+          >
+            <span>Advanced</span>
+            {advancedExpanded ? <UpOutlined style={{ fontSize: 10 }} /> : <DownOutlined style={{ fontSize: 10 }} />}
           </Button>
-        </Tooltip>
+
+          {onManageTags && (
+            <Tooltip title="Manage custom tags">
+              <Button
+                icon={<TagsOutlined aria-hidden />}
+                onClick={onManageTags}
+                disabled={disabled}
+              >
+                Tags
+              </Button>
+            </Tooltip>
+          )}
+
+          <Tooltip title="Clear all filters">
+            <Button
+              icon={<ClearOutlined aria-hidden />}
+              onClick={resetFilters}
+              disabled={disabled || activeCount === 0}
+              aria-label="Clear filters"
+            >
+              Reset
+            </Button>
+          </Tooltip>
+
+          <Tooltip
+            title={
+              activeCount > 0
+                ? "Download every row matching these filters"
+                : "Download every business"
+            }
+          >
+            <Button
+              type="primary"
+              icon={<DownloadOutlined aria-hidden />}
+              onClick={onExport}
+              loading={isExporting}
+              disabled={disabled || isExporting || totalItems === 0}
+              className="lf-filter-export"
+            >
+              {isExporting ? "Preparing…" : "Export CSV"}
+            </Button>
+          </Tooltip>
+        </div>
       </div>
 
       {/* Desktop Expandable Advanced Filters Panel */}

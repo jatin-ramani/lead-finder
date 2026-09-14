@@ -36,6 +36,18 @@ import { useScrapeRunner } from "@/features/scraping/hooks/useScrapeRunner";
 import { useUrlFilters } from "@/hooks/useUrlFilters";
 import type { Business } from "@/types/api";
 
+function LeadsPageIntro() {
+  return (
+    <div className="lf-page-intro">
+      <div className="lf-page-intro-copy">
+        <h1 className="lf-page-title">Leads</h1>
+        <p className="lf-page-subtitle">
+          Find, qualify, and manage local businesses from one focused CRM workspace.
+        </p>
+      </div>
+    </div>
+  );
+}
 function BusinessesWorkspace() {
   const filters = useUrlFilters();
   const { modal } = App.useApp();
@@ -151,6 +163,7 @@ function BusinessesWorkspace() {
 
     return (
       <PageContainer>
+        <LeadsPageIntro />
         <CityCardsGrid
           cities={cities}
           isLoading={isCitiesLoading}
@@ -174,6 +187,7 @@ function BusinessesWorkspace() {
 
   return (
     <PageContainer>
+      <LeadsPageIntro />
       {/* Navigation Breadcrumb Strip */}
       <div className="lf-nav-header">
         <div className="flex items-center gap-3">

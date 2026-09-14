@@ -57,7 +57,7 @@ export const TestEmailConfirmModal: React.FC<TestEmailConfirmModalProps> = ({
       ]}
       className="rounded-xl"
       centered
-      destroyOnClose
+      destroyOnHidden
     >
       <div className="space-y-4 py-2">
         <Paragraph className="!mb-2">
@@ -86,7 +86,7 @@ export const TestEmailConfirmModal: React.FC<TestEmailConfirmModalProps> = ({
           type="warning"
           showIcon
           icon={<ExclamationCircleOutlined />}
-          message="Daily Safety Quota Notice"
+          title="Daily Safety Quota Notice"
           description={
             <div className="text-xs space-y-1">
               <p className="!mb-0">

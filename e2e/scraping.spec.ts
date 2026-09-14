@@ -1,6 +1,20 @@
 import { expect, test } from "@playwright/test";
 import { authenticatePlaywright } from "./support/auth";
 
+function apiPathForMockRequest(urlString: string): string | null {
+  const url = new URL(urlString);
+  const isLocalHost = url.hostname === "127.0.0.1" || url.hostname === "localhost";
+  const isDirectLocalApi = isLocalHost && url.port === "8000";
+  const isSameOriginProxy =
+    isLocalHost &&
+    !isDirectLocalApi &&
+    (url.pathname === "/api" || url.pathname.startsWith("/api/"));
+
+  if (!isDirectLocalApi && !isSameOriginProxy) return null;
+
+  return isSameOriginProxy ? url.pathname.slice("/api".length) || "/" : url.pathname;
+}
+
 const mockJobResults = {
   success: true,
   data: [
@@ -74,8 +88,13 @@ test.describe("Website Scraping Experience & Results E2E Suite", () => {
     await authenticatePlaywright(context);
 
     await page.route("**/*", async (route) => {
-      const url = route.request().url();
-      if (url.includes("/auth/me")) {
+      const apiPath = apiPathForMockRequest(route.request().url());
+      if (!apiPath) {
+        await route.continue();
+        return;
+      }
+
+      if (apiPath === "/auth/me") {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
@@ -84,18 +103,13 @@ test.describe("Website Scraping Experience & Results E2E Suite", () => {
         return;
       }
 
-      if (!url.includes("8000")) {
-        await route.continue();
-        return;
-      }
-
-      if (url.includes("/scrape/jobs/10/results")) {
+      if (apiPath.includes("/scrape/jobs/10/results")) {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
           body: JSON.stringify(mockJobResults),
         });
-      } else if (url.includes("/scrape/jobs/99/results")) {
+      } else if (apiPath.includes("/scrape/jobs/99/results")) {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
@@ -116,7 +130,7 @@ test.describe("Website Scraping Experience & Results E2E Suite", () => {
             cities: [],
           }),
         });
-      } else if (url.endsWith("/scrape/jobs")) {
+      } else if (apiPath === "/scrape/jobs") {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
@@ -150,7 +164,7 @@ test.describe("Website Scraping Experience & Results E2E Suite", () => {
             ],
           }),
         });
-      } else if (url.includes("/scrape/jobs/10")) {
+      } else if (apiPath.includes("/scrape/jobs/10")) {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
@@ -170,7 +184,7 @@ test.describe("Website Scraping Experience & Results E2E Suite", () => {
             },
           }),
         });
-      } else if (url.includes("/activities")) {
+      } else if (apiPath.includes("/activities")) {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
@@ -183,7 +197,7 @@ test.describe("Website Scraping Experience & Results E2E Suite", () => {
             total_pages: 1,
           }),
         });
-      } else if (url.includes("/notes")) {
+      } else if (apiPath.includes("/notes")) {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
@@ -193,7 +207,7 @@ test.describe("Website Scraping Experience & Results E2E Suite", () => {
             total: 0,
           }),
         });
-      } else if (url.includes("/tags")) {
+      } else if (apiPath.includes("/tags")) {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
@@ -202,7 +216,7 @@ test.describe("Website Scraping Experience & Results E2E Suite", () => {
             data: [],
           }),
         });
-      } else if (url.includes("/businesses/cities")) {
+      } else if (apiPath.includes("/businesses/cities")) {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
@@ -223,7 +237,7 @@ test.describe("Website Scraping Experience & Results E2E Suite", () => {
             ],
           }),
         });
-      } else if (url.includes("/businesses/1/website")) {
+      } else if (apiPath.includes("/businesses/1/website")) {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
@@ -246,7 +260,7 @@ test.describe("Website Scraping Experience & Results E2E Suite", () => {
             },
           }),
         });
-      } else if (url.includes("/businesses")) {
+      } else if (apiPath.includes("/businesses")) {
         await route.fulfill({
           status: 200,
           contentType: "application/json",

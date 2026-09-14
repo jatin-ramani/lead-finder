@@ -115,7 +115,7 @@ export const ExecutionLogsDrawer: React.FC<ExecutionLogsDrawerProps> = ({
     <Drawer
       open={open}
       onClose={onClose}
-      width={680}
+      size={680}
       title={
         <div className="flex items-center justify-between w-full pr-4">
           <Space>

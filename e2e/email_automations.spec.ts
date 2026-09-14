@@ -1,425 +1,354 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page, type Request } from "@playwright/test";
 import type {
-  AutomationListResponse,
-  AutomationSingleResponse,
-  EmailAutomation,
-  EmailAutomationExecution,
-  ExecutionListResponse,
-  ProcessDueResponse,
+  CityAutomationListResponse,
+  CityAutomationReportResponse,
+  CityGradeStatsResponse,
+  CityStatListResponse,
+  GmailStatusResponse,
+  MasterTemplateResponse,
   SupportedVariable,
 } from "@/types/api";
 import { authenticatePlaywright } from "./support/auth";
 
-let mockAutomations: EmailAutomation[] = [
-  {
-    id: 1,
-    name: "Welcome New Scanned Leads",
-    description: "Initial introduction email for newly discovered businesses",
-    trigger_type: "lead_created",
-    subject_template: "Welcome {{business_name}}!",
-    body_template: "Hello {{contact_name}},\n\nWe saw {{business_name}} and would love to connect.",
-    enabled: true,
-    delay_minutes: 0,
-    max_retries: 3,
-    created_at: "2026-09-07T10:00:00Z",
-    updated_at: "2026-09-07T10:00:00Z",
+const FIXTURE_TIME = "2026-09-11T10:00:00Z";
+
+const cities: CityStatListResponse = {
+  success: true,
+  items: [
+    { city: "Ahmedabad", total_leads: 248, eligible_leads: 221, ineligible_leads: 27, already_sent_leads: 15 },
+    { city: "Surat", total_leads: 143, eligible_leads: 139, ineligible_leads: 4, already_sent_leads: 7 },
+  ],
+};
+
+const cityStats: Record<string, CityGradeStatsResponse> = {
+  Ahmedabad: {
+    success: true,
+    city: "Ahmedabad",
+    total_leads: 248,
+    email_eligible_leads: 221,
+    ineligible_leads: 27,
+    already_sent_leads: 15,
+    grades: {
+      A: { total: 42, eligible: 40, ineligible: 2, already_sent: 3 },
+      B: { total: 86, eligible: 80, ineligible: 6, already_sent: 6 },
+      C: { total: 91, eligible: 76, ineligible: 15, already_sent: 4 },
+      D: { total: 29, eligible: 25, ineligible: 4, already_sent: 2 },
+    },
   },
-  {
-    id: 2,
-    name: "Follow-Up Reminder Outreach",
-    description: "Remind prospect when follow-up task is due",
-    trigger_type: "follow_up_due",
-    subject_template: "Reminder: {{follow_up_title}} for {{business_name}}",
-    body_template: "Hi,\n\nFollowing up on our scheduled item {{follow_up_title}}.",
-    enabled: false,
-    delay_minutes: 15,
-    max_retries: 3,
-    created_at: "2026-09-07T10:00:00Z",
-    updated_at: "2026-09-07T10:00:00Z",
+  Surat: {
+    success: true,
+    city: "Surat",
+    total_leads: 143,
+    email_eligible_leads: 139,
+    ineligible_leads: 4,
+    already_sent_leads: 7,
+    grades: {
+      A: { total: 30, eligible: 29, ineligible: 1, already_sent: 2 },
+      B: { total: 53, eligible: 52, ineligible: 1, already_sent: 3 },
+      C: { total: 40, eligible: 39, ineligible: 1, already_sent: 1 },
+      D: { total: 20, eligible: 19, ineligible: 1, already_sent: 1 },
+    },
   },
+};
+
+const gmailStatus: GmailStatusResponse = {
+  success: true,
+  is_configured: true,
+  is_connected: true,
+  email_address: "outreach@example.test",
+  daily_send_count: 15,
+  daily_quota_limit: 400,
+  daily_quota_remaining: 385,
+  token_expiry: "2026-09-12T10:00:00Z",
+};
+
+const variables: SupportedVariable[] = [
+  { key: "business_name", label: "Business Name", description: "CRM business name" },
+  { key: "contact_name", label: "Contact Name", description: "Known contact name" },
+  { key: "city", label: "City", description: "Business city" },
+  { key: "lead_score", label: "Lead Score", description: "Lead score" },
 ];
 
-const mockExecutions: EmailAutomationExecution[] = [
-  {
+function masterTemplate(city: string): MasterTemplateResponse {
+  return {
+    success: true,
+    city,
+    data: {
+      name: `Universal Master Cold Email — ${city}`,
+      subject: "Quick idea for {{Business Name}}",
+      body: `<p>Hello {{Contact Name}},</p><p>I found {{Business Name}} in {{City}}.</p>`,
+      variables: ["business_name", "contact_name", "city"],
+    },
+  };
+}
+
+const report: CityAutomationReportResponse = {
+  success: true,
+  message: "Automation launched successfully",
+  data: {
     id: 101,
-    automation_id: 1,
-    business_id: 1,
-    follow_up_id: null,
-    status: "sent",
-    trigger_event: "lead_created",
-    trigger_key: "auto_1_biz_1_lead_created",
-    recipient_email: "contact@apexclinic.example",
-    rendered_subject: "Welcome Apex Clinic!",
-    rendered_body: "Hello Dr. Smith,\n\nWe saw Apex Clinic and would love to connect.",
-    provider: "mock",
-    provider_message_id: "mock_msg_987",
-    error_message: null,
-    retry_count: 0,
-    next_retry_at: null,
-    scheduled_at: "2026-09-07T10:05:00Z",
-    sent_at: "2026-09-07T10:05:01Z",
-    created_at: "2026-09-07T10:05:00Z",
-    updated_at: "2026-09-07T10:05:01Z",
-    automation_name: "Welcome New Scanned Leads",
-    business_name: "Apex Clinic",
+    name: "Email Automation — Ahmedabad",
+    city: "Ahmedabad",
+    status: "completed",
+    recipient_count: 221,
+    sent_count: 215,
+    failed_count: 6,
+    pending_count: 0,
+    processing_count: 0,
+    remaining_count: 0,
+    cancelled_count: 0,
+    skipped_count: 0,
+    percentage: 100,
+    created_at: FIXTURE_TIME,
+    completed_at: FIXTURE_TIME,
+    grade_breakdown: {
+      A: { total: 40, sent: 40, failed: 0, pending: 0, cancelled: 0 },
+      B: { total: 80, sent: 78, failed: 2, pending: 0, cancelled: 0 },
+      C: { total: 76, sent: 72, failed: 4, pending: 0, cancelled: 0 },
+      D: { total: 25, sent: 25, failed: 0, pending: 0, cancelled: 0 },
+    },
+    remaining_recipients: [],
+    recipient_logs: [
+      {
+        id: 1,
+        business_id: 1,
+        business_name: "Ahmedabad Prime Dental",
+        recipient_email: "contact@prime-dental.example",
+        lead_grade: "A",
+        status: "sent",
+        sent_at: FIXTURE_TIME,
+      },
+      {
+        id: 2,
+        business_id: 2,
+        business_name: "Gujarat Auto Hub",
+        recipient_email: "info@auto-hub.example",
+        lead_grade: "B",
+        status: "failed",
+        error_message: "Mailbox rejected the delivery",
+      },
+    ],
   },
-];
+};
 
-const mockVariables: SupportedVariable[] = [
-  { key: "business_name", label: "Business Name", description: "Name of business", example: "Apex Clinic" },
-  { key: "contact_name", label: "Contact Name", description: "Contact name", example: "Dr. Smith" },
-  { key: "email", label: "Email Address", description: "Contact email", example: "contact@apexclinic.example" },
-  { key: "lead_status", label: "CRM Status", description: "Pipeline status", example: "New" },
-  { key: "follow_up_title", label: "Follow-Up Title", description: "Task title", example: "Send proposal" },
-];
+const runs: CityAutomationListResponse = {
+  success: true,
+  total: 2,
+  page: 1,
+  page_size: 50,
+  total_pages: 1,
+  items: [
+    {
+      id: 101,
+      name: "Email Automation — Ahmedabad",
+      city: "Ahmedabad",
+      status: "completed",
+      recipient_count: 221,
+      sent_count: 215,
+      failed_count: 6,
+      created_at: FIXTURE_TIME,
+      completed_at: FIXTURE_TIME,
+    },
+    {
+      id: 100,
+      name: "Email Automation — Surat",
+      city: "Surat",
+      status: "completed",
+      recipient_count: 139,
+      sent_count: 136,
+      failed_count: 3,
+      created_at: "2026-09-10T10:00:00Z",
+      completed_at: "2026-09-10T10:00:00Z",
+    },
+  ],
+};
 
-let nextAutoId = 10;
+/**
+ * Tests must work both when local development talks to the backend directly
+ * and when the browser uses Next's same-origin `/api` proxy.
+ */
+function apiPath(request: Request): string | null {
+  const url = new URL(request.url());
+  if (url.pathname === "/api" || url.pathname.startsWith("/api/")) {
+    return url.pathname.slice("/api".length) || "/";
+  }
 
-async function mockAutomationRoutes(page: Page) {
+  const isLocalBackend =
+    (url.hostname === "127.0.0.1" || url.hostname === "localhost") &&
+    url.port === "8000";
+  return isLocalBackend ? url.pathname : null;
+}
+
+async function mockCityAutomationRoutes(page: Page) {
   await page.route("**/*", async (route) => {
     const request = route.request();
-    const urlString = request.url();
-    if (!urlString.includes("8000")) {
+    const pathname = apiPath(request);
+    if (!pathname) {
       await route.continue();
       return;
     }
 
-    const url = new URL(urlString);
-    const pathname = url.pathname;
     const method = request.method();
+    const url = new URL(request.url());
 
     if (pathname === "/auth/me") {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({ authenticated: true, role: "admin", user: "admin@test" }),
-      });
+      await route.fulfill({ json: { authenticated: true, role: "admin", user: "admin@test" } });
       return;
     }
 
     if (pathname === "/health") {
       await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({ status: "healthy", database: "connected", timestamp: new Date().toISOString() }),
+        json: { status: "healthy", database: "connected", timestamp: FIXTURE_TIME },
       });
       return;
     }
 
-    // GET /automations/variables
+    if (pathname === "/integrations/gmail/status" && method === "GET") {
+      await route.fulfill({ json: gmailStatus });
+      return;
+    }
+
+    if (pathname === "/automations/cities" && method === "GET") {
+      await route.fulfill({ json: cities });
+      return;
+    }
+
+    if (pathname === "/automations/city-stats" && method === "GET") {
+      await route.fulfill({ json: cityStats[url.searchParams.get("city") || "Ahmedabad"] });
+      return;
+    }
+
+    if (pathname === "/automations/master-template" && method === "GET") {
+      await route.fulfill({ json: masterTemplate(url.searchParams.get("city") || "Ahmedabad") });
+      return;
+    }
+
     if (pathname === "/automations/variables" && method === "GET") {
+      await route.fulfill({ json: variables });
+      return;
+    }
+
+    if (pathname === "/automations/start-city-automation" && method === "POST") {
+      await route.fulfill({ status: 201, json: report });
+      return;
+    }
+
+    if (pathname === "/automations/runs/101" && method === "GET") {
+      await route.fulfill({ json: report });
+      return;
+    }
+
+    if (pathname === "/automations/runs" && method === "GET") {
+      await route.fulfill({ json: runs });
+      return;
+    }
+
+    if (pathname === "/automations/export-mobile-numbers" && method === "GET") {
       await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify(mockVariables),
+        contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers: {
+          "Access-Control-Expose-Headers": "Content-Disposition",
+          "Content-Disposition": 'attachment; filename="Ahmedabad-mobile-numbers.xlsx"',
+        },
+        body: Buffer.from("PK\x03\x04mock-xlsx"),
       });
       return;
     }
 
-    // POST /automations/process-due
-    if (pathname === "/automations/process-due" && method === "POST") {
-      const resp: ProcessDueResponse = {
-        success: true,
-        processed: 1,
-        sent: 1,
-        failed: 0,
-        retried: 0,
-        cancelled: 0,
-      };
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify(resp),
-      });
-      return;
-    }
-
-    // POST /automations/:id/toggle
-    if (pathname.match(/^\/automations\/\d+\/toggle$/) && method === "POST") {
-      const id = parseInt(pathname.split("/")[2], 10);
-      const postData = JSON.parse(request.postData() || "{}");
-      const auto = mockAutomations.find((a) => a.id === id);
-      if (auto) {
-        auto.enabled = Boolean(postData.enabled);
-        auto.updated_at = new Date().toISOString();
-      }
-      const resp: AutomationSingleResponse = {
-        success: true,
-        data: auto || mockAutomations[0],
-        message: `Automation ${auto?.enabled ? "activated" : "deactivated"}`,
-      };
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify(resp),
-      });
-      return;
-    }
-
-    // GET /automations/executions or GET /automations/:id/executions
-    if (pathname.includes("/executions") && method === "GET") {
-      const resp: ExecutionListResponse = {
-        success: true,
-        items: mockExecutions,
-        total: mockExecutions.length,
-        page: 1,
-        page_size: 20,
-        total_pages: 1,
-      };
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify(resp),
-      });
-      return;
-    }
-
-    // GET /automations (list)
-    if (pathname === "/automations" && method === "GET") {
-      const triggerType = url.searchParams.get("trigger_type");
-      const enabledParam = url.searchParams.get("enabled");
-
-      let filtered = [...mockAutomations];
-      if (triggerType) {
-        filtered = filtered.filter((a) => a.trigger_type === triggerType);
-      }
-      if (enabledParam !== null && enabledParam !== undefined) {
-        const boolVal = enabledParam === "true";
-        filtered = filtered.filter((a) => a.enabled === boolVal);
-      }
-
-      const resp: AutomationListResponse = {
-        success: true,
-        items: filtered,
-        total: filtered.length,
-        page: 1,
-        page_size: 20,
-        total_pages: 1,
-      };
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify(resp),
-      });
-      return;
-    }
-
-    // POST /automations (create)
-    if (pathname === "/automations" && method === "POST") {
-      const postData = JSON.parse(request.postData() || "{}");
-      const newAuto: EmailAutomation = {
-        id: ++nextAutoId,
-        name: postData.name || "Untitled",
-        description: postData.description || null,
-        trigger_type: postData.trigger_type || "lead_created",
-        subject_template: postData.subject_template || "Hello",
-        body_template: postData.body_template || "Body",
-        enabled: postData.enabled ?? true,
-        delay_minutes: postData.delay_minutes ?? 0,
-        max_retries: postData.max_retries ?? 3,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-      mockAutomations.push(newAuto);
-
-      const resp: AutomationSingleResponse = {
-        success: true,
-        data: newAuto,
-        message: "Automation created successfully",
-      };
-      await route.fulfill({
-        status: 201,
-        contentType: "application/json",
-        body: JSON.stringify(resp),
-      });
-      return;
-    }
-
-    // DELETE /automations/:id
-    if (pathname.match(/^\/automations\/\d+$/) && method === "DELETE") {
-      const id = parseInt(pathname.split("/")[2], 10);
-      mockAutomations = mockAutomations.filter((a) => a.id !== id);
-      await route.fulfill({
-        status: 204,
-        contentType: "application/json",
-        body: "",
-      });
-      return;
-    }
-
-    await route.continue();
+    await route.fulfill({ status: 404, json: { success: false, message: `Unhandled mock route: ${pathname}` } });
   });
 }
 
-test.describe("Phase 4: Email Automation & Campaigns E2E Suite", () => {
+test.describe("City-first Email Automation workspace", () => {
   test.beforeEach(async ({ page }) => {
-    // Reset mock data
-    mockAutomations = [
-      {
-        id: 1,
-        name: "Welcome New Scanned Leads",
-        description: "Initial introduction email for newly discovered businesses",
-        trigger_type: "lead_created",
-        subject_template: "Welcome {{business_name}}!",
-        body_template: "Hello {{contact_name}},\n\nWe saw {{business_name}} and would love to connect.",
-        enabled: true,
-        delay_minutes: 0,
-        max_retries: 3,
-        created_at: "2026-09-07T10:00:00Z",
-        updated_at: "2026-09-07T10:00:00Z",
-      },
-      {
-        id: 2,
-        name: "Follow-Up Reminder Outreach",
-        description: "Remind prospect when follow-up task is due",
-        trigger_type: "follow_up_due",
-        subject_template: "Reminder: {{follow_up_title}} for {{business_name}}",
-        body_template: "Hi,\n\nFollowing up on our scheduled item {{follow_up_title}}.",
-        enabled: false,
-        delay_minutes: 15,
-        max_retries: 3,
-        created_at: "2026-09-07T10:00:00Z",
-        updated_at: "2026-09-07T10:00:00Z",
-      },
-    ];
-
-    await mockAutomationRoutes(page);
+    await page.addInitScript(() => localStorage.removeItem("leadfinder_active_automation_id"));
+    await mockCityAutomationRoutes(page);
     await authenticatePlaywright(page.context());
   });
 
-  test("Navigation and page header rendering", async ({ page }) => {
+  test("shows Gmail delivery, city audience, and an editable universal template", async ({ page }) => {
     await page.goto("/automations");
-    await page.waitForLoadState("networkidle");
 
-    // Check title and description
-    await expect(page.locator("h2")).toContainText("Email Automations");
-    await expect(page.locator("text=Event-driven email campaigns")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Email Automation", level: 1 })).toBeVisible();
+    await expect(page.getByText("Gmail API Delivery", { exact: true })).toBeVisible();
+    const gmailDeliveryBanner = page.locator(".ant-card").filter({ has: page.getByText("Gmail API Delivery", { exact: true }) });
+    await expect(gmailDeliveryBanner.getByText("Connected", { exact: true })).toBeVisible();
+    await expect(page.getByText("outreach@example.test")).toBeVisible();
+    await expect(page.getByText("15 / 400 sent")).toBeVisible();
 
-    // Check action buttons
-    await expect(page.locator("button:has-text('New Automation')")).toBeVisible();
-    await expect(page.locator("button:has-text('Process Queue Now')")).toBeVisible();
-    await expect(page.locator("button:has-text('All Dispatch Logs')")).toBeVisible();
-  });
+    await expect(page.getByText("Step 1: Select City & Review Lead Audience")).toBeVisible();
+    await expect(page.getByText("Email-Eligible Leads", { exact: true })).toBeVisible();
+    await expect(page.getByText("221", { exact: true }).first()).toBeVisible();
+    await expect(page.getByText("15 leads in Ahmedabad have already been emailed and are excluded from this automation.")).toBeVisible();
+    await expect(page.getByText("Grade A Leads")).toBeVisible();
 
-  test("KPI overview statistics cards render correctly", async ({ page }) => {
-    await page.goto("/automations");
-    await page.waitForLoadState("networkidle");
+    const citySelector = page.getByRole("combobox").first();
+    await citySelector.click();
+    await citySelector.press("ArrowDown");
+    await citySelector.press("Enter");
+    await expect(page.getByText("139", { exact: true }).first()).toBeVisible();
+    await expect(page.getByText("Universal Master Cold Email — Surat")).toBeVisible();
 
-    await expect(page.locator("text=Active Rules")).toBeVisible();
-    await expect(page.locator("text=Emails Sent")).toBeVisible();
-    await expect(page.locator("text=Scheduled / Due")).toBeVisible();
-    await expect(page.locator("text=Failed / Retries")).toBeVisible();
-  });
+    await expect(page.getByText("Step 2: Universal Master Cold Email")).toBeVisible();
+    const editButton = page.getByRole("button", { name: "Preview / Edit" });
+    await editButton.click();
 
-  test("Automations table lists configured rules with trigger badges and switches", async ({ page }) => {
-    await page.goto("/automations");
-    await page.waitForLoadState("networkidle");
-
-    // Check table rows
-    await expect(page.locator("text=Welcome New Scanned Leads")).toBeVisible();
-    await expect(page.locator("text=Follow-Up Reminder Outreach")).toBeVisible();
-
-    // Check trigger badges
-    await expect(page.locator(".ant-tag:has-text('Lead Created')")).toBeVisible();
-    await expect(page.locator(".ant-tag:has-text('Follow-Up Due')")).toBeVisible();
-  });
-
-  test("Create new email automation modal with variable injection and preview", async ({ page }) => {
-    await page.goto("/automations");
-    await page.waitForLoadState("networkidle");
-
-    // Click New Automation button
-    await page.getByRole("button", { name: /New Automation/i }).click({ force: true });
-
-    // Modal opens
     const modal = page.locator(".ant-modal");
-    await expect(modal).toBeVisible();
-    await expect(modal.getByText("Create Email Automation")).toBeVisible();
+    await expect(modal.getByText(/Edit Cold Email Template/)).toBeVisible();
+    await expect(modal.getByText("Allowlisted Template Variables:")).toBeVisible();
+    await modal.getByRole("tab", { name: /Live Sample Preview/ }).click();
+    await expect(modal.getByText("Sample Preview for Grade")).toBeVisible();
 
-    // Fill form
-    await modal.locator("input#name").fill("VIP Pitch Campaign");
-
-    // Click dynamic variable pill if visible
-    const variablePill = modal.getByText("+business_name");
-    if (await variablePill.isVisible()) {
-      await variablePill.click({ force: true });
-    }
-
-    // Switch to Preview Tab
-    const previewTab = modal.getByRole("tab", { name: /Live Sample Preview/i });
-    await previewTab.click({ force: true });
-    await expect(modal.getByText("Live Preview with Sample Lead Context")).toBeVisible();
-
-    // Submit
-    await modal.getByRole("button", { name: /Create Automation/i }).click({ force: true });
-
-    // Check table updated
-    await expect(page.getByText("VIP Pitch Campaign")).toBeVisible();
+    await modal.getByRole("tab", { name: /Template Content/ }).click();
+    await modal.locator("input#subject").fill("A better website for {{Business Name}}");
+    await modal.getByRole("button", { name: "Save Template" }).click();
+    await expect(page.getByText("A better website for {{Business Name}}")).toBeVisible();
   });
 
-  test("Toggle automation active state switch", async ({ page }) => {
+  test("launches the selected city, shows its report, and preserves report history", async ({ page }) => {
     await page.goto("/automations");
-    await page.waitForLoadState("networkidle");
 
-    // Find the toggle switch for first automation
-    const row = page.locator("tr:has-text('Welcome New Scanned Leads')");
-    const switchEl = row.locator(".ant-switch");
-    await switchEl.scrollIntoViewIfNeeded();
-    await expect(switchEl).toHaveAttribute("aria-checked", "true");
+    const launchRequest = page.waitForRequest(
+      (request) => apiPath(request) === "/automations/start-city-automation" && request.method() === "POST",
+    );
+    await page.getByRole("button", { name: "Start Automation" }).first().click();
 
-    // Click to deactivate
-    await switchEl.click({ force: true });
-    await expect(switchEl).toHaveAttribute("aria-checked", "false");
+    const confirmation = page.locator(".ant-modal");
+    await expect(confirmation.getByText("Review & Start Email Automation")).toBeVisible();
+    await expect(confirmation.getByText("221 Eligible Leads")).toBeVisible();
+    await expect(confirmation.getByText("Universal (All Grades)")).toBeVisible();
+    await confirmation.locator(".ant-modal-footer").getByRole("button", { name: "Start Automation" }).click();
+
+    const request = await launchRequest;
+    expect(request.postDataJSON()).toMatchObject({
+      city: "Ahmedabad",
+      template: { subject: "Quick idea for {{Business Name}}" },
+    });
+
+    await expect(page.getByText("Ahmedabad Email Automation")).toBeVisible();
+    await expect(page.getByText("Emails Sent", { exact: true })).toBeVisible();
+    await expect(page.getByText("215", { exact: true }).first()).toBeVisible();
+    await expect(page.getByText("Recipient Dispatch Logs")).toBeVisible();
+
+    await page.getByRole("button", { name: "Start New City Run" }).click();
+    await page.getByRole("button", { name: "Previous Automations" }).click();
+    const history = page.locator(".ant-drawer");
+    await expect(history.getByText("Automation History & Reports")).toBeVisible();
+    await expect(history.getByText("Ahmedabad Automation")).toBeVisible();
+    await expect(history.getByText("Surat Automation")).toBeVisible();
   });
 
-  test("Open dispatch execution logs drawer", async ({ page }) => {
+  test("keeps city export usable without horizontal overflow at 375px", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
     await page.goto("/automations");
-    await page.waitForLoadState("networkidle");
 
-    // Click Logs button in row
-    const row = page.locator("tr:has-text('Welcome New Scanned Leads')");
-    const logsBtn = row.getByRole("button", { name: /Logs/i });
-    await logsBtn.scrollIntoViewIfNeeded();
-    await logsBtn.click({ force: true });
-
-    // Drawer opens
-    const drawer = page.locator(".ant-drawer");
-    await expect(drawer).toBeVisible();
-    await expect(drawer.getByText("Welcome New Scanned Leads")).toBeVisible();
-
-    // Execution card visible
-    await expect(drawer.getByText("Welcome Apex Clinic!").first()).toBeVisible();
-    await expect(drawer.locator(".ant-tag").filter({ hasText: /^Sent$/i }).first()).toBeVisible();
-  });
-
-  test("Process due executions queue button triggers batch execution", async ({ page }) => {
-    await page.goto("/automations");
-    await page.waitForLoadState("networkidle");
-
-    // Click Process Queue Now
-    const procBtn = page.getByRole("button", { name: /Process Queue Now/i });
-    await procBtn.scrollIntoViewIfNeeded();
-    await procBtn.click({ force: true });
-
-    // Message popup or notification appears
-    await expect(page.locator(".ant-message-notice")).toBeVisible();
-  });
-
-  test("Delete automation rule with confirmation popconfirm", async ({ page }) => {
-    await page.goto("/automations");
-    await page.waitForLoadState("networkidle");
-
-    const row = page.locator("tr:has-text('Follow-Up Reminder Outreach')");
-    const deleteBtn = row.locator("button.ant-btn-dangerous");
-    await deleteBtn.scrollIntoViewIfNeeded();
-    await deleteBtn.click({ force: true });
-
-    // Popconfirm opens
-    const popconfirm = page.locator(".ant-popover, .ant-popconfirm");
-    await expect(popconfirm).toBeVisible();
-    await popconfirm.getByRole("button", { name: /Delete/i }).click({ force: true });
-
-    // Verify row removed
-    await expect(page.getByText("Follow-Up Reminder Outreach")).not.toBeVisible();
+    await expect(page.getByText("Email Automation").first()).toBeVisible();
+    const exportButton = page.getByRole("button", { name: "Export Mobile Numbers" }).first();
+    await expect(exportButton).toBeVisible();
+    const downloadPromise = page.waitForEvent("download");
+    await exportButton.click();
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe("Ahmedabad-mobile-numbers.xlsx");
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
   });
 });

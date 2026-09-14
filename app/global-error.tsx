@@ -49,23 +49,55 @@ export default function GlobalError({
         <title>Something went wrong · Lead Finder</title>
 
         <style>{`
-          :root { color-scheme: light dark; --bg:#F6F7F9; --fg:#17202B; --muted:#758293; --line:#DDE2E8; --accent:#2563EB; }
+          :root {
+            color-scheme: light dark;
+            --bg: #F7F9FA;
+            --surface: #FFFFFF;
+            --fg: #0F172A;
+            --muted: #64748B;
+            --line: #E8ECEF;
+            --accent: #14532D;
+            --accent-hover: #166534;
+            --on-accent: #FFFFFF;
+          }
           @media (prefers-color-scheme: dark) {
-            :root { --bg:#0D1117; --fg:#F3F6F9; --muted:#8491A1; --line:#303A46; }
+            :root {
+              --bg: #090D0B;
+              --surface: #111815;
+              --fg: #FFFFFF;
+              --muted: #94A3B8;
+              --line: #1F2D27;
+              --accent: #15803D;
+              --accent-hover: #166534;
+            }
           }
           body { background: var(--bg); color: var(--fg); }
-          .ge-card { max-width: 30rem; text-align: center; }
-          .ge-title { font-size: 1.375rem; font-weight: 650; margin: 0 0 .5rem; letter-spacing: -0.01em; }
+          .ge-card {
+            width: min(100%, 30rem);
+            padding: 2rem;
+            border: 1px solid var(--line);
+            border-radius: 1.25rem;
+            background: var(--surface);
+            box-shadow: 0 16px 36px -4px rgba(16, 24, 40, 0.10);
+            text-align: center;
+          }
+          .ge-title { font-size: 1.5rem; font-weight: 700; margin: 0 0 .5rem; letter-spacing: -0.025em; }
           .ge-text { color: var(--muted); line-height: 1.6; margin: 0 0 1.25rem; }
           .ge-ref { font-size: .8125rem; color: var(--muted); margin: 0 0 1.5rem; }
           .ge-ref code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
           .ge-btn {
-            font: inherit; font-weight: 600; cursor: pointer;
-            background: var(--accent); color: #FFFFFF; border: 0;
-            border-radius: 8px; padding: .625rem 1.25rem;
-            transition: filter 150ms ease;
+            min-height: 2.5rem;
+            padding: .625rem 1.25rem;
+            border: 1px solid var(--accent);
+            border-radius: 9999px;
+            background: var(--accent);
+            color: var(--on-accent);
+            font: inherit;
+            font-weight: 650;
+            cursor: pointer;
+            transition: background-color 150ms ease, border-color 150ms ease;
           }
-          .ge-btn:hover { filter: brightness(1.06); }
+          .ge-btn:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
           .ge-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
           @media (prefers-reduced-motion: reduce) { .ge-btn { transition: none; } }
         `}</style>

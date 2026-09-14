@@ -36,25 +36,28 @@ async function mockWorkspace(page: Page) {
   await page.route("**/*", async (route) => {
     const request = route.request();
     const urlString = request.url();
-    if (!urlString.includes("8000")) {
+    const url = new URL(urlString);
+    const isProxyApi = url.pathname.startsWith("/api/");
+    const isDirectApi = url.origin === "http://127.0.0.1:8000";
+    if (!isProxyApi && !isDirectApi) {
       await route.continue();
       return;
     }
-    const url = new URL(urlString);
-    if (url.pathname === "/auth/me") return route.fulfill({ status: 200, contentType: "application/json", json: { authenticated: true } });
-    if (url.pathname === "/businesses/cities") {
+    const pathname = isProxyApi ? url.pathname.replace(/^\/api/, "") : url.pathname;
+    if (pathname === "/auth/me") return route.fulfill({ status: 200, contentType: "application/json", json: { authenticated: true } });
+    if (pathname === "/businesses/cities") {
       return route.fulfill({ status: 200, contentType: "application/json", json: { success: true, data: mockCities } });
     }
-    if (url.pathname === "/businesses/export/preview") {
+    if (pathname === "/businesses/export/preview") {
       const payload = request.postDataJSON();
       const total = payload?.scope === "selected" ? payload?.business_ids?.length ?? 0 : 2;
       return route.fulfill({ status: 200, contentType: "application/json", json: { success: true, total_selected: total, matching_qualification: 1, export_count: 1 } });
     }
-    if (url.pathname === "/businesses/export/csv") {
+    if (pathname === "/businesses/export/csv") {
       return route.fulfill({ status: 200, headers: { "content-type": "text/csv", "content-disposition": 'attachment; filename="businesses.csv"', "access-control-expose-headers": "Content-Disposition" }, body: "\uFEFFID,Name,Phone,Email,Website,City,Category,Address,Status\r\n1,'=SUM(1+1) Caf\u00e9,+91 98765 43210,alpha@example.com,,Ahmedabad,Dental,A,No Website\r\n" });
     }
     if (
-      url.pathname === "/businesses" &&
+      pathname === "/businesses" &&
       request.method() === "GET"
     ) {
       return route.fulfill({ status: 200, contentType: "application/json", json: { success: true, data: businesses, pagination: { page: Number(url.searchParams.get("page") ?? 1), pageSize: 20, totalItems: 2, totalPages: 2 } } });
@@ -199,7 +202,10 @@ test.describe("Businesses Level 1 Cities & Level 2 CRM", () => {
     await dialog.getByRole("checkbox", { name: /Only export businesses/ }).check();
     await dialog.getByRole("checkbox", { name: "Has email" }).check();
     await dialog.getByRole("checkbox", { name: "Has phone" }).check();
-    const requestPromise = page.waitForRequest((r) => new URL(r.url()).pathname === "/businesses/export/csv" && r.method() === "POST");
+    const requestPromise = page.waitForRequest((request) => {
+      const pathname = new URL(request.url()).pathname.replace(/^\/api/, "");
+      return pathname === "/businesses/export/csv" && request.method() === "POST";
+    });
     await dialog.getByRole("button", { name: /Export$/ }).click();
     expect((await requestPromise).postDataJSON()).toEqual({ business_ids: [1], has_email: true, has_phone: true });
   });
@@ -224,7 +230,10 @@ test.describe("Businesses Level 1 Cities & Level 2 CRM", () => {
     await expect(page.getByText("Alpha Dental").filter({ visible: true }).first()).toBeVisible({ timeout: 15000 });
     await page.route("**/*", (route) => {
       const url = new URL(route.request().url());
-      if (url.origin === "http://127.0.0.1:8000" && url.pathname === "/businesses" && url.searchParams.get("has_website") === "false") {
+      const isProxyApi = url.pathname.startsWith("/api/");
+      const isDirectApi = url.origin === "http://127.0.0.1:8000";
+      const pathname = isProxyApi ? url.pathname.replace(/^\/api/, "") : url.pathname;
+      if ((isProxyApi || isDirectApi) && pathname === "/businesses" && url.searchParams.get("has_website") === "false") {
         return route.fulfill({
           status: 503,
           json: { success: false, message: "Business filters are temporarily unavailable.", error: "SERVICE_UNAVAILABLE", timestamp: "2026-08-19T00:00:00Z", requestId: "filters-test" },

@@ -126,7 +126,7 @@ export const TemplateEditorModal: React.FC<TemplateEditorModalProps> = ({
           Save Template
         </Button>,
       ]}
-      destroyOnClose
+      destroyOnHidden
     >
       <Form form={form} layout="vertical" onFinish={handleFinish}>
         <Tabs
@@ -217,14 +217,14 @@ export const TemplateEditorModal: React.FC<TemplateEditorModalProps> = ({
                   <Alert
                     type="info"
                     showIcon
-                    message={`Sample Preview for Grade ${grade} Prospect`}
+                    title={`Sample Preview for Grade ${grade} Prospect`}
                     description="Variables {{...}} are dynamically populated with the prospect's CRM data upon sending."
                     className="text-xs"
                   />
 
                   <Card
                     title={
-                      <Space direction="vertical" size={2} className="w-full">
+                      <Space orientation="vertical" size={2} className="w-full">
                         <Text type="secondary" className="text-xs">
                           SUBJECT:
                         </Text>

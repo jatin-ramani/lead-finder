@@ -174,13 +174,15 @@ async function mockFilterRoutes(page: Page) {
   await page.route("**/*", async (route) => {
     const request = route.request();
     const urlString = request.url();
-    if (!urlString.includes("8000")) {
+    const url = new URL(urlString);
+    const isProxyApi = url.pathname.startsWith("/api/");
+    const isDirectApi = url.origin === "http://127.0.0.1:8000";
+    if (!isProxyApi && !isDirectApi) {
       await route.continue();
       return;
     }
 
-    const url = new URL(urlString);
-    const pathname = url.pathname;
+    const pathname = isProxyApi ? url.pathname.replace(/^\/api/, "") : url.pathname;
     const method = request.method();
 
     if (pathname === "/auth/me") {
@@ -277,6 +279,9 @@ async function mockFilterRoutes(page: Page) {
   });
 }
 
+async function usesCompactFilters(page: Page) {
+  return page.locator(".lf-filter-mobile").isVisible();
+}
 test.describe("Advanced Filters System E2E Suite", () => {
   test.beforeEach(async ({ page }) => {
     await authenticatePlaywright(page.context());
@@ -285,8 +290,8 @@ test.describe("Advanced Filters System E2E Suite", () => {
     await page.waitForLoadState("networkidle");
   });
 
-  test("renders all primary controls and expands advanced filters panel", async ({ page, isMobile }) => {
-    if (!isMobile) {
+  test("renders all primary controls and expands advanced filters panel", async ({ page }) => {
+    if (!(await usesCompactFilters(page))) {
       await expect(page.getByRole("textbox", { name: "Search businesses" })).toBeVisible();
       await expect(page.getByRole("textbox", { name: "Filter by city (exact match)" })).toBeVisible();
       await expect(page.getByRole("textbox", { name: "Filter by category (exact match)" })).toBeVisible();
@@ -308,8 +313,8 @@ test.describe("Advanced Filters System E2E Suite", () => {
     }
   });
 
-  test("filters by Grade A and Score 80-100 combination", async ({ page, isMobile }) => {
-    if (!isMobile) {
+  test("filters by Grade A and Score 80-100 combination", async ({ page }) => {
+    if (!(await usesCompactFilters(page))) {
       // Open advanced panel
       await page.getByRole("button", { name: /Advanced/i }).click();
 
@@ -338,8 +343,8 @@ test.describe("Advanced Filters System E2E Suite", () => {
     }
   });
 
-  test("filters by Favorites and Contacted status combination", async ({ page, isMobile }) => {
-    if (!isMobile) {
+  test("filters by Favorites and Contacted status combination", async ({ page }) => {
+    if (!(await usesCompactFilters(page))) {
       // Toggle favorites
       await page.getByRole("button", { name: "Favorites" }).click();
       await expect(page).toHaveURL(/is_favorite=true/);
@@ -360,8 +365,8 @@ test.describe("Advanced Filters System E2E Suite", () => {
     }
   });
 
-  test("removes individual filter using chip close button", async ({ page, isMobile }) => {
-    if (!isMobile) {
+  test("removes individual filter using chip close button", async ({ page }) => {
+    if (!(await usesCompactFilters(page))) {
       await page.goto("/businesses?city=Ahmedabad&lead_grade=A&view=all");
       await page.waitForLoadState("networkidle");
 
@@ -378,8 +383,8 @@ test.describe("Advanced Filters System E2E Suite", () => {
     }
   });
 
-  test("clear all button resets all filters", async ({ page, isMobile }) => {
-    if (!isMobile) {
+  test("clear all button resets all filters", async ({ page }) => {
+    if (!(await usesCompactFilters(page))) {
       await page.goto("/businesses?city=Ahmedabad&has_website=true&is_favorite=true&view=all");
       await page.waitForLoadState("networkidle");
 
@@ -410,8 +415,8 @@ test.describe("Advanced Filters System E2E Suite", () => {
     await expect(page.getByText("Apex Dental Clinic").filter({ visible: true }).first()).toBeVisible();
   });
 
-  test("active filters flow into Export Modal preview", async ({ page, isMobile }) => {
-    if (!isMobile) {
+  test("active filters flow into Export Modal preview", async ({ page }) => {
+    if (!(await usesCompactFilters(page))) {
       await page.goto("/businesses?city=Ahmedabad&has_website=false&view=all");
       await page.waitForLoadState("networkidle");
 
@@ -426,8 +431,8 @@ test.describe("Advanced Filters System E2E Suite", () => {
     }
   });
 
-  test("mobile filter drawer supports setting and resetting filters", async ({ page, isMobile }) => {
-    if (isMobile) {
+  test("mobile filter drawer supports setting and resetting filters", async ({ page }) => {
+    if (await usesCompactFilters(page)) {
       const filtersTrigger = page.getByRole("button", { name: /Filters/i });
       await filtersTrigger.click();
 

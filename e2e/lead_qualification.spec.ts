@@ -19,8 +19,33 @@ function matches(url: URL) {
   });
 }
 
+function isApiRequest(url: URL) {
+  return (
+    url.origin === "http://127.0.0.1:8000" ||
+    url.origin === "http://localhost:8000" ||
+    url.pathname === "/api" ||
+    url.pathname.startsWith("/api/")
+  );
+}
+
+function apiPath(url: URL) {
+  return url.pathname.startsWith("/api/")
+    ? url.pathname.slice("/api".length)
+    : url.pathname;
+}
+
 async function openMobileFilters(page: Page) {
   const trigger = page.getByRole("button", { name: /^Filters/ });
+  const viewportWidth = page.viewportSize()?.width ?? 1024;
+
+  // The deliberate compact filter layout is shared by mobile and tablet.
+  // Desktop keeps the full inline toolbar.
+  if (viewportWidth <= 1023) {
+    await expect(trigger).toBeVisible({ timeout: 15000 });
+    await trigger.click();
+    return;
+  }
+
   if (await trigger.isVisible()) await trigger.click();
 }
 
@@ -28,11 +53,13 @@ async function mockApi(page: Page) {
   await page.route("**/*", async (route) => {
     const request = route.request();
     const url = new URL(request.url());
-    if (url.pathname === "/auth/me") return route.fulfill({ json: { authenticated: true } });
-    if (url.pathname === "/businesses/cities") {
+    if (!isApiRequest(url)) return route.continue();
+    const pathname = apiPath(url);
+    if (pathname === "/auth/me") return route.fulfill({ json: { authenticated: true } });
+    if (pathname === "/businesses/cities") {
       return route.fulfill({ json: { success: true, data: [{ city: "Ahmedabad", total_businesses: 3, with_website: 1, without_website: 2, with_email: 2, without_email: 1, with_phone: 2, without_phone: 1, actionable_leads: 1 }] } });
     }
-    if (url.origin === "http://127.0.0.1:8000" && url.pathname === "/businesses" && request.method() === "GET") {
+    if (pathname === "/businesses" && request.method() === "GET") {
       const data = matches(url);
       return route.fulfill({ json: { success: true, data, pagination: { page: Number(url.searchParams.get("page") ?? 1), pageSize: 20, totalItems: data.length, totalPages: 1 } } });
     }
@@ -64,9 +91,17 @@ test.describe("Lead qualification boolean filter contract", () => {
     test(`requests the backend for ${scenario.name}`, async ({ page }) => {
       const requests: URL[] = [];
       await openMobileFilters(page);
-      page.on("request", (request) => { if (request.url().startsWith("http://127.0.0.1:8000/businesses?")) requests.push(new URL(request.url())); });
-      for (const control of scenario.controls) await page.getByRole("checkbox", { name: control, exact: true }).click();
-      for (const part of scenario.query) await expect(page).toHaveURL(new RegExp(part));
+      page.on("request", (request) => {
+        const url = new URL(request.url());
+        if (isApiRequest(url) && apiPath(url) === "/businesses") requests.push(url);
+      });
+      // Each toggle pushes a new URL state. Wait for that state before the next
+      // mobile drawer interaction so the test models consecutive user actions
+      // instead of racing Next's client-side navigation.
+      for (const [index, control] of scenario.controls.entries()) {
+        await page.getByRole("checkbox", { name: control, exact: true }).click();
+        await expect(page).toHaveURL(new RegExp(scenario.query[index]));
+      }
       await expect.poll(() => requests.some((url) => scenario.query.every((part) => url.search.includes(part)))).toBe(true);
       for (const name of scenario.visible) await expect(page.getByText(name).filter({ visible: true })).toBeVisible({ timeout: 15000 });
       await page.reload();

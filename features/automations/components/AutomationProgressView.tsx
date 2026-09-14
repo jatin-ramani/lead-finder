@@ -6,9 +6,9 @@ import {
   Card,
   Col,
   Popconfirm,
+  Pagination,
   Progress,
   Row,
-  Space,
   Statistic,
   Table,
   Tag,
@@ -53,6 +53,25 @@ const STATUS_TAG_MAP: Record<string, { color: string; label: string }> = {
   draft: { color: "default", label: "Draft" },
 };
 
+function RecipientStatusTag({
+  status,
+  errorMessage,
+}: {
+  status: string;
+  errorMessage?: string | null;
+}) {
+  if (status === "processing") {
+    return <Tag color="processing" icon={<SyncOutlined spin />} className="lf-status-badge">Processing now</Tag>;
+  }
+  if (errorMessage?.includes("Retrying")) {
+    return <Tag color="warning" icon={<SyncOutlined />} className="lf-status-badge">Retry scheduled</Tag>;
+  }
+  if (status === "sent") return <Tag color="success" className="lf-status-badge">Delivered</Tag>;
+  if (status === "failed") return <Tag color="error" className="lf-status-badge">Failed</Tag>;
+  if (status === "cancelled") return <Tag className="lf-status-badge">Cancelled</Tag>;
+  return <Tag className="lf-status-badge">Queued</Tag>;
+}
+
 export const AutomationProgressView: React.FC<AutomationProgressViewProps> = ({
   report,
   isLoading,
@@ -64,6 +83,7 @@ export const AutomationProgressView: React.FC<AutomationProgressViewProps> = ({
   onStartNew,
 }) => {
   const [filterFailedOnly, setFilterFailedOnly] = useState(false);
+  const [recipientPage, setRecipientPage] = useState(1);
 
   const total = report.recipient_count;
   const sent = report.sent_count;
@@ -90,6 +110,16 @@ export const AutomationProgressView: React.FC<AutomationProgressViewProps> = ({
     : recipientLogs;
 
   const [activeTab, setActiveTab] = useState<string>(isFinished && remaining === 0 ? "sent" : "remaining");
+  const visibleRecipients = activeTab === "remaining"
+    ? remainingRecipients
+    : activeTab === "sent"
+      ? sentRecipients
+      : displayedLogs;
+  const recipientPageSize = 10;
+  const mobileRecipients = visibleRecipients.slice(
+    (recipientPage - 1) * recipientPageSize,
+    recipientPage * recipientPageSize,
+  );
 
   const remainingColumns = [
     {
@@ -97,10 +127,10 @@ export const AutomationProgressView: React.FC<AutomationProgressViewProps> = ({
       key: "business",
       render: (_: unknown, record: RecipientExecutionLogItem) => (
         <div className="space-y-0.5">
-          <div className="font-semibold text-xs text-gray-900 dark:text-gray-100">
+          <div className="font-semibold text-xs text-[var(--lf-text)]">
             {record.business_name}
           </div>
-          <div className="font-mono text-[11px] text-gray-500">
+          <div className="font-mono text-[11px] text-[var(--lf-text-muted)]">
             {record.recipient_email}
           </div>
         </div>
@@ -112,7 +142,7 @@ export const AutomationProgressView: React.FC<AutomationProgressViewProps> = ({
       key: "lead_grade",
       width: 90,
       render: (g: string) => (
-        <Tag color="blue" className="text-xs font-semibold">
+        <Tag color="processing" className="lf-status-badge text-xs font-semibold">
           Grade {g || "D"}
         </Tag>
       ),
@@ -123,36 +153,22 @@ export const AutomationProgressView: React.FC<AutomationProgressViewProps> = ({
       key: "status",
       width: 140,
       render: (st: string, record: RecipientExecutionLogItem) => {
-        if (st === "processing") {
-          return (
-            <Tag color="processing" icon={<SyncOutlined spin />}>
-              Processing Now
-            </Tag>
-          );
-        }
-        if (record.error_message && record.error_message.includes("Retrying")) {
-          return (
-            <Tag color="warning" icon={<SyncOutlined />}>
-              Retry Scheduled
-            </Tag>
-          );
-        }
-        return <Tag color="default">Queued Pending</Tag>;
+        return <RecipientStatusTag status={st} errorMessage={record.error_message} />;
       },
     },
     {
       title: "Status Details",
       key: "details",
       render: (_: unknown, record: RecipientExecutionLogItem) => (
-        <div className="text-xs text-gray-500">
+        <div className="text-xs text-[var(--lf-text-muted)]">
           {record.error_message ? (
-            <span className="text-amber-600 dark:text-amber-400 font-mono text-[11px]">
+            <span className="text-[var(--lf-warning)] font-mono text-[11px]">
               {record.error_message}
             </span>
           ) : record.status === "processing" ? (
-            <span className="text-blue-600 dark:text-blue-400">Currently generating & dispatching...</span>
+            <span className="text-[var(--lf-info)]">Currently generating & dispatching...</span>
           ) : (
-            <span className="text-gray-400">Awaiting queue dispatch at 20/min</span>
+            <span className="text-[var(--lf-text-muted)]">Awaiting queue dispatch at 20/min</span>
           )}
         </div>
       ),
@@ -165,10 +181,10 @@ export const AutomationProgressView: React.FC<AutomationProgressViewProps> = ({
       key: "recipient",
       render: (_: unknown, record: RecipientExecutionLogItem) => (
         <div className="space-y-0.5">
-          <div className="font-semibold text-xs text-gray-900 dark:text-gray-100">
+          <div className="font-semibold text-xs text-[var(--lf-text)]">
             {record.business_name}
           </div>
-          <div className="font-mono text-[11px] text-gray-500">
+          <div className="font-mono text-[11px] text-[var(--lf-text-muted)]">
             {record.recipient_email}
           </div>
         </div>
@@ -180,7 +196,7 @@ export const AutomationProgressView: React.FC<AutomationProgressViewProps> = ({
       key: "lead_grade",
       width: 80,
       render: (g: string) => (
-        <Tag color="blue" className="text-xs font-semibold">
+        <Tag color="processing" className="lf-status-badge text-xs font-semibold">
           Grade {g || "D"}
         </Tag>
       ),
@@ -191,10 +207,7 @@ export const AutomationProgressView: React.FC<AutomationProgressViewProps> = ({
       key: "status",
       width: 100,
       render: (st: string) => {
-        if (st === "sent") return <Tag color="success">Sent</Tag>;
-        if (st === "failed") return <Tag color="error">Failed</Tag>;
-        if (st === "cancelled") return <Tag color="default">Cancelled</Tag>;
-        return <Tag color="processing">{st}</Tag>;
+        return <RecipientStatusTag status={st} />;
       },
     },
     {
@@ -203,15 +216,15 @@ export const AutomationProgressView: React.FC<AutomationProgressViewProps> = ({
       render: (_: unknown, record: RecipientExecutionLogItem) => (
         <div className="text-xs">
           {record.error_message ? (
-            <span className="text-red-500 font-mono text-[11px]">
+            <span className="text-[var(--lf-error)] font-mono text-[11px]">
               {record.error_message}
             </span>
           ) : record.sent_at ? (
-            <span className="text-emerald-600 dark:text-emerald-400">
+            <span className="text-[var(--lf-success)]">
               Delivered at {new Date(record.sent_at).toLocaleTimeString()}
             </span>
           ) : (
-            <span className="text-gray-400">In queue / processing</span>
+            <span className="text-[var(--lf-text-muted)]">In queue / processing</span>
           )}
         </div>
       ),
@@ -222,13 +235,13 @@ export const AutomationProgressView: React.FC<AutomationProgressViewProps> = ({
     <div className="space-y-6">
       {/* Paused Alert Banner */}
       {isPaused && (
-        <Card className="border border-amber-300 bg-amber-50 dark:bg-amber-950/30 rounded-xl">
+        <Card className="lf-workspace-card border-[var(--lf-warning)] bg-[var(--lf-warning-soft)]">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <div className="font-bold text-amber-900 dark:text-amber-200 text-sm">
+              <div className="font-bold text-[var(--lf-text)] text-sm">
                 Automation Paused
               </div>
-              <div className="text-xs text-amber-800 dark:text-amber-300 mt-0.5">
+              <div className="text-xs text-[var(--lf-text-secondary)] mt-0.5">
                 {report.paused_reason || "Sending was paused. Pending items are safely preserved in queue."}
               </div>
             </div>
@@ -237,7 +250,7 @@ export const AutomationProgressView: React.FC<AutomationProgressViewProps> = ({
                 type="primary"
                 loading={isResuming}
                 onClick={() => onResumeRun(report.id)}
-                className="bg-amber-600 hover:bg-amber-700 font-semibold"
+                className="!border-[var(--lf-warning)] !bg-[var(--lf-warning)] font-semibold"
               >
                 Resume Automation
               </Button>
@@ -247,15 +260,15 @@ export const AutomationProgressView: React.FC<AutomationProgressViewProps> = ({
       )}
 
       {/* Header Banner */}
-      <Card className="border border-gray-200 dark:border-gray-800 shadow-sm rounded-xl">
+      <Card className="lf-workspace-card">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <EnvironmentOutlined className="text-blue-600 text-lg" />
+              <EnvironmentOutlined className="text-[var(--lf-brand)] text-lg" />
               <Title level={3} className="!mb-0">
                 {report.city ? `${report.city} Email Automation` : report.name}
               </Title>
-              <Tag color={statusBadge.color} className="text-xs px-2 py-0.5 ml-2 font-semibold">
+              <Tag color={statusBadge.color} className="lf-status-badge text-xs px-2 py-0.5 ml-2 font-semibold">
                 {isRunning && <SyncOutlined spin className="mr-1" />}
                 {statusBadge.label}
               </Tag>
@@ -266,7 +279,7 @@ export const AutomationProgressView: React.FC<AutomationProgressViewProps> = ({
             </Paragraph>
           </div>
 
-          <Space wrap>
+          <div className="lf-page-toolbar flex flex-wrap gap-2">
             <Button icon={<ReloadOutlined />} onClick={onRefresh} loading={isLoading}>
               Refresh
             </Button>
@@ -288,16 +301,16 @@ export const AutomationProgressView: React.FC<AutomationProgressViewProps> = ({
               type="primary"
               icon={<PlusOutlined />}
               onClick={onStartNew}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="font-semibold"
             >
               Start New City Run
             </Button>
-          </Space>
+          </div>
         </div>
 
         {/* Progress Bar */}
         <div className="mt-5 space-y-1.5">
-          <div className="flex justify-between text-xs font-semibold text-gray-600 dark:text-gray-300">
+          <div className="flex justify-between gap-3 text-xs font-semibold text-[var(--lf-text-secondary)]">
             <span>
               Progress: {sent} of {total} sent • {remaining} remaining unsent
               {failed > 0 ? ` • ${failed} failed` : ""}
@@ -307,10 +320,7 @@ export const AutomationProgressView: React.FC<AutomationProgressViewProps> = ({
           <Progress
             percent={percent}
             status={isRunning ? "active" : failed > 0 ? "normal" : "success"}
-            strokeColor={{
-              from: "#108ee9",
-              to: "#87d068",
-            }}
+            strokeColor="var(--lf-brand)"
             size={["100%", 10]}
           />
         </div>
@@ -319,40 +329,40 @@ export const AutomationProgressView: React.FC<AutomationProgressViewProps> = ({
       {/* KPI Metrics */}
       <Row gutter={[16, 16]}>
         <Col xs={12} sm={6}>
-          <Card size="small" className="border border-gray-200 dark:border-gray-800 shadow-sm text-center">
+          <Card size="small" className="lf-metric-card text-center">
             <Statistic
-              title={<span className="text-xs text-gray-500">Total Audience</span>}
+              title={<span className="text-xs text-[var(--lf-text-muted)]">Total Audience</span>}
               value={total}
-              valueStyle={{ fontWeight: 700, color: "#1f2937" }}
+              styles={{ content: { fontWeight: 700, color: "var(--lf-text)" } }}
             />
           </Card>
         </Col>
         <Col xs={12} sm={6}>
-          <Card size="small" className="border border-gray-200 dark:border-gray-800 shadow-sm text-center bg-emerald-50/40 dark:bg-emerald-950/20">
+          <Card size="small" className="lf-metric-card text-center">
             <Statistic
-              title={<span className="text-xs text-emerald-700 dark:text-emerald-400">Emails Sent</span>}
+              title={<span className="text-xs text-[var(--lf-success)]">Emails Sent</span>}
               value={sent}
-              valueStyle={{ fontWeight: 700, color: "#10b981" }}
+              styles={{ content: { fontWeight: 700, color: "var(--lf-success)" } }}
               prefix={<CheckCircleOutlined />}
             />
           </Card>
         </Col>
         <Col xs={12} sm={6}>
-          <Card size="small" className="border border-gray-200 dark:border-gray-800 shadow-sm text-center bg-blue-50/40 dark:bg-blue-950/20">
+          <Card size="small" className="lf-metric-card text-center">
             <Statistic
-              title={<span className="text-xs text-blue-700 dark:text-blue-400">Remaining Unsent</span>}
+              title={<span className="text-xs text-[var(--lf-info)]">Remaining Unsent</span>}
               value={remaining}
-              valueStyle={{ fontWeight: 700, color: "#2563eb" }}
+              styles={{ content: { fontWeight: 700, color: "var(--lf-info)" } }}
               prefix={<SyncOutlined spin={isRunning} />}
             />
           </Card>
         </Col>
         <Col xs={12} sm={6}>
-          <Card size="small" className="border border-gray-200 dark:border-gray-800 shadow-sm text-center bg-red-50/40 dark:bg-red-950/20">
+          <Card size="small" className="lf-metric-card text-center">
             <Statistic
-              title={<span className="text-xs text-red-700 dark:text-red-400">Failed</span>}
+              title={<span className="text-xs text-[var(--lf-error)]">Failed</span>}
               value={failed}
-              valueStyle={{ fontWeight: 700, color: failed > 0 ? "#ef4444" : "#6b7280" }}
+              styles={{ content: { fontWeight: 700, color: failed > 0 ? "var(--lf-error)" : "var(--lf-text-muted)" } }}
               prefix={<CloseCircleOutlined />}
             />
           </Card>
@@ -361,7 +371,7 @@ export const AutomationProgressView: React.FC<AutomationProgressViewProps> = ({
 
       {/* Grade Breakdown Cards */}
       <Card
-        className="border border-gray-200 dark:border-gray-800 shadow-sm rounded-xl"
+        className="lf-workspace-card"
         title={<span className="font-semibold text-base">Grade-Wise Performance</span>}
       >
         <Row gutter={[16, 16]}>
@@ -369,28 +379,28 @@ export const AutomationProgressView: React.FC<AutomationProgressViewProps> = ({
             const g = report.grade_breakdown?.[grade] || { total: 0, sent: 0, failed: 0, pending: 0, processing: 0 };
             return (
               <Col xs={24} sm={12} md={6} key={grade}>
-                <div className="p-3.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-900/60 space-y-2">
+                <div className="lf-metric-card space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-sm text-gray-800 dark:text-gray-200">
+                    <span className="font-bold text-sm text-[var(--lf-text)]">
                       Grade {grade}
                     </span>
-                    <Tag color="blue" className="text-xs m-0">
+                    <Tag color="blue" className="lf-status-badge text-xs m-0">
                       {g.total} Total
                     </Tag>
                   </div>
 
-                  <div className="space-y-1 text-xs text-gray-600 dark:text-gray-400 pt-1 border-t border-gray-200 dark:border-gray-800">
+                  <div className="space-y-1 border-t border-[var(--lf-border)] pt-1 text-xs text-[var(--lf-text-secondary)]">
                     <div className="flex justify-between">
                       <span>Sent:</span>
-                      <span className="font-semibold text-emerald-600">{g.sent}</span>
+                      <span className="font-semibold text-[var(--lf-success)]">{g.sent}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Remaining:</span>
-                      <span className="font-semibold text-blue-600">{g.pending + (g.processing || 0)}</span>
+                      <span className="font-semibold text-[var(--lf-info)]">{g.pending + (g.processing || 0)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Failed:</span>
-                      <span className="font-semibold text-red-500">{g.failed}</span>
+                      <span className="font-semibold text-[var(--lf-error)]">{g.failed}</span>
                     </div>
                   </div>
                 </div>
@@ -402,107 +412,162 @@ export const AutomationProgressView: React.FC<AutomationProgressViewProps> = ({
 
       {/* Live Recipient Views & History Inspector */}
       <Card
-        className="border border-gray-200 dark:border-gray-800 shadow-sm rounded-xl"
+        className="lf-workspace-card"
         title={
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <span className="font-semibold text-base">Recipient Dispatch Logs</span>
-            <div className="flex items-center gap-2">
-              <Space size="small">
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="small"
+                type={activeTab === "remaining" ? "primary" : "default"}
+                onClick={() => {
+                  setActiveTab("remaining");
+                  setFilterFailedOnly(false);
+                  setRecipientPage(1);
+                }}
+              >
+                Remaining unsent ({remaining})
+              </Button>
+              <Button
+                size="small"
+                type={activeTab === "sent" ? "primary" : "default"}
+                onClick={() => {
+                  setActiveTab("sent");
+                  setFilterFailedOnly(false);
+                  setRecipientPage(1);
+                }}
+              >
+                Delivered ({sent})
+              </Button>
+              <Button
+                size="small"
+                type={activeTab === "all" && !filterFailedOnly ? "primary" : "default"}
+                onClick={() => {
+                  setActiveTab("all");
+                  setFilterFailedOnly(false);
+                  setRecipientPage(1);
+                }}
+              >
+                All logs ({recipientLogs.length})
+              </Button>
+              {failed > 0 && (
                 <Button
                   size="small"
-                  type={activeTab === "remaining" ? "primary" : "default"}
-                  onClick={() => {
-                    setActiveTab("remaining");
-                    setFilterFailedOnly(false);
-                  }}
-                  className={activeTab === "remaining" ? "bg-blue-600" : ""}
-                >
-                  Remaining Unsent ({remaining})
-                </Button>
-                <Button
-                  size="small"
-                  type={activeTab === "sent" ? "primary" : "default"}
-                  onClick={() => {
-                    setActiveTab("sent");
-                    setFilterFailedOnly(false);
-                  }}
-                  className={activeTab === "sent" ? "bg-emerald-600" : ""}
-                >
-                  Delivered ({sent})
-                </Button>
-                <Button
-                  size="small"
-                  type={activeTab === "all" && !filterFailedOnly ? "primary" : "default"}
+                  type={filterFailedOnly ? "primary" : "default"}
+                  danger={filterFailedOnly}
                   onClick={() => {
                     setActiveTab("all");
-                    setFilterFailedOnly(false);
+                    setFilterFailedOnly(!filterFailedOnly);
+                    setRecipientPage(1);
                   }}
                 >
-                  All Logs ({recipientLogs.length})
+                  {filterFailedOnly ? "Show all" : `Inspect ${failed} failed`}
                 </Button>
-                {failed > 0 && (
-                  <Button
-                    size="small"
-                    type={filterFailedOnly ? "primary" : "default"}
-                    danger={filterFailedOnly}
-                    onClick={() => {
-                      setActiveTab("all");
-                      setFilterFailedOnly(!filterFailedOnly);
-                    }}
-                  >
-                    {filterFailedOnly ? "Show All" : `Inspect ${failed} Failed`}
-                  </Button>
-                )}
-              </Space>
+              )}
             </div>
           </div>
         }
       >
-        {activeTab === "remaining" ? (
-          <Table
-            dataSource={remainingRecipients}
-            columns={remainingColumns}
-            rowKey="id"
-            size="small"
-            pagination={{ pageSize: 10 }}
-            locale={{
-              emptyText: (
-                <div className="py-8 text-center">
-                  <CheckCircleOutlined className="text-emerald-500 text-3xl mb-2" />
-                  <div className="font-semibold text-gray-800 dark:text-gray-200">
-                    No remaining unsent leads in queue
+        <div className="hidden md:block">
+          {activeTab === "remaining" ? (
+            <Table
+              dataSource={remainingRecipients}
+              columns={remainingColumns}
+              rowKey="id"
+              size="small"
+              pagination={{ pageSize: recipientPageSize }}
+              locale={{
+                emptyText: (
+                  <div className="py-8 text-center">
+                    <CheckCircleOutlined className="mb-2 text-3xl text-[var(--lf-success)]" />
+                    <div className="font-semibold text-[var(--lf-text)]">
+                      No remaining unsent leads in queue
+                    </div>
+                    <div className="mt-1 text-xs text-[var(--lf-text-muted)]">
+                      All eligible prospects have been processed or delivered. Check &quot;Delivered&quot; or &quot;All Logs&quot; to review history.
+                    </div>
                   </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    All eligible prospects have been processed or delivered. Check &quot;Delivered&quot; or &quot;All Logs&quot; to review history.
+                ),
+              }}
+            />
+          ) : activeTab === "sent" ? (
+            <Table
+              dataSource={sentRecipients}
+              columns={logColumns}
+              rowKey="id"
+              size="small"
+              pagination={{ pageSize: recipientPageSize }}
+              locale={{
+                emptyText: (
+                  <div className="py-8 text-center text-[var(--lf-text-muted)]">
+                    No emails have been delivered yet.
                   </div>
+                ),
+              }}
+            />
+          ) : (
+            <Table
+              dataSource={displayedLogs}
+              columns={logColumns}
+              rowKey="id"
+              size="small"
+              pagination={{ pageSize: recipientPageSize }}
+            />
+          )}
+        </div>
+
+        <div className="lf-mobile-data-list md:hidden">
+          {mobileRecipients.length === 0 ? (
+            <div className="py-8 text-center text-sm text-[var(--lf-text-muted)]">
+              {activeTab === "remaining"
+                ? "No remaining unsent leads in queue."
+                : activeTab === "sent"
+                  ? "No emails have been delivered yet."
+                  : "No recipient activity matches this view."}
+            </div>
+          ) : (
+            mobileRecipients.map((record) => (
+              <article key={record.id} className="lf-mobile-data-item">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="truncate font-semibold text-[var(--lf-text)]">
+                      {record.business_name}
+                    </div>
+                    <div className="truncate font-mono text-xs text-[var(--lf-text-muted)]">
+                      {record.recipient_email}
+                    </div>
+                  </div>
+                  <RecipientStatusTag status={record.status} errorMessage={record.error_message} />
                 </div>
-              ),
-            }}
-          />
-        ) : activeTab === "sent" ? (
-          <Table
-            dataSource={sentRecipients}
-            columns={logColumns}
-            rowKey="id"
-            size="small"
-            pagination={{ pageSize: 10 }}
-            locale={{
-              emptyText: (
-                <div className="py-8 text-center text-gray-400">
-                  No emails have been delivered yet.
+                <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+                  <Tag color="processing" className="lf-status-badge">Grade {record.lead_grade || "D"}</Tag>
+                  {record.sent_at && (
+                    <span className="text-[var(--lf-success)]">
+                      Delivered {new Date(record.sent_at).toLocaleTimeString()}
+                    </span>
+                  )}
                 </div>
-              ),
-            }}
-          />
-        ) : (
-          <Table
-            dataSource={displayedLogs}
-            columns={logColumns}
-            rowKey="id"
-            size="small"
-            pagination={{ pageSize: 10 }}
-          />
-        )}
+                {record.error_message && (
+                  <p className="mt-2 break-words font-mono text-xs text-[var(--lf-error)]">
+                    {record.error_message}
+                  </p>
+                )}
+              </article>
+            ))
+          )}
+          {visibleRecipients.length > recipientPageSize && (
+            <div className="flex justify-center pt-1">
+              <Pagination
+                simple
+                size="small"
+                current={recipientPage}
+                pageSize={recipientPageSize}
+                total={visibleRecipients.length}
+                onChange={setRecipientPage}
+              />
+            </div>
+          )}
+        </div>
       </Card>
     </div>
   );

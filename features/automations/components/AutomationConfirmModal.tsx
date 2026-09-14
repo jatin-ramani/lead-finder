@@ -61,7 +61,7 @@ export const AutomationConfirmModal: React.FC<AutomationConfirmModalProps> = ({
           Start Automation
         </Button>,
       ]}
-      destroyOnClose
+      destroyOnHidden
     >
       <div className="space-y-4 py-1">
         {/* City & Audience Summary Alert */}

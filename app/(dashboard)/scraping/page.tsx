@@ -11,6 +11,18 @@ import ScrapeJobDetails from "@/features/scraping/components/ScrapeJobDetails";
 import ScrapeJobHistory from "@/features/scraping/components/ScrapeJobHistory";
 import { useScrapeRunner } from "@/features/scraping/hooks/useScrapeRunner";
 
+function ScrapingPageIntro() {
+  return (
+    <div className="lf-page-intro">
+      <div className="lf-page-intro-copy">
+        <h1 className="lf-page-title">Website Scraper</h1>
+        <p className="lf-page-subtitle">
+          Enrich discovered businesses with website contact details and track every scrape job.
+        </p>
+      </div>
+    </div>
+  );
+}
 function ScrapingWorkspace() {
   const router = useRouter();
   const pathname = usePathname();
@@ -49,6 +61,7 @@ function ScrapingWorkspace() {
   if (validJobId) {
     return (
       <PageContainer>
+        <ScrapingPageIntro />
         <ScrapeJobDetails
           jobId={validJobId}
           onBack={handleBackToHistory}
@@ -61,6 +74,8 @@ function ScrapingWorkspace() {
 
   return (
     <PageContainer>
+      <ScrapingPageIntro />
+
       {/* Live Progress View */}
       <LiveScrapeProgress jobId={activeJobId} />
 
@@ -87,6 +102,7 @@ export default function ScrapingPage() {
     <Suspense
       fallback={
         <PageContainer>
+          <ScrapingPageIntro />
           <div className="lf-panel">
             <Skeleton active paragraph={{ rows: 3 }} />
           </div>

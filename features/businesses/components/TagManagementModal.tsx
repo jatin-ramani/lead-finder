@@ -204,7 +204,7 @@ export default function TagManagementModal({
       ]}
       width={560}
       destroyOnHidden
-      className="lf-modal"
+      className="lf-modal lf-modal--wide"
     >
       <div className="flex flex-col gap-4 my-2">
         <div className="flex gap-2">

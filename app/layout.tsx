@@ -24,7 +24,7 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: {
     default: "Lead Finder",
-    template: "%s Â· Lead Finder",
+    template: "%s · Lead Finder",
   },
   description:
     "Find local businesses without a website and turn them into qualified leads.",
@@ -32,8 +32,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#F6F7F9" },
-    { media: "(prefers-color-scheme: dark)", color: "#0D1117" },
+    { media: "(prefers-color-scheme: light)", color: "#F7F9FA" },
+    { media: "(prefers-color-scheme: dark)", color: "#090D0B" },
   ],
 };
 

@@ -48,13 +48,15 @@ async function mockNotesRoutes(page: Page) {
   await page.route("**/*", async (route) => {
     const request = route.request();
     const urlString = request.url();
-    if (!urlString.includes("8000")) {
+    const url = new URL(urlString);
+    const isDirectApiRequest = url.origin === "http://127.0.0.1:8000";
+    const isProxyApiRequest = url.pathname.startsWith("/api/");
+    if (!isDirectApiRequest && !isProxyApiRequest) {
       await route.continue();
       return;
     }
 
-    const url = new URL(urlString);
-    const pathname = url.pathname;
+    const pathname = isProxyApiRequest ? url.pathname.slice(4) : url.pathname;
     const method = request.method();
 
     if (pathname === "/auth/me") {
@@ -338,6 +340,8 @@ test.describe("Business Notes System E2E Suite", () => {
     await expect(noteCard).toContainText("<script>alert('xss')</script>");
 
     // Close drawer
+    await page.mouse.move(0, 0);
+    await expect(page.locator(".ant-message-notice")).toHaveCount(0, { timeout: 5000 });
     await drawer.locator(".ant-drawer-close").click();
     await expect(drawer).not.toBeVisible();
   });

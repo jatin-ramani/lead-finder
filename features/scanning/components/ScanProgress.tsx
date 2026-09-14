@@ -25,6 +25,7 @@ import Panel from "@/components/Panel";
 import type { LatestScanJob, ScanRecentLead } from "@/types/api";
 
 import { isPaused, isRunning } from "../hooks/useScanJobs";
+import ScanLiveMap from "./ScanLiveMap";
 
 interface ScanProgressProps {
   job: LatestScanJob | undefined;
@@ -41,12 +42,13 @@ interface ScanProgressProps {
   isPausing?: boolean;
   isResuming?: boolean;
   isCancelling?: boolean;
+  onOpenLead?: (businessId: number) => void;
 }
 
 function StatusTag({ status }: { status: string }) {
   if (isRunning(status)) {
     return (
-      <Tag color="processing" icon={<LoadingOutlined aria-hidden />} className="lf-tag font-medium">
+      <Tag color="processing" icon={<LoadingOutlined aria-hidden />} className="lf-tag lf-status-badge font-medium">
         Scanning
       </Tag>
     );
@@ -54,7 +56,7 @@ function StatusTag({ status }: { status: string }) {
 
   if (isPaused(status)) {
     return (
-      <Tag color="warning" icon={<PauseCircleOutlined aria-hidden />} className="lf-tag font-medium">
+      <Tag color="warning" icon={<PauseCircleOutlined aria-hidden />} className="lf-tag lf-status-badge font-medium">
         Paused
       </Tag>
     );
@@ -62,7 +64,7 @@ function StatusTag({ status }: { status: string }) {
 
   if (status === "Completed") {
     return (
-      <Tag color="success" icon={<CheckCircleFilled aria-hidden />} className="lf-tag font-medium">
+      <Tag color="success" icon={<CheckCircleFilled aria-hidden />} className="lf-tag lf-status-badge font-medium">
         Completed
       </Tag>
     );
@@ -70,14 +72,14 @@ function StatusTag({ status }: { status: string }) {
 
   if (status === "Cancelled") {
     return (
-      <Tag color="default" icon={<StopOutlined aria-hidden />} className="lf-tag font-medium">
+      <Tag color="default" icon={<StopOutlined aria-hidden />} className="lf-tag lf-status-badge font-medium">
         Cancelled
       </Tag>
     );
   }
 
   return (
-    <Tag color="error" icon={<CloseCircleFilled aria-hidden />} className="lf-tag font-medium">
+    <Tag color="error" icon={<CloseCircleFilled aria-hidden />} className="lf-tag lf-status-badge font-medium">
       Failed
     </Tag>
   );
@@ -98,6 +100,7 @@ export default function ScanProgress({
   isPausing = false,
   isResuming = false,
   isCancelling = false,
+  onOpenLead,
 }: ScanProgressProps) {
   if (isLoading) {
     return (
@@ -148,6 +151,7 @@ export default function ScanProgress({
   const currentCell = job.current_cell || "Scanning...";
   const scanRadius = job.scan_radius_km ?? 25;
   const recentLeads: ScanRecentLead[] = job.recent_leads ?? [];
+  const displayedRecentLeads = recentLeads.slice(0, 20);
 
   const totalSearchUnits = job.total_search_units ?? job.totalSearchUnits ?? 0;
   const completedSearchUnits = job.completed_search_units ?? job.completedSearchUnits ?? 0;
@@ -162,7 +166,7 @@ export default function ScanProgress({
       title="Continuous Scanner Monitor"
       description="Live multi-cell geographic scan status and discovered leads"
       extra={
-        <Space orientation="horizontal" size="small">
+        <Space wrap size="small">
           {running && onPause && (
             <Button
               size="small"
@@ -216,7 +220,7 @@ export default function ScanProgress({
           <Alert
             type="warning"
             showIcon
-            message="Daily Geoapify API Quota Reached"
+            title="Daily Geoapify API Quota Reached"
             description="Continuous scan state and all discovered leads are preserved in PostgreSQL. The scan will resume remaining search units once provider quota resets."
             className="text-xs"
           />
@@ -224,13 +228,15 @@ export default function ScanProgress({
 
         {/* Watching / Timeout Notification */}
         {watching && !isQuotaPaused && (
-          <div data-testid="watching-banner" className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs flex items-center gap-2">
-            <InfoCircleOutlined className="text-base shrink-0" />
-            <div>
-              <p className="font-semibold text-blue-300">Still scanning in background...</p>
-              <p className="text-[11px] text-blue-400/80">The scan is taking longer than usual, but continuous background scanning is running. Results will update automatically.</p>
-            </div>
-          </div>
+          <Alert
+            data-testid="watching-banner"
+            type="info"
+            showIcon
+            icon={<InfoCircleOutlined />}
+            title="Still scanning in background"
+            description="The scan is taking longer than usual, but continuous background scanning is running. Results will update automatically."
+            className="text-xs"
+          />
         )}
 
         {/* Header with City, Category, Radius, Job ID and Status */}
@@ -256,7 +262,7 @@ export default function ScanProgress({
                 <span>
                   Search Units: {completedSearchUnits + failedSearchUnits} / {totalSearchUnits} processed
                   {failedSearchUnits > 0 && (
-                    <span className="text-amber-400 ml-1">({failedSearchUnits} failed)</span>
+                    <span className="ml-1 text-[var(--lf-warning)]">({failedSearchUnits} failed)</span>
                   )}
                 </span>
               )}
@@ -265,19 +271,9 @@ export default function ScanProgress({
           <StatusTag status={job.status} />
         </div>
 
-        {watching && running && (
-          <Alert
-            type="info"
-            showIcon
-            message="Continuous Scan In Flight"
-            description="Background multi-cell scanning is executing across geographic zones."
-            className="text-xs"
-          />
-        )}
-
         {/* Current Active Geographic Cell Info & Coverage Progress */}
         {(running || paused) && (
-          <div className="flex items-center justify-between p-2.5 rounded-lg bg-blue-500/5 border border-blue-500/20 text-xs">
+          <div className="flex flex-col gap-2 rounded-lg border border-[var(--lf-border)] bg-[var(--lf-info-soft)] p-2.5 text-xs sm:flex-row sm:items-center sm:justify-between">
             <span className="flex items-center gap-2 font-medium text-[var(--lf-text-secondary)]">
               <CompassOutlined className={running ? "animate-spin text-[var(--lf-brand)]" : "text-[var(--lf-text-muted)]"} />
               <span>Current Search Zone: <strong className="text-[var(--lf-text)]">{currentCell}</strong></span>
@@ -296,10 +292,10 @@ export default function ScanProgress({
           {running ? (
             <div className="relative w-full h-3 rounded-full bg-[var(--lf-track)] overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-300 rounded-full"
+                className="h-full rounded-full bg-[var(--lf-brand)] transition-all duration-300"
                 style={{ width: `${Math.max(5, coverageProgress)}%` }}
               />
-              <div className="absolute inset-0 bg-white/20 animate-pulse" />
+              <div className="absolute inset-0 animate-pulse bg-[color:color-mix(in_srgb,var(--lf-surface)_20%,transparent)]" />
             </div>
           ) : (
             <div
@@ -314,7 +310,7 @@ export default function ScanProgress({
                   failed
                     ? "bg-[var(--lf-error)]"
                     : completed
-                    ? (failedSearchUnits > 0 ? "bg-amber-500" : "bg-[var(--lf-success)]")
+                    ? (failedSearchUnits > 0 ? "bg-[var(--lf-warning)]" : "bg-[var(--lf-success)]")
                     : cancelled
                     ? "bg-[var(--lf-text-muted)]"
                     : "bg-[var(--lf-brand)]"
@@ -325,16 +321,21 @@ export default function ScanProgress({
           )}
         </div>
 
+        {/* Live Geographic Scanner Map */}
+        <div className="lf-scan-map-frame">
+          <ScanLiveMap job={job} scanning={running} onSelectLead={onOpenLead} />
+        </div>
+
         {/* 4-Stat Metric Cards Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="p-3 rounded-lg bg-[var(--lf-card)] border border-[var(--lf-border)] flex flex-col">
+          <div className="lf-metric-card flex flex-col">
             <span className="text-xs text-[var(--lf-text-muted)] font-medium">Businesses Found</span>
             <span className="text-lg font-bold font-mono text-[var(--lf-text)] mt-1">
               {businessesFound.toLocaleString()}
             </span>
           </div>
 
-          <div className="p-3 rounded-lg bg-[var(--lf-card)] border border-[var(--lf-border)] flex flex-col">
+          <div className="lf-metric-card flex flex-col">
             <Tooltip title="Stored in CRM with verified email or phone">
               <span className="text-xs text-[var(--lf-text-muted)] font-medium flex items-center gap-1 cursor-help">
                 <span className="text-[var(--lf-success)]">●</span> Stored Leads
@@ -345,7 +346,7 @@ export default function ScanProgress({
             </span>
           </div>
 
-          <div className="p-3 rounded-lg bg-[var(--lf-card)] border border-[var(--lf-border)] flex flex-col">
+          <div className="lf-metric-card flex flex-col">
             <Tooltip title="Skipped places that have neither an email address nor a phone number">
               <span className="text-xs text-[var(--lf-text-muted)] font-medium flex items-center gap-1 cursor-help">
                 <FilterOutlined /> Skipped (No Contact)
@@ -356,7 +357,7 @@ export default function ScanProgress({
             </span>
           </div>
 
-          <div className="p-3 rounded-lg bg-[var(--lf-card)] border border-[var(--lf-border)] flex flex-col">
+          <div className="lf-metric-card flex flex-col">
             <Tooltip title="Already known leads updated with any new contact info">
               <span className="text-xs text-[var(--lf-text-muted)] font-medium cursor-help">
                 Duplicates Enriched
@@ -373,7 +374,7 @@ export default function ScanProgress({
           <div className="flex flex-col gap-2 mt-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-[var(--lf-text-secondary)] uppercase tracking-wider">
-                Live Discovered Leads Feed ({recentLeads.length})
+                Live Discovered Leads Feed (latest {displayedRecentLeads.length} of {recentLeads.length})
               </span>
               <Link href={job.city ? `/businesses?city=${encodeURIComponent(job.city)}` : "/businesses"}>
                 <span className="text-xs text-[var(--lf-brand)] hover:underline flex items-center gap-1">
@@ -383,7 +384,7 @@ export default function ScanProgress({
             </div>
 
             <div className="max-h-56 overflow-y-auto rounded-lg border border-[var(--lf-border)] bg-[var(--lf-card)] divide-y divide-[var(--lf-border)]">
-              {recentLeads.map((lead) => (
+              {displayedRecentLeads.map((lead) => (
                 <div key={lead.id} className="p-2.5 flex items-center justify-between gap-2 hover:bg-[var(--lf-subtle)] transition-colors">
                   <div className="min-w-0">
                     <p className="text-xs font-medium text-[var(--lf-text)] truncate">{lead.name}</p>
@@ -392,21 +393,21 @@ export default function ScanProgress({
                   <div className="flex items-center gap-1.5 shrink-0">
                     {lead.has_phone && (
                       <Tooltip title="Phone Available">
-                        <Tag color="green" icon={<PhoneOutlined />} className="text-[10px] m-0 px-1 py-0">Phone</Tag>
+                        <Tag color="success" icon={<PhoneOutlined />} className="lf-status-badge m-0 px-1 py-0 text-[10px]">Phone</Tag>
                       </Tooltip>
                     )}
                     {lead.has_email && (
                       <Tooltip title="Email Available">
-                        <Tag color="blue" icon={<MailOutlined />} className="text-[10px] m-0 px-1 py-0">Email</Tag>
+                        <Tag color="processing" icon={<MailOutlined />} className="lf-status-badge m-0 px-1 py-0 text-[10px]">Email</Tag>
                       </Tooltip>
                     )}
                     {lead.has_website && (
                       <Tooltip title="Has Website">
-                        <Tag color="default" icon={<GlobalOutlined />} className="text-[10px] m-0 px-1 py-0">Web</Tag>
+                        <Tag icon={<GlobalOutlined />} className="lf-status-badge m-0 px-1 py-0 text-[10px]">Web</Tag>
                       </Tooltip>
                     )}
                     {lead.lead_grade && (
-                      <Tag color={lead.lead_grade === "A" ? "gold" : lead.lead_grade === "B" ? "cyan" : "default"} className="text-[10px] font-bold m-0 px-1.5 py-0">
+                      <Tag color={lead.lead_grade === "A" ? "success" : lead.lead_grade === "B" ? "processing" : lead.lead_grade === "C" ? "warning" : "default"} className="lf-status-badge m-0 px-1.5 py-0 text-[10px] font-bold">
                         {lead.lead_grade}
                       </Tag>
                     )}
@@ -438,7 +439,7 @@ export default function ScanProgress({
           <Alert
             type="error"
             showIcon
-            message="Continuous Scan Failed"
+            title="Continuous Scan Failed"
             description={job.error_message || "The scan encountered an unexpected error."}
             className="text-xs"
           />

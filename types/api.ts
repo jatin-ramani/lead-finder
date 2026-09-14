@@ -144,9 +144,18 @@ export interface Business {
   lead_score_reasons?: string[] | null;
   is_favorite?: boolean;
   tags?: Tag[];
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 export type BusinessListResponse = PaginatedResponse<Business>;
+export interface BusinessMapResponse {
+  success: boolean;
+  data: Business[];
+  totalItems: number;
+  locatedItems: number;
+  unlocatedItems: number;
+}
 
 /** Sort columns the backend accepts. Anything else falls back to `id`. */
 export const BUSINESS_SORT_FIELDS = [
@@ -349,16 +358,33 @@ export type WebsiteDataResponse = DetailResponse<WebsiteData>;
 /** Job lifecycle values written by the backend. */
 export type JobStatus = "Pending" | "Running" | "Paused" | "Completed" | "Failed" | "Cancelled";
 
+export interface ScanCellInfo {
+  cell_index: number;
+  latitude: number;
+  longitude: number;
+  radius_meters: number;
+  label: string;
+  status: "pending" | "in_progress" | "running" | "completed" | "failed" | "retry_wait" | "skipped";
+  results_count?: number;
+  stored_count?: number;
+  total_units?: number;
+  completed_units?: number;
+  failed_units?: number;
+}
+
 export interface ScanRecentLead {
   id: number;
   name: string;
   city: string | null;
   category: string | null;
+  phone?: string | null;
   has_email: boolean;
   has_phone: boolean;
   has_website: boolean;
   lead_grade?: string | null;
   lead_score?: number | null;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 /**
@@ -372,6 +398,11 @@ export interface ScanJob {
   status: JobStatus | string;
   progress: number;
   scanRadiusKm?: number;
+  scan_radius_km?: number;
+  centerLatitude?: number | null;
+  centerLongitude?: number | null;
+  center_latitude?: number | null;
+  center_longitude?: number | null;
   total_businesses?: number;
   new_businesses?: number;
   totalBusinesses?: number;
@@ -404,6 +435,7 @@ export interface ScanJob {
   pausedAt?: string | null;
   errorMessage?: string | null;
   createdAt?: string | null;
+  cells?: ScanCellInfo[];
 }
 
 /** `GET /scan/jobs/latest` and detailed scan job metrics */
@@ -419,6 +451,8 @@ export interface LatestScanJob {
   coverageProgress?: number;
   processedProgress?: number;
   scan_radius_km?: number;
+  center_latitude?: number | null;
+  center_longitude?: number | null;
   total_cells?: number;
   completed_cells?: number;
   current_cell?: string | null;
@@ -441,6 +475,7 @@ export interface LatestScanJob {
   paused_at?: string | null;
   error_message?: string | null;
   recent_leads?: ScanRecentLead[];
+  cells?: ScanCellInfo[];
 }
 
 export type ScanJobDetail = LatestScanJob;

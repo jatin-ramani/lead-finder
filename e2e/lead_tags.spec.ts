@@ -42,14 +42,18 @@ const mockBusinesses = [
 async function mockTagRoutes(page: Page) {
   await page.route("**/*", async (route) => {
     const request = route.request();
-    const urlString = request.url();
-    if (!urlString.includes("8000")) {
+    const url = new URL(request.url());
+    const isProxyApiRequest = url.pathname === "/api" || url.pathname.startsWith("/api/");
+    const isDirectApiRequest =
+      (url.hostname === "127.0.0.1" || url.hostname === "localhost") &&
+      url.port === "8000";
+    if (!isProxyApiRequest && !isDirectApiRequest) {
       await route.continue();
       return;
     }
 
-    const url = new URL(urlString);
-    if (url.pathname === "/auth/me") {
+    const pathname = isProxyApiRequest ? url.pathname.slice("/api".length) || "/" : url.pathname;
+    if (pathname === "/auth/me") {
       return route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -57,7 +61,7 @@ async function mockTagRoutes(page: Page) {
       });
     }
 
-    if (url.pathname === "/tags" && request.method() === "GET") {
+    if (pathname === "/tags" && request.method() === "GET") {
       return route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -65,7 +69,7 @@ async function mockTagRoutes(page: Page) {
       });
     }
 
-    if (url.pathname === "/tags" && request.method() === "POST") {
+    if (pathname === "/tags" && request.method() === "POST") {
       const body = request.postDataJSON();
       return route.fulfill({
         status: 201,
@@ -79,7 +83,7 @@ async function mockTagRoutes(page: Page) {
       });
     }
 
-    if (url.pathname === "/businesses/cities") {
+    if (pathname === "/businesses/cities") {
       return route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -87,7 +91,7 @@ async function mockTagRoutes(page: Page) {
       });
     }
 
-    if (url.pathname === "/businesses" && request.method() === "GET") {
+    if (pathname === "/businesses" && request.method() === "GET") {
       return route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -99,7 +103,7 @@ async function mockTagRoutes(page: Page) {
       });
     }
 
-    if (url.pathname === "/businesses/1" && request.method() === "GET") {
+    if (pathname === "/businesses/1" && request.method() === "GET") {
       return route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -107,7 +111,7 @@ async function mockTagRoutes(page: Page) {
       });
     }
 
-    if (url.pathname.includes("/tags") && request.method() === "DELETE") {
+    if (pathname.includes("/tags") && request.method() === "DELETE") {
       return route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -115,7 +119,7 @@ async function mockTagRoutes(page: Page) {
       });
     }
 
-    if (url.pathname.includes("/tags") && request.method() === "POST") {
+    if (pathname.includes("/tags") && request.method() === "POST") {
       const body = request.postDataJSON() || {};
       return route.fulfill({
         status: 200,

@@ -22,17 +22,25 @@ export default function SystemPage() {
   } = useSystemStatus();
 
   return (
-    <PageContainer
-      actions={
-        <Button
-          icon={<ReloadOutlined spin={isFetching} />}
-          onClick={refresh}
-          disabled={isFetching}
-        >
-          {isFetching ? "Checking…" : "Check now"}
-        </Button>
-      }
-    >
+    <PageContainer>
+      <div className="lf-page-intro">
+        <div className="lf-page-intro-copy">
+          <h1 className="lf-page-title">System settings</h1>
+          <p className="lf-page-subtitle">
+            Monitor API connection health, runtime details, and workspace configuration.
+          </p>
+        </div>
+        <div className="lf-page-toolbar">
+          <Button
+            icon={<ReloadOutlined spin={isFetching} />}
+            onClick={refresh}
+            disabled={isFetching}
+          >
+            {isFetching ? "Checking…" : "Check now"}
+          </Button>
+        </div>
+      </div>
+
       <div className="lf-grid-2">
         <ConnectionCard
           health={health}

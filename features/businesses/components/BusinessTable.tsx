@@ -121,7 +121,7 @@ export default function BusinessTable({
       {
         title: (
           <Tooltip title="Sort by Favorites">
-            <StarFilled style={{ color: "var(--lf-amber, #f59e0b)", fontSize: 14 }} />
+            <StarFilled style={{ color: "var(--lf-warning)", fontSize: 14 }} />
           </Tooltip>
         ),
         dataIndex: "is_favorite",
@@ -150,7 +150,7 @@ export default function BusinessTable({
               }}
             >
               {isFav ? (
-                <StarFilled style={{ color: "#f59e0b", fontSize: 16 }} />
+                <StarFilled style={{ color: "var(--lf-warning)", fontSize: 16 }} />
               ) : (
                 <StarOutlined style={{ color: "var(--lf-text-muted)", fontSize: 16 }} />
               )}
@@ -212,7 +212,7 @@ export default function BusinessTable({
           if (numbers.length === 0) return <Text type="secondary">—</Text>;
 
           return (
-            <Tooltip title={numbers.length > 1 ? numbers.join(" Â· ") : undefined}>
+            <Tooltip title={numbers.length > 1 ? numbers.join(" · ") : undefined}>
               <a href={toTelHref(value as string)} className="lf-cell-contact">
                 <PhoneOutlined className="lf-cell-contact-icon" aria-hidden />
                 <span className="truncate">{numbers[0]}</span>
@@ -311,7 +311,7 @@ export default function BusinessTable({
                 size="small"
                 value={status}
                 className={`lf-status-select lf-status-select--${status}`}
-                popupClassName="lf-status-select-popup"
+                classNames={{ popup: { root: "lf-status-select-popup" } }}
                 onChange={(nextStatus: LeadStatus) => {
                   updateStatusMutation.mutate({
                     id: record.id,
@@ -559,7 +559,7 @@ export default function BusinessTable({
       className={`lf-table-card ${isRefetching ? "is-refetching" : ""}`}
       aria-busy={isRefetching || isLoading}
     >
-      <div className="lf-mobile-business-list" aria-label="Businesses">
+      <div className="lf-mobile-business-list lf-table-mobile-list" aria-label="Businesses">
         {!showSkeleton && businesses.length === 0 ? (
           <div className="p-4">
             <EmptyState
@@ -597,7 +597,7 @@ export default function BusinessTable({
                   }}
                 >
                   {business.is_favorite ? (
-                    <StarFilled style={{ color: "#f59e0b", fontSize: 18 }} />
+                    <StarFilled style={{ color: "var(--lf-warning)", fontSize: 18 }} />
                   ) : (
                     <StarOutlined style={{ color: "var(--lf-text-muted)", fontSize: 18 }} />
                   )}
@@ -606,13 +606,28 @@ export default function BusinessTable({
                 <Button type="text" icon={<EyeOutlined />} aria-label={`View ${business.name}`} onClick={() => onView(business)} />
               </div>
               <p className="lf-mobile-business-meta">{[business.city, business.category].filter(Boolean).join(" • ") || "Location not available"}</p>
+              <div
+                className="lf-mobile-lead-score"
+                aria-label={`Lead score ${business.lead_score ?? 0} out of 100, grade ${business.lead_grade || "D"}`}
+              >
+                <span
+                  className={`lf-grade-badge lf-grade-badge--${business.lead_grade || "D"}`}
+                  aria-hidden
+                >
+                  {business.lead_grade || "D"}
+                </span>
+                <span className="lf-mobile-lead-score-value">
+                  {business.lead_score ?? 0}
+                  <span aria-hidden>/100</span>
+                </span>
+              </div>
               <div className="flex items-center justify-between gap-2 my-2" onClick={(e) => e.stopPropagation()}>
                 <span className="text-xs font-semibold text-[var(--lf-text-muted)]">CRM Status:</span>
                 <Select
                   size="small"
                   value={business.lead_status || "new"}
                   className={`lf-status-select lf-status-select--${business.lead_status || "new"}`}
-                  popupClassName="lf-status-select-popup"
+                  classNames={{ popup: { root: "lf-status-select-popup" } }}
                   onChange={(nextStatus: LeadStatus) => {
                     updateStatusMutation.mutate({
                       id: business.id,

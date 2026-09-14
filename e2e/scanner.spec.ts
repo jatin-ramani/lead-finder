@@ -1,6 +1,20 @@
 import { test, expect } from "@playwright/test";
 import { authenticatePlaywright } from "./support/auth";
 
+function apiPathForMockRequest(urlString: string): string | null {
+  const url = new URL(urlString);
+  const isLocalHost = url.hostname === "127.0.0.1" || url.hostname === "localhost";
+  const isDirectLocalApi = isLocalHost && url.port === "8000";
+  const isSameOriginProxy =
+    isLocalHost &&
+    !isDirectLocalApi &&
+    (url.pathname === "/api" || url.pathname.startsWith("/api/"));
+
+  if (!isDirectLocalApi && !isSameOriginProxy) return null;
+
+  return isSameOriginProxy ? url.pathname.slice("/api".length) || "/" : url.pathname;
+}
+
 test.describe("Frontend Scanner Experience (Mocked Deterministic Suite)", () => {
   test.beforeEach(async ({ context }) => {
     await authenticatePlaywright(context);
@@ -11,14 +25,14 @@ test.describe("Frontend Scanner Experience (Mocked Deterministic Suite)", () => 
     let pollCount = 0;
 
     await page.route("**/*", async (route) => {
-      const urlString = route.request().url();
+      const apiPath = apiPathForMockRequest(route.request().url());
 
-      if (!urlString.includes("8000")) {
+      if (!apiPath) {
         await route.continue();
         return;
       }
 
-      if (urlString.includes("/auth/me")) {
+      if (apiPath === "/auth/me") {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
@@ -27,7 +41,7 @@ test.describe("Frontend Scanner Experience (Mocked Deterministic Suite)", () => 
         return;
       }
 
-      if (urlString.endsWith("/scan/jobs/latest")) {
+      if (apiPath === "/scan/jobs/latest") {
         if (!scanStarted) {
           await route.fulfill({
             status: 200,
@@ -103,7 +117,7 @@ test.describe("Frontend Scanner Experience (Mocked Deterministic Suite)", () => 
             }),
           });
         }
-      } else if (urlString.endsWith("/scan/jobs")) {
+      } else if (apiPath === "/scan/jobs") {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
@@ -123,7 +137,7 @@ test.describe("Frontend Scanner Experience (Mocked Deterministic Suite)", () => 
               : []
           ),
         });
-      } else if (urlString.endsWith("/scan")) {
+      } else if (apiPath === "/scan") {
         // POST /scan
         scanStarted = true;
         await route.fulfill({
@@ -153,7 +167,9 @@ test.describe("Frontend Scanner Experience (Mocked Deterministic Suite)", () => 
     await expect(page.getByText(/discovering businesses|scanning/i).first()).toBeVisible();
 
     // Wait for polling progression to 1,020 and 1,019
-    await expect(page.getByText("1,020").first()).toBeVisible({ timeout: 10000 });
+    // Four 2.5s polling intervals can land just beyond 10s on the Tablet
+    // dev-server path; keep the full 0 -> 50 -> 80 -> 100 contract intact.
+    await expect(page.getByText("1,020").first()).toBeVisible({ timeout: 15000 });
     await expect(page.getByText("1,019").first()).toBeVisible();
     await expect(page.getByText("Completed").first()).toBeVisible();
 
@@ -168,14 +184,14 @@ test.describe("Frontend Scanner Experience (Mocked Deterministic Suite)", () => 
     let scanStarted = false;
 
     await page.route("**/*", async (route) => {
-      const urlString = route.request().url();
+      const apiPath = apiPathForMockRequest(route.request().url());
 
-      if (!urlString.includes("8000")) {
+      if (!apiPath) {
         await route.continue();
         return;
       }
 
-      if (urlString.includes("/auth/me")) {
+      if (apiPath === "/auth/me") {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
@@ -184,7 +200,7 @@ test.describe("Frontend Scanner Experience (Mocked Deterministic Suite)", () => 
         return;
       }
 
-      if (urlString.endsWith("/scan/jobs/latest")) {
+      if (apiPath === "/scan/jobs/latest") {
         if (!scanStarted) {
           await route.fulfill({
             status: 200,
@@ -214,9 +230,9 @@ test.describe("Frontend Scanner Experience (Mocked Deterministic Suite)", () => 
             newBusinesses: 0,
           }),
         });
-      } else if (urlString.endsWith("/scan/jobs")) {
+      } else if (apiPath === "/scan/jobs") {
         await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([]) });
-      } else if (urlString.endsWith("/scan")) {
+      } else if (apiPath === "/scan") {
         // POST /scan -> 502 Error
         scanStarted = true;
         await route.fulfill({
@@ -250,14 +266,14 @@ test.describe("Frontend Scanner Experience (Mocked Deterministic Suite)", () => 
     let scanStarted = false;
 
     await page.route("**/*", async (route) => {
-      const urlString = route.request().url();
+      const apiPath = apiPathForMockRequest(route.request().url());
 
-      if (!urlString.includes("8000")) {
+      if (!apiPath) {
         await route.continue();
         return;
       }
 
-      if (urlString.includes("/auth/me")) {
+      if (apiPath === "/auth/me") {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
@@ -266,7 +282,7 @@ test.describe("Frontend Scanner Experience (Mocked Deterministic Suite)", () => 
         return;
       }
 
-      if (urlString.endsWith("/scan/jobs/latest")) {
+      if (apiPath === "/scan/jobs/latest") {
         if (!scanStarted) {
           await route.fulfill({
             status: 200,
@@ -296,9 +312,9 @@ test.describe("Frontend Scanner Experience (Mocked Deterministic Suite)", () => 
             newBusinesses: 50,
           }),
         });
-      } else if (urlString.endsWith("/scan/jobs")) {
+      } else if (apiPath === "/scan/jobs") {
         await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([]) });
-      } else if (urlString.endsWith("/scan")) {
+      } else if (apiPath === "/scan") {
         // POST /scan -> TIMEOUT
         scanStarted = true;
         await route.fulfill({
@@ -329,16 +345,20 @@ test.describe("Frontend Scanner Experience (Mocked Deterministic Suite)", () => 
 
   test("category family selection displays subcategory tags preview", async ({ page }) => {
     await page.route("**/*", async (route) => {
-      const urlString = route.request().url();
-      if (urlString.includes("/auth/me")) {
+      const apiPath = apiPathForMockRequest(route.request().url());
+      if (!apiPath) {
+        await route.continue();
+        return;
+      }
+      if (apiPath === "/auth/me") {
         await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ authenticated: true }) });
         return;
       }
-      if (urlString.endsWith("/scan/jobs/latest")) {
+      if (apiPath === "/scan/jobs/latest") {
         await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(null) });
         return;
       }
-      if (urlString.endsWith("/scan/jobs")) {
+      if (apiPath === "/scan/jobs") {
         await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([]) });
         return;
       }
@@ -362,20 +382,24 @@ test.describe("Frontend Scanner Experience (Mocked Deterministic Suite)", () => 
     let clearCalled = false;
 
     await page.route("**/*", async (route) => {
-      const urlString = route.request().url();
-      if (urlString.includes("/auth/me")) {
+      const apiPath = apiPathForMockRequest(route.request().url());
+      if (!apiPath) {
+        await route.continue();
+        return;
+      }
+      if (apiPath === "/auth/me") {
         await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ authenticated: true }) });
         return;
       }
-      if (urlString.endsWith("/scan/jobs/latest")) {
+      if (apiPath === "/scan/jobs/latest") {
         await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(null) });
         return;
       }
-      if (urlString.endsWith("/scan/jobs")) {
+      if (apiPath === "/scan/jobs") {
         await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([]) });
         return;
       }
-      if (urlString.endsWith("/scan/clear-data")) {
+      if (apiPath === "/scan/clear-data") {
         clearCalled = true;
         await route.fulfill({
           status: 200,

@@ -56,13 +56,13 @@ export const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
         <Alert
           type="info"
           showIcon
-          message="Rendered with sample lead attributes"
+          title="Rendered with sample lead attributes"
           description="Variables are dynamically populated using real lead data at dispatch time."
         />
 
         <Card
           title={
-            <Space direction="vertical" size={2} className="w-full">
+            <Space orientation="vertical" size={2} className="w-full">
               <Text type="secondary" className="text-xs">
                 SUBJECT:
               </Text>

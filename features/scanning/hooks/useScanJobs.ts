@@ -71,7 +71,7 @@ export function useScanJobs() {
 }
 
 /**
- * The most recent scan job, polled while it is running or paused.
+ * The most recent scan job, polled only while work is active. Paused jobs refresh through explicit actions.
  */
 export function useLatestScanJob() {
   const query = useQuery({
@@ -80,7 +80,7 @@ export function useLatestScanJob() {
     refetchInterval: (q) => {
       if (typeof document !== "undefined" && document.hidden) return false;
       const job = q.state.data as LatestScanJob | undefined;
-      return isRunning(job?.status) || isPaused(job?.status) ? DETAIL_RUNNING_POLL_MS : false;
+      return isRunning(job?.status) ? DETAIL_RUNNING_POLL_MS : false;
     },
     staleTime: 0,
   });

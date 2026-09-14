@@ -16,6 +16,21 @@ let mockCampaigns: EmailCampaign[] = [];
 let mockRecipients: EmailCampaignRecipient[] = [];
 let nextCampaignId = 10;
 
+function visibleCampaignItem(page: Page, campaignName: string) {
+  return page.locator("tr:visible, article.lf-mobile-data-item:visible").filter({ hasText: campaignName });
+}
+
+async function selectCampaignStatus(page: Page, status: string) {
+  const segmentedOption = page.locator(".ant-segmented-item:visible").filter({ hasText: status });
+  if (await segmentedOption.count()) {
+    await segmentedOption.click();
+    return;
+  }
+
+  await page.getByRole("combobox", { name: "Campaign status" }).click();
+  await page.locator(".ant-select-dropdown:visible").getByText(status, { exact: true }).click();
+}
+
 async function mockCampaignRoutes(page: Page) {
   await page.route("**/*", async (route) => {
     const request = route.request();
@@ -385,32 +400,31 @@ test.describe("Email Campaigns Feature", () => {
     await page.goto("/campaigns");
     await page.waitForLoadState("networkidle");
 
-    await expect(page.getByRole("heading", { name: "Email Campaigns", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Email Campaigns/, level: 1 })).toBeVisible();
 
     // Check KPI Cards
-    await expect(page.getByText("Total Campaigns")).toBeVisible();
-    await expect(page.getByText("Active / Running")).toBeVisible();
-    await expect(page.getByText("Emails Sent")).toBeVisible();
-    await expect(page.getByText("Delivery Success Rate")).toBeVisible();
+    await expect(page.getByText("Total campaigns", { exact: true })).toBeVisible();
+    await expect(page.getByText("Active / running", { exact: true })).toBeVisible();
+    await expect(page.getByText("Emails sent", { exact: true })).toBeVisible();
+    await expect(page.getByText("Delivery rate", { exact: true })).toBeVisible();
 
     // Check campaign table rows
-    await expect(page.getByText("Q3 Dental Outreach Blitz")).toBeVisible();
-    await expect(page.getByText("Denver Medical Follow-up")).toBeVisible();
+    await expect(visibleCampaignItem(page, "Q3 Dental Outreach Blitz")).toBeVisible();
+    await expect(visibleCampaignItem(page, "Denver Medical Follow-up")).toBeVisible();
   });
 
   test("filters campaigns by status tab and search input", async ({ page }) => {
     await page.goto("/campaigns");
     await page.waitForLoadState("networkidle");
-    await expect(page.getByText("Q3 Dental Outreach Blitz")).toBeVisible();
+    await expect(visibleCampaignItem(page, "Q3 Dental Outreach Blitz")).toBeVisible();
 
     // Filter by Scheduled
-    const scheduledTab = page.locator(".ant-segmented-item").filter({ hasText: "Scheduled" });
-    await scheduledTab.click();
-    await expect(page.getByText("Denver Medical Follow-up")).toBeVisible();
+    await selectCampaignStatus(page, "Scheduled");
+    await expect(visibleCampaignItem(page, "Denver Medical Follow-up")).toBeVisible();
 
     // Search filter
     await page.getByPlaceholder("Search campaigns by name...").fill("Denver");
-    await expect(page.getByText("Denver Medical Follow-up")).toBeVisible();
+    await expect(visibleCampaignItem(page, "Denver Medical Follow-up")).toBeVisible();
   });
 
   test("creates a new email campaign via multi-step wizard", async ({ page }) => {
@@ -446,19 +460,17 @@ test.describe("Email Campaigns Feature", () => {
     await modal.getByRole("button", { name: "Launch Campaign" }).click({ force: true });
 
     // Wizard closes and new campaign appears in table
-    await expect(page.getByText("Austin Ortho Campaign")).toBeVisible();
+    await expect(visibleCampaignItem(page, "Austin Ortho Campaign")).toBeVisible();
   });
 
   test("opens campaign detail drawer and views recipient logs", async ({ page }) => {
     await page.goto("/campaigns");
     await page.waitForLoadState("networkidle");
-    await expect(page.getByText("Q3 Dental Outreach Blitz")).toBeVisible();
+    await expect(visibleCampaignItem(page, "Q3 Dental Outreach Blitz")).toBeVisible();
 
     // Click View Details (first action button with EyeOutlined in table)
-    const row = page.locator("tr").filter({ hasText: "Q3 Dental Outreach Blitz" });
-    const viewBtn = row.locator(".ant-btn").first();
-    await viewBtn.scrollIntoViewIfNeeded();
-    await viewBtn.click({ force: true });
+    const viewBtn = page.locator('button[aria-label="View Q3 Dental Outreach Blitz"]:visible');
+    await viewBtn.click();
 
     // Drawer opens
     const drawer = page.locator(".ant-drawer");
@@ -477,13 +489,11 @@ test.describe("Email Campaigns Feature", () => {
   test("cancels a scheduled campaign from the table action", async ({ page }) => {
     await page.goto("/campaigns");
     await page.waitForLoadState("networkidle");
-    await expect(page.getByText("Denver Medical Follow-up")).toBeVisible();
+    await expect(visibleCampaignItem(page, "Denver Medical Follow-up")).toBeVisible();
 
     // Click Cancel on Denver Medical Follow-up row
-    const row = page.locator("tr").filter({ hasText: "Denver Medical Follow-up" });
-    const cancelBtn = row.locator("button:has(.anticon-stop)");
-    await cancelBtn.scrollIntoViewIfNeeded();
-    await cancelBtn.click({ force: true });
+    const cancelBtn = page.locator('button[aria-label="Cancel Denver Medical Follow-up"]:visible');
+    await cancelBtn.click();
 
     const popconfirm = page.locator(".ant-popconfirm, .ant-popover");
     await expect(popconfirm).toBeVisible();
@@ -491,8 +501,6 @@ test.describe("Email Campaigns Feature", () => {
     await okBtn.click({ force: true });
 
     // Verify row displays CANCELLED status tag
-    const statusTag = page.locator("tr").filter({ hasText: "Denver Medical Follow-up" }).getByText("CANCELLED");
-    await statusTag.scrollIntoViewIfNeeded();
-    await expect(statusTag).toBeVisible();
+    await expect(visibleCampaignItem(page, "Denver Medical Follow-up").getByText("CANCELLED", { exact: true })).toBeVisible();
   });
 });

@@ -104,7 +104,7 @@ export const TestEmailSection: React.FC<TestEmailSectionProps> = ({
     <Card
       loading={isLoadingStatus}
       className="border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm overflow-hidden"
-      bodyStyle={{ padding: "20px 24px" }}
+      styles={{ body: { padding: "20px 24px" } }}
     >
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
@@ -140,7 +140,7 @@ export const TestEmailSection: React.FC<TestEmailSectionProps> = ({
           type="warning"
           showIcon
           icon={<WarningOutlined />}
-          message="Gmail Not Connected"
+          title="Gmail Not Connected"
           description={
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs mt-1">
               <span>

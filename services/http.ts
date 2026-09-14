@@ -49,17 +49,24 @@ export function setStoredSessionToken(token: string | null): void {
  * reverse proxy so cookies and credentials work reliably without third-party
  * cookie blocking on mobile browsers.
  */
-const DEFAULT_API_BASE_URL =
-  typeof window !== "undefined"
-    ? "/api"
-    : process.env.NODE_ENV === "production"
-      ? "https://lead-find-api.onrender.com"
-      : "http://127.0.0.1:8000";
+const configuredApiUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
+
+// Keep the legacy variable and loopback fallback strictly development-only.
+// This prevents a local `.env.local` value from being retained in a production
+// browser bundle, while production continues to use the explicit public URL
+// (or the same-origin proxy configured in next.config.ts).
+const developmentApiUrl =
+  configuredApiUrl ||
+  process.env.NEXT_PUBLIC_API_BASE_URL?.trim() ||
+  "http://127.0.0.1:8000";
+const productionApiUrl =
+  configuredApiUrl ||
+  (typeof window === "undefined"
+    ? "https://lead-find-api.onrender.com"
+    : "/api");
 
 export const API_BASE_URL = (
-  process.env.NEXT_PUBLIC_API_URL?.trim() ||
-  process.env.NEXT_PUBLIC_API_BASE_URL?.trim() ||
-  DEFAULT_API_BASE_URL
+  process.env.NODE_ENV === "production" ? productionApiUrl : developmentApiUrl
 ).replace(/\/+$/, "");
 
 /**

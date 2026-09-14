@@ -59,13 +59,15 @@ async function setupMockRoutes(
   await page.route("**/*", async (route) => {
     const request = route.request();
     const urlString = request.url();
-    if (!urlString.includes("8000")) {
+    if (!urlString.includes("8000") && !urlString.includes("/api/")) {
       await route.continue();
       return;
     }
 
     const url = new URL(urlString);
-    const pathname = url.pathname;
+    const pathname = url.pathname.startsWith("/api/")
+      ? url.pathname.replace(/^\/api/, "")
+      : url.pathname;
     const method = request.method();
 
     if (pathname === "/auth/me") {

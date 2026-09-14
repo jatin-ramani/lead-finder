@@ -81,7 +81,7 @@ export default function BusinessBulkBar({
           <>
             <Button
               size="small"
-              icon={<StarFilled style={{ color: "#f59e0b" }} />}
+              icon={<StarFilled style={{ color: "var(--lf-warning)" }} />}
               onClick={() => onBulkFavorite(true)}
               loading={isBulkFavoriting}
               disabled={
@@ -182,6 +182,7 @@ export default function BusinessBulkBar({
         onCancel={() => setStatusModalOpen(false)}
         okText="Update status"
         confirmLoading={isBulkUpdatingStatus}
+        className="lf-modal"
       >
         <div className="py-3">
           <label className="text-xs font-semibold text-[var(--lf-text-muted)] block mb-2">
@@ -206,6 +207,7 @@ export default function BusinessBulkBar({
         onCancel={() => setScrapeConfirmModalOpen(false)}
         okText="Start scrape job"
         okButtonProps={{ type: "primary" }}
+        className="lf-modal"
       >
         <p className="text-sm text-gray-600 dark:text-gray-300 py-2">
           Only businesses in your selection that have a website URL will be scraped.

@@ -201,7 +201,7 @@ export const AutomationModal: React.FC<AutomationModalProps> = ({
           {editingAutomation ? "Save Changes" : "Create Automation"}
         </Button>,
       ]}
-      destroyOnClose
+      destroyOnHidden
     >
       <Form
         form={form}
@@ -211,7 +211,7 @@ export const AutomationModal: React.FC<AutomationModalProps> = ({
         <Tabs
           activeKey={activeTab}
           onChange={(k) => setActiveTab(k as "compose" | "preview")}
-          destroyInactiveTabPane={false}
+          destroyOnHidden={false}
           items={[
             {
               key: "compose",
@@ -371,13 +371,13 @@ export const AutomationModal: React.FC<AutomationModalProps> = ({
                 <Alert
                   type="info"
                   showIcon
-                  message="Live Preview with Sample Lead Context"
+                  title="Live Preview with Sample Lead Context"
                   description="Variables {{...}} are dynamically replaced using sample business attributes."
                 />
 
                 <Card
                   title={
-                    <Space direction="vertical" size={2} className="w-full">
+                    <Space orientation="vertical" size={2} className="w-full">
                       <Text type="secondary" className="text-xs">
                         SUBJECT:
                       </Text>

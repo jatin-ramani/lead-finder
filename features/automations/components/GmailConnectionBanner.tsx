@@ -56,7 +56,7 @@ export const GmailConnectionBanner: React.FC<GmailConnectionBannerProps> = ({
           ? "border-emerald-200 dark:border-emerald-900/50 bg-gradient-to-r from-emerald-50/40 via-white to-emerald-50/20 dark:from-emerald-950/20 dark:via-gray-900 dark:to-emerald-950/10"
           : "border-amber-200 dark:border-amber-900/50 bg-gradient-to-r from-amber-50/50 via-white to-amber-50/20 dark:from-amber-950/20 dark:via-gray-900 dark:to-amber-950/10"
       }`}
-      bodyStyle={{ padding: "16px 20px" }}
+      styles={{ body: { padding: "16px 20px" } }}
     >
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         {/* Left Side: Connection Status */}

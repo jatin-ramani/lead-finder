@@ -30,7 +30,7 @@ interface ScanHistoryProps {
 function StatusTag({ status }: { status: string }) {
   if (isRunning(status)) {
     return (
-      <Tag color="processing" icon={<LoadingOutlined />} className="lf-tag font-medium">
+      <Tag color="processing" icon={<LoadingOutlined />} className="lf-tag lf-status-badge font-medium">
         Scanning
       </Tag>
     );
@@ -38,7 +38,7 @@ function StatusTag({ status }: { status: string }) {
 
   if (isPaused(status)) {
     return (
-      <Tag color="warning" icon={<PauseCircleOutlined />} className="lf-tag font-medium">
+      <Tag color="warning" icon={<PauseCircleOutlined />} className="lf-tag lf-status-badge font-medium">
         Paused
       </Tag>
     );
@@ -46,7 +46,7 @@ function StatusTag({ status }: { status: string }) {
 
   if (status === "Completed") {
     return (
-      <Tag color="success" icon={<CheckCircleFilled />} className="lf-tag font-medium">
+      <Tag color="success" icon={<CheckCircleFilled />} className="lf-tag lf-status-badge font-medium">
         Completed
       </Tag>
     );
@@ -54,14 +54,14 @@ function StatusTag({ status }: { status: string }) {
 
   if (status === "Cancelled") {
     return (
-      <Tag color="default" icon={<StopOutlined />} className="lf-tag font-medium">
+      <Tag color="default" icon={<StopOutlined />} className="lf-tag lf-status-badge font-medium">
         Cancelled
       </Tag>
     );
   }
 
   return (
-    <Tag color="error" icon={<CloseCircleFilled />} className="lf-tag font-medium">
+    <Tag color="error" icon={<CloseCircleFilled />} className="lf-tag lf-status-badge font-medium">
       {status}
     </Tag>
   );
@@ -184,33 +184,87 @@ export default function ScanHistory({
           />
         </div>
       ) : (
-        <Table<ScanJob>
-          rowKey="id"
-          columns={columns}
-          dataSource={jobs}
-          size="middle"
-          className="lf-table"
-          rowClassName={() => "lf-table-row lf-table-row--static"}
-          scroll={{ x: 800 }}
-          pagination={
-            jobs.length > 10
-              ? {
-                  pageSize: 10,
-                  showSizeChanger: false,
-                  showTotal: (total) => `${total} scans`,
-                }
-              : false
-          }
-          locale={{
-            emptyText: (
+        <>
+          <div className="hidden md:block">
+            <Table<ScanJob>
+              rowKey="id"
+              columns={columns}
+              dataSource={jobs}
+              size="middle"
+              className="lf-table"
+              rowClassName={() => "lf-table-row lf-table-row--static"}
+              scroll={{ x: 800 }}
+              pagination={
+                jobs.length > 10
+                  ? {
+                      pageSize: 10,
+                      showSizeChanger: false,
+                      showTotal: (total) => `${total} scans`,
+                    }
+                  : false
+              }
+              locale={{
+                emptyText: (
+                  <EmptyState
+                    compact
+                    title="No scans executed yet"
+                    description="Run your first scan above to start continuous multi-cell business discovery."
+                  />
+                ),
+              }}
+            />
+          </div>
+
+          <div className="lf-mobile-data-list md:hidden">
+            {jobs.length === 0 ? (
               <EmptyState
                 compact
                 title="No scans executed yet"
                 description="Run your first scan above to start continuous multi-cell business discovery."
               />
-            ),
-          }}
-        />
+            ) : (
+              jobs.map((job) => {
+                const found = job.businessesFound ?? job.total_businesses ?? job.totalBusinesses ?? 0;
+                const stored = job.businessesStored ?? job.new_businesses ?? job.newBusinesses ?? 0;
+                const cells = job.totalCells ?? job.total_cells ?? 0;
+                const completedCells = job.completedCells ?? job.completed_cells ?? 0;
+
+                return (
+                  <article key={job.id} className="lf-mobile-data-item">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="lf-mobile-data-title">Scan #{job.id}</p>
+                        <p className="lf-mobile-data-meta">
+                          {job.city ?? "Unknown city"} · {job.categoryFamily ?? job.category ?? "No category"}
+                        </p>
+                      </div>
+                      <StatusTag status={job.status} />
+                    </div>
+                    <dl className="mt-3 grid grid-cols-3 gap-2">
+                      <div>
+                        <dt className="lf-mobile-data-label">Progress</dt>
+                        <dd className="lf-mobile-data-value">{job.progress}%</dd>
+                      </div>
+                      <div>
+                        <dt className="lf-mobile-data-label">Found</dt>
+                        <dd className="lf-mobile-data-value">{found.toLocaleString()}</dd>
+                      </div>
+                      <div>
+                        <dt className="lf-mobile-data-label">Stored</dt>
+                        <dd className="lf-mobile-data-value">{stored.toLocaleString()}</dd>
+                      </div>
+                    </dl>
+                    {cells > 0 && (
+                      <p className="mt-2 text-xs text-[var(--lf-text-muted)]">
+                        {completedCells} of {cells} geographic cells completed
+                      </p>
+                    )}
+                  </article>
+                );
+              })
+            )}
+          </div>
+        </>
       )}
     </Panel>
   );

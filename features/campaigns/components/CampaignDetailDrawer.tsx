@@ -8,7 +8,7 @@ import {
   Col,
   Divider,
   Drawer,
-  message,
+  App,
   Popconfirm,
   Progress,
   Row,
@@ -51,6 +51,7 @@ export const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
   campaignId,
   onClose,
 }) => {
+  const { message } = App.useApp();
   const [statusFilter, setStatusFilter] = useState<CampaignRecipientStatus | "all">("all");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -198,7 +199,7 @@ export const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
           )}
         </Space>
       }
-      width={780}
+      size={780}
       onClose={onClose}
     >
       {campaign && (
