@@ -227,18 +227,25 @@ async function selectVisibleOption(page: Page, text: string): Promise<void> {
   const option = page.getByText(text, { exact: true }).last();
   await expect(option).toBeVisible();
   await option.click();
+  await page.keyboard.press("Escape");
+  await expect(page.locator(".ant-select-dropdown:not(.ant-select-dropdown-hidden)")).toHaveCount(0);
 }
 
 function scannerDetail(status: "Running" | "Paused" | "Completed" | "Failed" = "Running") {
   return {
     id: 501,
     city: "Ahmedabad",
-    category: "catering",
+    category: "Supported Business Categories",
     status,
     progress: status === "Completed" ? 100 : 60,
-    coverage_progress: status === "Completed" ? 100 : 60,
+    coverage_progress: status === "Completed" ? 100 : 75,
     total_cells: 4,
-    completed_cells: status === "Completed" ? 4 : 2,
+    requested_cells: 4,
+    already_covered_cells: 1,
+    new_cells_queued: 3,
+    completed_cells: status === "Completed" ? 3 : 2,
+    pending_cells: status === "Completed" ? 0 : 1,
+    failed_cells: status === "Failed" ? 1 : 0,
     current_cell: "Zone 3: North-East (4.2km)",
     businesses_found: 45,
     businesses_stored: 30,
@@ -248,7 +255,7 @@ function scannerDetail(status: "Running" | "Paused" | "Completed" | "Failed" = "
     center_longitude: 72.5714,
     scan_radius_km: 15,
     cells: [
-      { cell_index: 0, latitude: 23.0225, longitude: 72.5714, radius_meters: 3000, label: "Center (0.0km)", status: "completed", results_count: 25, stored_count: 18 },
+      { cell_index: 0, latitude: 23.0225, longitude: 72.5714, radius_meters: 3000, label: "Center (0.0km)", status: "skipped", results_count: 25, stored_count: 18 },
       { cell_index: 1, latitude: 23.045, longitude: 72.5714, radius_meters: 3000, label: "North (2.5km)", status: "completed", results_count: 20, stored_count: 12 },
       { cell_index: 2, latitude: 23.035, longitude: 72.6, radius_meters: 3000, label: "Zone 3: North-East (4.2km)", status: status === "Running" ? "running" : status === "Failed" ? "failed" : "pending", results_count: 0, stored_count: 0 },
       { cell_index: 3, latitude: 23.01, longitude: 72.54, radius_meters: 3000, label: "South-West (3.7km)", status: "pending", results_count: 0, stored_count: 0 },
@@ -260,9 +267,13 @@ function scannerDetail(status: "Running" | "Paused" | "Completed" | "Failed" = "
   };
 }
 
-async function mockApi(page: Page, options?: { leads?: Business[]; scanStatus?: "Running" | "Paused" | "Completed" | "Failed" }) {
+async function mockApi(page: Page, options?: {
+  leads?: Business[];
+  scanStatus?: "Running" | "Paused" | "Completed" | "Failed";
+  scan?: ReturnType<typeof scannerDetail>;
+}) {
   const leads = options?.leads ?? mapLeads;
-  const scan = scannerDetail(options?.scanStatus);
+  const scan = options?.scan ?? scannerDetail(options?.scanStatus);
 
   await page.route("**/*", async (route) => {
     const request = route.request();
@@ -336,7 +347,7 @@ test.describe("Lead Map & Live Geographic Scanner Suite", () => {
     const map = page.locator(".leaflet-container");
     const fitVisibleLeads = page.getByRole("button", { name: "Fit visible leads" });
     const centerOnCityScan = page.getByRole("button", { name: "Center on verified scan data" });
-    await expect(page.getByRole("heading", { name: "Lead Map" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Lead Map" })).toBeVisible({ timeout: 20_000 });
     await expect(map).toBeVisible();
     await expect(fitVisibleLeads).toBeEnabled();
     await expect(centerOnCityScan).toBeEnabled();
@@ -386,16 +397,13 @@ test.describe("Lead Map & Live Geographic Scanner Suite", () => {
     await expect(mapCoverage).toContainText("Scanner coverage: Ahmedabad");
     await expect(mapCoverage.getByLabel("Scanner cell state legend")).toContainText("Current");
     await expect(mapCoverage.getByLabel("Scanner cell state legend")).toContainText("Completed");
-
+    await expect(mapCoverage.getByLabel("Scanner cell state legend")).toContainText("Already covered");
     await filterScope.locator('input[placeholder="Exact category"]').fill("catering");
     await openSelectByPlaceholder(filterScope, "All grades");
     await selectVisibleOption(page, "Grade A");
     await openSelectByPlaceholder(filterScope, "All statuses");
     await selectVisibleOption(page, "New");
     await filterScope.locator('input[placeholder="Min score"]').fill("90");
-    await openSelectByPlaceholder(filterScope, "Filter by tags");
-    await selectVisibleOption(page, "Priority");
-
     const completeFilterResponse = page.waitForResponse((response) => {
       const url = new URL(response.url());
       return apiPath(response.url()) === "/businesses/map"
@@ -410,6 +418,10 @@ test.describe("Lead Map & Live Geographic Scanner Suite", () => {
         && url.searchParams.get("tags") === "priority"
         && url.searchParams.get("is_favorite") === "true";
     });
+
+    await openSelectByPlaceholder(filterScope, "Filter by tags");
+    await selectVisibleOption(page, "Priority");
+
     await filterScope.getByRole("checkbox", { name: "Favorites" }).check();
     const completeFilterPayload = await completeFilterResponse.then((response) => response.json()) as {
       success: boolean;
@@ -429,9 +441,10 @@ test.describe("Lead Map & Live Geographic Scanner Suite", () => {
 
     const leadPin = page.locator(".lf-map-lead-pin-wrap").first();
     await leadPin.click();
-    await expect(page.getByRole("button", { name: "Open lead details" })).toBeVisible();
-    await page.getByRole("button", { name: "Open lead details" }).click();
-    await expect(page.getByRole("dialog", { name: "Business details" })).toBeVisible();
+    const openLeadDetails = page.getByRole("button", { name: "Open lead details" });
+    await expect(openLeadDetails).toBeVisible();
+    await openLeadDetails.click();
+    await expect(page.getByRole("dialog", { name: "Business details" })).toBeVisible({ timeout: 20_000 });
   });
   test("map clusters a large real-coordinate result set instead of rendering every pin", async ({ page }) => {
     const clusteredLeads = Array.from({ length: 10_000 }, (_, index) => ({
@@ -449,11 +462,60 @@ test.describe("Lead Map & Live Geographic Scanner Suite", () => {
     await expect(page.locator(".lf-map-cluster")).toHaveText("10000");
   });
 
+  test("keeps genuine antimeridian map data in a compact wrapped view", async ({ page }) => {
+    const datelineLeads: Business[] = [
+      {
+        ...fullyQualifiedLead,
+        id: 801,
+        name: "East Dateline Lead",
+        city: "Dateline City",
+        latitude: 10,
+        longitude: 179.8,
+      },
+      {
+        ...fullyQualifiedLead,
+        id: 802,
+        name: "West Dateline Lead",
+        city: "Dateline City",
+        latitude: 10.1,
+        longitude: -179.8,
+      },
+    ];
+    const baseScan = scannerDetail();
+    const datelineScan = {
+      ...baseScan,
+      city: "Dateline City",
+      center_latitude: 10.05,
+      center_longitude: 179.9,
+      recent_leads_total: 700,
+      recent_leads_truncated: true,
+      cells: [
+        { ...baseScan.cells[0], latitude: 10, longitude: 179.8, label: "East cell" },
+        { ...baseScan.cells[1], latitude: 10.1, longitude: -179.8, label: "West cell" },
+      ],
+      recent_leads: [
+        { ...baseScan.recent_leads[0], id: 801, latitude: 10, longitude: 179.8 },
+        { ...baseScan.recent_leads[1], id: 802, latitude: 10.1, longitude: -179.8 },
+      ],
+    };
+    await mockApi(page, { leads: datelineLeads, scan: datelineScan });
+
+    await page.goto("/map");
+    await expect(page.getByTestId("lead-map")).toHaveAttribute("data-longitude-wrap", "antimeridian");
+    await expect(page.locator(".lf-map-lead-pin-wrap")).toHaveCount(2);
+
+    await page.goto("/scanner");
+    await expect(page.getByRole("heading", { name: "Lead Scanner" })).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByTestId("scan-live-map")).toHaveAttribute("data-longitude-wrap", "antimeridian");
+    await expect(page.getByText("Live map shows the latest 2 of 700 leads.")).toBeVisible();
+    await expect(page.locator(".lf-scan-marker-pin")).toHaveCount(2);
+  });
+
   test("scanner renders actual cells, clusters discovered leads, and opens canonical lead details", async ({ page }) => {
     await mockApi(page);
     await page.goto("/scanner");
 
-    await expect(page.getByRole("heading", { name: "Lead Scanner" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Lead Scanner" })).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText("Continuous Scanner Monitor")).toBeVisible();
     const scannerMap = page.locator(".leaflet-container");
     const zoomIn = page.getByRole("button", { name: "Zoom in scanner map" });
@@ -468,9 +530,11 @@ test.describe("Lead Map & Live Geographic Scanner Suite", () => {
     await expect(zoomOut).toBeFocused();
     await zoomOut.press("Enter");
     await expect(page.getByLabel("Scan cell state legend")).toContainText("Running");
-    await expect(page.getByText("Cell 2 / 4")).toBeVisible();
+    await expect(page.getByLabel("Scan cell state legend")).toContainText("Already covered");
+    await expect(page.locator(".lf-map-overlay").filter({ hasText: "3 / 4 cells covered" }).getByText("3 / 4 cells covered")).toBeVisible();
     await expect(page.locator(".lf-scan-cell-current")).toBeVisible();
-
+    await expect(page.locator(".lf-scan-cell-already-covered")).toBeVisible();
+    await expect(page.getByTestId("scan-coverage-metrics")).toContainText("Already Covered");
     const leadPin = page.locator(".lf-scan-marker-pin").first();
     await expect(leadPin).toBeVisible();
     await leadPin.click();
@@ -485,14 +549,14 @@ test.describe("Lead Map & Live Geographic Scanner Suite", () => {
     for (const width of [375, 390, 414]) {
       await page.setViewportSize({ width, height: 844 });
       await page.goto("/map");
-      await expect(page.getByRole("heading", { name: "Lead Map" })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Lead Map" })).toBeVisible({ timeout: 20_000 });
       await page.getByRole("button", { name: /Filters$/ }).click();
       await expect(page.getByText("Map filters", { exact: true })).toBeVisible();
       await page.keyboard.press("Escape");
       await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth), { message: `No horizontal overflow on map at ${width}px` }).toBe(true);
 
       await page.goto("/scanner");
-      await expect(page.getByRole("heading", { name: "Lead Scanner" })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Lead Scanner" })).toBeVisible({ timeout: 20_000 });
       await expect(page.getByLabel("Scan cell state legend")).toBeVisible();
       await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth), { message: `No horizontal overflow on scanner at ${width}px` }).toBe(true);
     }

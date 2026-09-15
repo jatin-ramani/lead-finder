@@ -11,7 +11,6 @@ import { isPaused, isRunning } from "./useScanJobs";
 
 export interface ScanAttempt {
   city: string;
-  category: string;
   radius_km?: number;
 }
 
@@ -43,10 +42,17 @@ export function useScanRunner(job: LatestScanJob | undefined) {
     },
 
     onSuccess: (data) => {
+      const newCellsQueued = data.new_cells_queued ?? data.total_cells ?? 0;
+      const alreadyCoveredCells = data.already_covered_cells ?? 0;
+      const queueDescription = `${newCellsQueued} new geographic ${newCellsQueued === 1 ? "cell" : "cells"} queued.`;
+      const coverageDescription = alreadyCoveredCells > 0
+        ? ` ${alreadyCoveredCells} previously completed ${alreadyCoveredCells === 1 ? "cell was" : "cells were"} skipped.`
+        : "";
+
       notification.info({
-        title: "Continuous scan started",
-        description: `Scanning ${data.city} across ${data.total_cells} multi-cell geographic areas...`,
-        duration: 4,
+        title: "City coverage scan started",
+        description: `Scanning ${data.city}. ${queueDescription}${coverageDescription}`,
+        duration: 5,
       });
       invalidateAfterScan();
     },
@@ -138,7 +144,7 @@ export function useScanRunner(job: LatestScanJob | undefined) {
     onSuccess: (data) => {
       notification.success({
         title: "Scanned leads cleared",
-        description: `Successfully removed ${data.deleted_count} leads and reset search history.`,
+        description: `Successfully removed ${data.deleted_count} leads. A future scan will begin a fresh coverage generation.`,
         duration: 5,
       });
       invalidateAfterScan();
@@ -161,10 +167,16 @@ export function useScanRunner(job: LatestScanJob | undefined) {
     if (!wasRunning || isRunning(status) || isPaused(status)) return;
 
     if (status === "Completed") {
+      const newCellsQueued = job?.new_cells_queued ?? job?.total_cells ?? 0;
+      const alreadyCoveredCells = job?.already_covered_cells ?? 0;
+      const coverageSummary = newCellsQueued === 0 && alreadyCoveredCells > 0
+        ? "The requested coverage was already complete."
+        : `${newCellsQueued} new ${newCellsQueued === 1 ? "cell" : "cells"} processed${alreadyCoveredCells > 0 ? `; ${alreadyCoveredCells} already covered cell${alreadyCoveredCells === 1 ? "" : "s"} skipped` : ""}.`;
+
       notification.success({
-        title: "Continuous scan completed",
-        description: `Finished scanning ${job?.city}! Stored: ${job?.businesses_stored ?? job?.new_businesses ?? 0}, Skipped (no contact): ${job?.businesses_skipped_no_contact ?? 0}.`,
-        duration: 6,
+        title: "City coverage scan completed",
+        description: `Finished scanning ${job?.city}! ${coverageSummary} Stored: ${job?.businesses_stored ?? job?.new_businesses ?? 0}, skipped (no contact): ${job?.businesses_skipped_no_contact ?? 0}.`,
+        duration: 7,
       });
       invalidateAfterScan();
     } else if (status === "Failed") {

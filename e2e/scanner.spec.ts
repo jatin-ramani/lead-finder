@@ -143,7 +143,7 @@ test.describe("Frontend Scanner Experience (Mocked Deterministic Suite)", () => 
         await route.fulfill({
           status: 200,
           contentType: "application/json",
-          body: JSON.stringify({ success: true, message: "Scan completed." }),
+          body: JSON.stringify({ success: true, message: "Scan started.", job_id: 101, city: "Ahmedabad", total_cells: 4, total_search_units: 28, requested_cells: 4, already_covered_cells: 1, new_cells_queued: 3, pending_cells: 3, failed_cells: 0 }),
         });
       } else {
         await route.continue();
@@ -153,16 +153,19 @@ test.describe("Frontend Scanner Experience (Mocked Deterministic Suite)", () => 
     await page.goto("/scanner");
 
     const cityInput = page.locator("#city");
-    const categoryInput = page.locator("#category");
 
     await cityInput.fill("Ahmedabad");
-    await categoryInput.fill("catering");
-    await page.keyboard.press("Escape");
 
-    const submitBtn = page.getByRole("button", { name: /launch continuous|start scan/i });
+    const submitBtn = page.getByRole("button", { name: "Launch city coverage scan" });
     await expect(submitBtn).toBeEnabled();
+    const scanRequest = page.waitForRequest((request) =>
+      request.method() === "POST" && apiPathForMockRequest(request.url()) === "/scan",
+    );
     await submitBtn.click();
-
+    expect((await scanRequest).postDataJSON()).toEqual({
+      city: "Ahmedabad",
+      radius_km: 25,
+    });
     // Verify initial loading text / state
     await expect(page.getByText(/discovering businesses|scanning/i).first()).toBeVisible();
 
@@ -172,7 +175,7 @@ test.describe("Frontend Scanner Experience (Mocked Deterministic Suite)", () => 
     await expect(page.getByText("1,020").first()).toBeVisible({ timeout: 15000 });
     await expect(page.getByText("1,019").first()).toBeVisible();
     await expect(page.getByText("Completed").first()).toBeVisible();
-
+    await expect(page.getByTestId("scan-coverage-metrics")).toContainText("Already Covered");
     // Verify "View businesses" action appears
     await expect(page.getByRole("button", { name: /view businesses/i })).toBeVisible();
 
@@ -253,10 +256,8 @@ test.describe("Frontend Scanner Experience (Mocked Deterministic Suite)", () => 
     await page.goto("/scanner");
 
     await page.locator("#city").fill("Mumbai");
-    await page.locator("#category").fill("commercial");
-    await page.keyboard.press("Escape");
 
-    await page.getByRole("button", { name: /launch continuous|start scan/i }).click();
+    await page.getByRole("button", { name: "Launch city coverage scan" }).click();
 
     // Verify safe user error message in alert or notification
     await expect(page.getByText("The scan could not be completed because Geoapify is unavailable.").first()).toBeVisible();
@@ -334,16 +335,14 @@ test.describe("Frontend Scanner Experience (Mocked Deterministic Suite)", () => 
     await page.goto("/scanner");
 
     await page.locator("#city").fill("Delhi");
-    await page.locator("#category").fill("healthcare");
-    await page.keyboard.press("Escape");
 
-    await page.getByRole("button", { name: /launch continuous|start scan/i }).click();
+    await page.getByRole("button", { name: "Launch city coverage scan" }).click();
 
     // Verify timeout status notification banner (NOT "Scan failed")
     await expect(page.getByText(/still scanning|taking longer than usual/i).first()).toBeVisible();
   });
 
-  test("category family selection displays subcategory tags preview", async ({ page }) => {
+  test("uses city and requested radius only, and explains automatic all-business coverage", async ({ page }) => {
     await page.route("**/*", async (route) => {
       const apiPath = apiPathForMockRequest(route.request().url());
       if (!apiPath) {
@@ -367,17 +366,12 @@ test.describe("Frontend Scanner Experience (Mocked Deterministic Suite)", () => 
 
     await page.goto("/scanner");
 
-    // By default healthcare is selected
-    await expect(page.getByText("Subcategories included in this continuous scan:")).toBeVisible();
-    await expect(page.getByText("Dentists").first()).toBeVisible();
-    await expect(page.getByText("Clinics & Doctors").first()).toBeVisible();
-    await expect(page.getByText("Pharmacies").first()).toBeVisible();
-    await expect(page.getByText("Hospitals").first()).toBeVisible();
-
-    // Verify Geographic Scan Radius dropdown exists
-    await expect(page.getByText("Geographic Scan Radius")).toBeVisible();
+    await expect(page.getByLabel("Target city to scan")).toBeVisible();
+    await expect(page.getByText("Requested Geographic Coverage")).toBeVisible();
+    await expect(page.getByText("All supported provider business categories are searched automatically in each new geographic cell.")).toBeVisible();
+    await expect(page.locator("#category")).toHaveCount(0);
+    await expect(page.getByText("Subcategories included in this continuous scan:")).toHaveCount(0);
   });
-
   test("safe clear scanned leads modal opens and requires typing DELETE", async ({ page }) => {
     let clearCalled = false;
 

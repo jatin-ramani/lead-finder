@@ -110,6 +110,10 @@ export default function MapPage() {
   const scanForHud = cityScanDetail ?? cityScan;
   const completedCells = cityScanDetail?.completed_cells ?? cityScan?.completed_cells ?? cityScan?.completedCells ?? 0;
   const totalCells = cityScanDetail?.total_cells ?? cityScan?.total_cells ?? cityScan?.totalCells ?? 0;
+  const requestedCells = cityScanDetail?.requested_cells ?? cityScan?.requestedCells ?? cityScan?.requested_cells ?? totalCells;
+  const alreadyCoveredCells = cityScanDetail?.already_covered_cells ?? cityScan?.alreadyCoveredCells ?? cityScan?.already_covered_cells ?? 0;
+  const newCellsQueued = cityScanDetail?.new_cells_queued ?? cityScan?.newCellsQueued ?? cityScan?.new_cells_queued ?? 0;
+  const coveredCells = requestedCells > 0 ? Math.min(requestedCells, completedCells + alreadyCoveredCells) : 0;
 
   const reset = () => {
     setCity(undefined);
@@ -202,7 +206,13 @@ export default function MapPage() {
           <span><strong className="text-[var(--lf-text)]">{isLoading ? "…" : data?.locatedItems ?? 0}</strong> mapped</span>
           <span><strong className="text-[var(--lf-text)]">{data?.totalItems ?? 0}</strong> matching</span>
           {(data?.unlocatedItems ?? 0) > 0 && <span><strong>{data?.unlocatedItems}</strong> location unavailable</span>}
-          {scanForHud && <span><strong className="text-[var(--lf-text)]">{scanForHud.status}</strong> scan · {completedCells}/{totalCells} cells</span>}
+          {scanForHud && (
+            <span>
+              <strong className="text-[var(--lf-text)]">{scanForHud.status}</strong> scan · {coveredCells}/{requestedCells} cells covered
+            </span>
+          )}
+          {scanForHud && alreadyCoveredCells > 0 && <span>{alreadyCoveredCells} already covered</span>}
+          {scanForHud && newCellsQueued > 0 && <span>{newCellsQueued} newly queued</span>}
         </div>
         {isError ? (
           <div className="lf-card-v2 p-6">

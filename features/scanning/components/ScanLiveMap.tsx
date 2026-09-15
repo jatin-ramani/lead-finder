@@ -4,6 +4,11 @@ import type { LayerGroup, Map as LeafletMap } from "leaflet";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Supercluster, { type PointFeature } from "supercluster";
 
+import {
+  clusterBboxesForViewport,
+  geographicBoundsForCoordinates,
+  longitudeNear,
+} from "@/lib/mapBounds";
 import type { LatestScanJob, ScanCellInfo, ScanRecentLead } from "@/types/api";
 
 interface ScanLeadClusterProperties {
@@ -110,6 +115,17 @@ function cellPresentation(
     };
   }
 
+  if (cell.status === "skipped") {
+    return {
+      label: "Already covered",
+      color: "var(--lf-info)",
+      fillColor: "var(--lf-info)",
+      fillOpacity: 0.08,
+      weight: 1.5,
+      dashArray: "2, 5",
+      className: "lf-scan-cell-already-covered",
+    };
+  }
   if (cell.status === "retry_wait") {
     return {
       label: "Retrying",
@@ -164,8 +180,12 @@ export default function ScanLiveMap({
   const isCompleted = status === "Completed";
   const isFailed = status === "Failed";
   const currentCell = job?.current_cell || "Initializing scan grid...";
+  const totalCells = job?.total_cells ?? job?.requested_cells ?? 0;
+  const requestedCells = job?.requested_cells ?? totalCells;
   const completedCells = job?.completed_cells ?? 0;
-  const totalCells = job?.total_cells ?? 0;
+  const alreadyCoveredCells = job?.already_covered_cells ?? 0;
+  const newCellsQueued = job?.new_cells_queued ?? 0;
+  const coveredCells = requestedCells > 0 ? Math.min(requestedCells, completedCells + alreadyCoveredCells) : 0;
   const coverageProgress = job?.coverage_progress ?? job?.progress ?? 0;
   const jobId = job?.id;
   const centerLatitude = job?.center_latitude;
@@ -184,6 +204,24 @@ export default function ScanLiveMap({
       ),
     [recentLeads],
   );
+  const geographicBounds = useMemo(
+    () => geographicBoundsForCoordinates([
+      ...cells
+        .filter((cell) => hasValidCoordinates(cell.latitude, cell.longitude))
+        .map((cell) => ({
+          latitude: cell.latitude,
+          longitude: cell.longitude,
+        })),
+      ...validLeads.map((lead) => ({
+        latitude: lead.latitude!,
+        longitude: lead.longitude!,
+      })),
+    ]),
+    [cells, validLeads],
+  );
+  const longitudeReference = geographicBounds
+    ? (geographicBounds.west + geographicBounds.east) / 2
+    : centerLongitude ?? 0;
   // The full, exact job result stays in the spatial index, but identical poll
   // responses never rebuild clusters or Leaflet marker layers.
   const leadSignature = useMemo(
@@ -219,17 +257,17 @@ export default function ScanLiveMap({
 
         markersLayer.clearLayers();
         const bounds = map.getBounds();
-        const bbox: [number, number, number, number] = [
+        const clusters = clusterBboxesForViewport(
           bounds.getWest(),
           bounds.getSouth(),
           bounds.getEast(),
           bounds.getNorth(),
-        ];
-        const clusters = clusterIndex.getClusters(bbox, Math.floor(map.getZoom()));
+        ).flatMap((bbox) => clusterIndex.getClusters(bbox, Math.floor(map.getZoom())));
 
         clusters.forEach((feature) => {
           const [longitude, latitude] = feature.geometry.coordinates;
           if (!hasValidCoordinates(latitude, longitude)) return;
+          const displayedLongitude = longitudeNear(longitude, map.getCenter().lng);
 
           if (feature.properties.cluster) {
             const count = feature.properties.point_count ?? 1;
@@ -248,7 +286,7 @@ export default function ScanLiveMap({
               iconSize: [size, size],
               iconAnchor: [size / 2, size / 2],
             });
-            const marker = L.marker([latitude, longitude], {
+            const marker = L.marker([latitude, displayedLongitude], {
               icon: clusterIcon,
               title: `Cluster of ${count} discovered leads`,
               alt: `Cluster of ${count} discovered leads`,
@@ -260,7 +298,7 @@ export default function ScanLiveMap({
                 clusterIndex.getClusterExpansionZoom(clusterId),
                 18,
               );
-              map.flyTo([latitude, longitude], expansionZoom, {
+              map.flyTo([latitude, displayedLongitude], expansionZoom, {
                 duration: 0.6,
               });
             });
@@ -290,7 +328,7 @@ export default function ScanLiveMap({
             iconAnchor: [15, 15],
             popupAnchor: [0, -16],
           });
-          const marker = L.marker([latitude, longitude], {
+          const marker = L.marker([latitude, displayedLongitude], {
             icon,
             title: `Grade ${grade} lead: ${lead.name}`,
             alt: `Grade ${grade} lead: ${lead.name}`,
@@ -444,18 +482,19 @@ export default function ScanLiveMap({
         if (!map || !cellsLayer) return;
 
         cellsLayer.clearLayers();
-        const bounds = L.latLngBounds([]);
 
         cells.forEach((cell) => {
           if (!hasValidCoordinates(cell.latitude, cell.longitude)) return;
 
-          bounds.extend([cell.latitude, cell.longitude]);
           const presentation = cellPresentation(
             cell,
             isPaused && cell.label === currentCell,
             isFailed && cell.label === currentCell,
           );
-          const circle = L.circle([cell.latitude, cell.longitude], {
+          const circle = L.circle([
+            cell.latitude,
+            longitudeNear(cell.longitude, longitudeReference),
+          ], {
             radius: cell.radius_meters || 3000,
             color: presentation.color,
             fillColor: presentation.fillColor,
@@ -476,7 +515,7 @@ export default function ScanLiveMap({
               "<span>Stored leads: <b>",
               cell.stored_count ?? 0,
               "</b></span><br/>",
-              "<span>Categories complete: <b>",
+              "<span>Search operations complete: <b>",
               cell.completed_units ?? 0,
               " / ",
               cell.total_units ?? 0,
@@ -487,13 +526,15 @@ export default function ScanLiveMap({
           cellsLayer.addLayer(circle);
         });
 
-        validLeads.forEach((lead) =>
-          bounds.extend([lead.latitude!, lead.longitude!]),
-        );
-
-        if (bounds.isValid()) {
+        if (geographicBounds) {
           if (fittedJobIdRef.current !== jobId) {
-            map.fitBounds(bounds, { padding: [30, 30], maxZoom: 13 });
+            map.fitBounds(
+              L.latLngBounds(
+                [geographicBounds.south, geographicBounds.west],
+                [geographicBounds.north, geographicBounds.east],
+              ),
+              { padding: [30, 30], maxZoom: 13 },
+            );
             fittedJobIdRef.current = jobId ?? null;
           }
           return;
@@ -516,12 +557,18 @@ export default function ScanLiveMap({
     isPaused,
     centerLatitude,
     centerLongitude,
+    geographicBounds,
     jobId,
+    longitudeReference,
     validLeads,
   ]);
 
   return (
-    <div className="lf-workspace-card relative h-full min-h-[380px] w-full overflow-hidden">
+    <div
+      className="lf-workspace-card relative h-full min-h-[380px] w-full overflow-hidden"
+      data-testid="scan-live-map"
+      data-longitude-wrap={geographicBounds?.crossesAntimeridian ? "antimeridian" : "standard"}
+    >
       <div ref={mapContainerRef} className="relative z-0 h-full min-h-[380px] w-full" />
 
       <div className="lf-map-overlay absolute right-3 top-28 z-10 flex overflow-hidden sm:top-20">
@@ -576,16 +623,25 @@ export default function ScanLiveMap({
           </div>
         </div>
 
-        {totalCells > 0 && (
-          <div className="shrink-0 border-t border-[var(--lf-border)] pt-1 text-right sm:border-t-0 sm:pt-0">
-            <div className="text-xs font-bold text-[var(--lf-text)]">
-              Cell {completedCells} / {totalCells}
-            </div>
-            <div className="text-[10px] font-medium text-[var(--lf-success)]">
-              {coverageProgress}% Geographic Coverage
-            </div>
-          </div>
-        )}
+        <div className="shrink-0 border-t border-[var(--lf-border)] pt-1 text-right sm:border-t-0 sm:pt-0">
+          {requestedCells > 0 && (
+            <>
+              <div className="text-xs font-bold text-[var(--lf-text)]">
+                {coveredCells} / {requestedCells} cells covered
+              </div>
+              <div className="text-[10px] font-medium text-[var(--lf-success)]">
+                {alreadyCoveredCells > 0
+                  ? `${alreadyCoveredCells} already covered · ${coverageProgress}% coverage`
+                  : `${newCellsQueued} new cells queued · ${coverageProgress}% coverage`}
+              </div>
+            </>
+          )}
+          {job?.recent_leads_truncated && (
+            <p className="max-w-52 text-[10px] font-medium text-[var(--lf-text-muted)]" role="status">
+              Live map shows the latest {recentLeads.length.toLocaleString()} of {(job.recent_leads_total ?? recentLeads.length).toLocaleString()} leads.
+            </p>
+          )}
+        </div>
       </div>
 
       <div
@@ -616,6 +672,13 @@ export default function ScanLiveMap({
               aria-hidden
             />
             Completed
+          </span>
+          <span role="listitem" className="flex items-center gap-1">
+            <i
+              className="h-2.5 w-2.5 rounded-full border border-dashed border-[var(--lf-info)]"
+              aria-hidden
+            />
+            Already covered
           </span>
           <span role="listitem" className="flex items-center gap-1">
             <i

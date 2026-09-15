@@ -51,7 +51,7 @@ function buildActions(
         icon: <ThunderboltOutlined />,
         title: "Run your first scan",
         description:
-          "Pick a city and a category, and Lead Finder will pull in the businesses it finds.",
+          "Pick a city and requested coverage, and Lead Finder will search supported business categories in the new geographic cells.",
         href: "/scanner",
         primary: true,
       },
@@ -73,7 +73,7 @@ function buildActions(
     key: "scan-more",
     icon: <RadarChartOutlined />,
     title: "Scan another city",
-    description: `${stats.scanJobs.total.toLocaleString()} scans run so far. Widen the net with a new city or category.`,
+    description: `${stats.scanJobs.total.toLocaleString()} scans run so far. Widen coverage with a new city or a larger requested radius.`,
     href: "/scanner",
   });
 

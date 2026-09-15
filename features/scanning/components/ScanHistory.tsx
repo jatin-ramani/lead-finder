@@ -27,6 +27,51 @@ interface ScanHistoryProps {
   onRetry: () => void;
 }
 
+interface CoverageSummary {
+  radiusKm: number;
+  requestedCells: number;
+  completedCells: number;
+  coveredCells: number;
+  alreadyCoveredCells: number;
+  newCellsQueued: number;
+  pendingCells: number;
+  failedCells: number;
+  hasCumulativeMetrics: boolean;
+}
+
+function coverageFor(job: ScanJob): CoverageSummary {
+  const requestedCells = job.requestedCells ?? job.requested_cells ?? job.totalCells ?? job.total_cells ?? 0;
+  const completedCells = job.completedCells ?? job.completed_cells ?? 0;
+  const alreadyCoveredCells = job.alreadyCoveredCells ?? job.already_covered_cells ?? 0;
+  const newCellsQueued = job.newCellsQueued ?? job.new_cells_queued ?? 0;
+  const pendingCells = job.pendingCells ?? job.pending_cells ?? 0;
+  const failedCells = job.failedCells ?? job.failed_cells ?? 0;
+  const coveredCells = requestedCells > 0 ? Math.min(requestedCells, completedCells + alreadyCoveredCells) : 0;
+
+  return {
+    radiusKm: job.scanRadiusKm ?? job.scan_radius_km ?? 25,
+    requestedCells,
+    completedCells,
+    coveredCells,
+    alreadyCoveredCells,
+    newCellsQueued,
+    pendingCells,
+    failedCells,
+    hasCumulativeMetrics: [
+      job.requestedCells,
+      job.requested_cells,
+      job.alreadyCoveredCells,
+      job.already_covered_cells,
+      job.newCellsQueued,
+      job.new_cells_queued,
+      job.pendingCells,
+      job.pending_cells,
+      job.failedCells,
+      job.failed_cells,
+    ].some((value) => value != null),
+  };
+}
+
 function StatusTag({ status }: { status: string }) {
   if (isRunning(status)) {
     return (
@@ -91,18 +136,22 @@ export default function ScanHistory({
           city ? <strong>{city}</strong> : <Text type="secondary">—</Text>,
       },
       {
-        title: "Category Family",
-        dataIndex: "category",
-        key: "category",
-        ellipsis: true,
-        render: (category: string | null, record: ScanJob) => (
-          <div className="flex flex-col">
-            <span className="capitalize font-medium">{record.categoryFamily ?? category ?? "—"}</span>
-            {record.scanRadiusKm && (
-              <span className="text-[11px] text-[var(--lf-text-muted)]">{record.scanRadiusKm} km radius</span>
-            )}
-          </div>
-        ),
+        title: "Requested Coverage",
+        key: "coverage",
+        width: 185,
+        render: (_, record: ScanJob) => {
+          const coverage = coverageFor(record);
+          return (
+            <div className="flex flex-col">
+              <span className="font-medium">{coverage.radiusKm} km radius</span>
+              {coverage.hasCumulativeMetrics && (
+                <span className="text-[11px] text-[var(--lf-text-muted)]">
+                  {coverage.alreadyCoveredCells} already covered · {coverage.newCellsQueued} newly queued
+                </span>
+              )}
+            </div>
+          );
+        },
       },
       {
         title: "Status",
@@ -114,17 +163,25 @@ export default function ScanHistory({
       {
         title: "Cells / Progress",
         key: "progress",
-        width: 140,
-        render: (_, record: ScanJob) => (
-          <div className="flex flex-col text-xs">
-            <span className="font-mono">{record.progress}%</span>
-            {record.totalCells ? (
-              <span className="text-[11px] text-[var(--lf-text-muted)]">
-                {record.completedCells} / {record.totalCells} cells
-              </span>
-            ) : null}
-          </div>
-        ),
+        width: 165,
+        render: (_, record: ScanJob) => {
+          const coverage = coverageFor(record);
+          return (
+            <div className="flex flex-col text-xs">
+              <span className="font-mono">{record.progress}%</span>
+              {coverage.requestedCells > 0 && (
+                <span className="text-[11px] text-[var(--lf-text-muted)]">
+                  {coverage.coveredCells} / {coverage.requestedCells} cells covered
+                </span>
+              )}
+              {(coverage.pendingCells > 0 || coverage.failedCells > 0) && (
+                <span className="text-[11px] text-[var(--lf-warning)]">
+                  {coverage.pendingCells} pending · {coverage.failedCells} failed
+                </span>
+              )}
+            </div>
+          );
+        },
       },
       {
         title: "Found",
@@ -167,7 +224,7 @@ export default function ScanHistory({
   return (
     <Panel
       title="Continuous Scan History"
-      description="Record of multi-cell geographic continuous scans"
+      description="Record of multi-cell geographic coverage scans"
       flush
     >
       {isLoading ? (
@@ -193,7 +250,7 @@ export default function ScanHistory({
               size="middle"
               className="lf-table"
               rowClassName={() => "lf-table-row lf-table-row--static"}
-              scroll={{ x: 800 }}
+              scroll={{ x: 900 }}
               pagination={
                 jobs.length > 10
                   ? {
@@ -208,7 +265,7 @@ export default function ScanHistory({
                   <EmptyState
                     compact
                     title="No scans executed yet"
-                    description="Run your first scan above to start continuous multi-cell business discovery."
+                    description="Run your first city coverage scan to start business discovery."
                   />
                 ),
               }}
@@ -220,14 +277,13 @@ export default function ScanHistory({
               <EmptyState
                 compact
                 title="No scans executed yet"
-                description="Run your first scan above to start continuous multi-cell business discovery."
+                description="Run your first city coverage scan to start business discovery."
               />
             ) : (
               jobs.map((job) => {
                 const found = job.businessesFound ?? job.total_businesses ?? job.totalBusinesses ?? 0;
                 const stored = job.businessesStored ?? job.new_businesses ?? job.newBusinesses ?? 0;
-                const cells = job.totalCells ?? job.total_cells ?? 0;
-                const completedCells = job.completedCells ?? job.completed_cells ?? 0;
+                const coverage = coverageFor(job);
 
                 return (
                   <article key={job.id} className="lf-mobile-data-item">
@@ -235,7 +291,7 @@ export default function ScanHistory({
                       <div className="min-w-0">
                         <p className="lf-mobile-data-title">Scan #{job.id}</p>
                         <p className="lf-mobile-data-meta">
-                          {job.city ?? "Unknown city"} · {job.categoryFamily ?? job.category ?? "No category"}
+                          {job.city ?? "Unknown city"} · {coverage.radiusKm} km requested
                         </p>
                       </div>
                       <StatusTag status={job.status} />
@@ -254,9 +310,10 @@ export default function ScanHistory({
                         <dd className="lf-mobile-data-value">{stored.toLocaleString()}</dd>
                       </div>
                     </dl>
-                    {cells > 0 && (
+                    {coverage.requestedCells > 0 && (
                       <p className="mt-2 text-xs text-[var(--lf-text-muted)]">
-                        {completedCells} of {cells} geographic cells completed
+                        {coverage.coveredCells} of {coverage.requestedCells} geographic cells covered
+                        {coverage.hasCumulativeMetrics && ` · ${coverage.alreadyCoveredCells} already covered`}
                       </p>
                     )}
                   </article>
@@ -269,4 +326,3 @@ export default function ScanHistory({
     </Panel>
   );
 }
-

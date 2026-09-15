@@ -129,7 +129,7 @@ export default function ScanProgress({
         <EmptyState
           compact
           title="No scans executed yet"
-          description="Configure a city and category above to launch multi-cell continuous scanning."
+          description="Configure a city and requested radius above to launch multi-cell geographic coverage scanning."
         />
       </Panel>
     );
@@ -146,11 +146,18 @@ export default function ScanProgress({
   const businessesSkipped = job.businesses_skipped_no_contact ?? 0;
   const businessesDuplicates = job.businesses_duplicates ?? 0;
 
-  const totalCells = job.total_cells ?? 0;
+  const totalCells = job.total_cells ?? job.requested_cells ?? 0;
+  const requestedCells = job.requested_cells ?? totalCells;
   const completedCells = job.completed_cells ?? 0;
+  const alreadyCoveredCells = job.already_covered_cells ?? 0;
+  const newCellsQueued = job.new_cells_queued ?? 0;
+  const pendingCells = job.pending_cells ?? 0;
+  const failedCells = job.failed_cells ?? 0;
+  const coveredCells = requestedCells > 0 ? Math.min(requestedCells, completedCells + alreadyCoveredCells) : 0;
   const currentCell = job.current_cell || "Scanning...";
   const scanRadius = job.scan_radius_km ?? 25;
   const recentLeads: ScanRecentLead[] = job.recent_leads ?? [];
+  const recentLeadsTotal = job.recent_leads_total ?? recentLeads.length;
   const displayedRecentLeads = recentLeads.slice(0, 20);
 
   const totalSearchUnits = job.total_search_units ?? job.totalSearchUnits ?? 0;
@@ -239,28 +246,28 @@ export default function ScanProgress({
           />
         )}
 
-        {/* Header with City, Category, Radius, Job ID and Status */}
+        {/* Header with City, Requested Coverage, Job ID and Status */}
         <div className="lf-scan-head flex items-center justify-between gap-3 p-3 rounded-lg bg-[var(--lf-subtle)] border border-[var(--lf-border)]">
           <div className="min-w-0">
-            <p className="lf-scan-target text-base font-semibold text-[var(--lf-text)] flex items-center gap-2">
+            <p className="lf-scan-target flex items-center gap-2 text-base font-semibold text-[var(--lf-text)]">
               <span>{job.city ?? "Unknown city"}</span>
-              <span className="lf-scan-sep text-[var(--lf-text-muted)]" aria-hidden>•</span>
-              <span className="capitalize text-[var(--lf-brand)]">{job.category ?? "—"}</span>
               <Badge
-                count={`${scanRadius} km radius`}
+                count={`${scanRadius} km requested`}
                 style={{ backgroundColor: "var(--lf-card)", color: "var(--lf-text-secondary)", borderColor: "var(--lf-border)" }}
               />
             </p>
-            <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--lf-text-muted)] font-mono mt-1">
+            <div className="mt-1 flex flex-wrap items-center gap-3 font-mono text-xs text-[var(--lf-text-muted)]">
               <span>Job #{job.id}</span>
-              {totalCells > 0 && (
+              {requestedCells > 0 && (
                 <span>
-                  Cells: {completedCells} / {totalCells} completed
+                  Coverage: {coveredCells} / {requestedCells} complete
                 </span>
               )}
+              {alreadyCoveredCells > 0 && <span>{alreadyCoveredCells} already covered</span>}
+              {newCellsQueued > 0 && <span>{newCellsQueued} newly queued</span>}
               {totalSearchUnits > 0 && (
                 <span>
-                  Search Units: {completedSearchUnits + failedSearchUnits} / {totalSearchUnits} processed
+                  Search operations: {completedSearchUnits + failedSearchUnits} / {totalSearchUnits} processed
                   {failedSearchUnits > 0 && (
                     <span className="ml-1 text-[var(--lf-warning)]">({failedSearchUnits} failed)</span>
                   )}
@@ -271,6 +278,32 @@ export default function ScanProgress({
           <StatusTag status={job.status} />
         </div>
 
+        <div data-testid="scan-coverage-metrics" className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+          <div className="lf-metric-card flex flex-col">
+            <span className="text-xs font-medium text-[var(--lf-text-muted)]">Requested Cells</span>
+            <span className="mt-1 text-lg font-bold font-mono text-[var(--lf-text)]">{requestedCells.toLocaleString()}</span>
+          </div>
+          <div className="lf-metric-card flex flex-col">
+            <span className="text-xs font-medium text-[var(--lf-text-muted)]">Already Covered</span>
+            <span className="mt-1 text-lg font-bold font-mono text-[var(--lf-info)]">{alreadyCoveredCells.toLocaleString()}</span>
+          </div>
+          <div className="lf-metric-card flex flex-col">
+            <span className="text-xs font-medium text-[var(--lf-text-muted)]">New Cells Queued</span>
+            <span className="mt-1 text-lg font-bold font-mono text-[var(--lf-brand)]">{newCellsQueued.toLocaleString()}</span>
+          </div>
+          <div className="lf-metric-card flex flex-col">
+            <span className="text-xs font-medium text-[var(--lf-text-muted)]">Newly Completed Cells</span>
+            <span className="mt-1 text-lg font-bold font-mono text-[var(--lf-success)]">{completedCells.toLocaleString()}</span>
+          </div>
+          <div className="lf-metric-card flex flex-col">
+            <span className="text-xs font-medium text-[var(--lf-text-muted)]">Pending Cells</span>
+            <span className="mt-1 text-lg font-bold font-mono text-[var(--lf-text-secondary)]">{pendingCells.toLocaleString()}</span>
+          </div>
+          <div className="lf-metric-card flex flex-col">
+            <span className="text-xs font-medium text-[var(--lf-text-muted)]">Failed Cells</span>
+            <span className="mt-1 text-lg font-bold font-mono text-[var(--lf-error)]">{failedCells.toLocaleString()}</span>
+          </div>
+        </div>
         {/* Current Active Geographic Cell Info & Coverage Progress */}
         {(running || paused) && (
           <div className="flex flex-col gap-2 rounded-lg border border-[var(--lf-border)] bg-[var(--lf-info-soft)] p-2.5 text-xs sm:flex-row sm:items-center sm:justify-between">
@@ -374,7 +407,7 @@ export default function ScanProgress({
           <div className="flex flex-col gap-2 mt-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-[var(--lf-text-secondary)] uppercase tracking-wider">
-                Live Discovered Leads Feed (latest {displayedRecentLeads.length} of {recentLeads.length})
+                Live Discovered Leads Feed (latest {displayedRecentLeads.length} of {recentLeadsTotal.toLocaleString()})
               </span>
               <Link href={job.city ? `/businesses?city=${encodeURIComponent(job.city)}` : "/businesses"}>
                 <span className="text-xs text-[var(--lf-brand)] hover:underline flex items-center gap-1">
@@ -422,9 +455,11 @@ export default function ScanProgress({
         {completed && (
           <div className="flex items-center justify-between pt-2 border-t border-[var(--lf-border)]">
             <p className="text-xs text-[var(--lf-text-muted)]">
-              {businessesStored > 0
-                ? `${businessesStored.toLocaleString()} actionable leads with contact info stored in CRM.`
-                : "Continuous scan completed. All returned places were duplicates or lacked contacts."}
+              {newCellsQueued === 0 && alreadyCoveredCells > 0
+                ? `The requested ${scanRadius} km coverage was already complete; no cells were rescanned.`
+                : businessesStored > 0
+                  ? `${businessesStored.toLocaleString()} actionable leads with contact info stored in CRM.`
+                  : "City coverage scan completed. All returned places were duplicates or lacked contacts."}
             </p>
             <Link href={job.city ? `/businesses?city=${encodeURIComponent(job.city)}` : "/businesses"}>
               <Button type="primary" size="small" icon={<RightOutlined aria-hidden />}>

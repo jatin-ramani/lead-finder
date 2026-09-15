@@ -409,9 +409,24 @@ export interface ScanJob {
   newBusinesses?: number;
   total_cells?: number;
   completed_cells?: number;
+  /** Deterministic cells inside the radius requested for this job. */
+  requested_cells?: number;
+  /** Requested cells already completed by a previous scan for this location. */
+  already_covered_cells?: number;
+  /** Previously-uncovered cells that this job actually enqueued. */
+  new_cells_queued?: number;
+  /** New cells that remain eligible for this job to process. */
+  pending_cells?: number;
+  /** New cells that did not complete and remain eligible for a later retry. */
+  failed_cells?: number;
   current_cell?: string | null;
   totalCells?: number;
   completedCells?: number;
+  requestedCells?: number;
+  alreadyCoveredCells?: number;
+  newCellsQueued?: number;
+  pendingCells?: number;
+  failedCells?: number;
   total_search_units?: number;
   completed_search_units?: number;
   failed_search_units?: number;
@@ -455,6 +470,11 @@ export interface LatestScanJob {
   center_longitude?: number | null;
   total_cells?: number;
   completed_cells?: number;
+  requested_cells?: number;
+  already_covered_cells?: number;
+  new_cells_queued?: number;
+  pending_cells?: number;
+  failed_cells?: number;
   current_cell?: string | null;
   total_search_units?: number;
   completed_search_units?: number;
@@ -474,7 +494,10 @@ export interface LatestScanJob {
   completed_at?: string | null;
   paused_at?: string | null;
   error_message?: string | null;
+  /** The live scanner map receives a bounded feed; the full lead set remains on the Lead Map. */
   recent_leads?: ScanRecentLead[];
+  recent_leads_total?: number;
+  recent_leads_truncated?: boolean;
   cells?: ScanCellInfo[];
 }
 
@@ -586,7 +609,6 @@ export interface CategoryFamiliesResponse {
 
 export interface ScanRequest {
   city: string;
-  category: string;
   radius_km?: number;
 }
 
@@ -595,9 +617,16 @@ export interface ScanStartResponse {
   message: string;
   job_id: number;
   city: string;
-  category: string;
+  /** Legacy field retained by the backend for historical job compatibility. */
+  category?: string | null;
   total_cells: number;
   total_search_units: number;
+  requested_cells?: number;
+  already_covered_cells?: number;
+  new_cells_queued?: number;
+  completed_cells?: number;
+  pending_cells?: number;
+  failed_cells?: number;
 }
 
 export interface ClearDataResponse {

@@ -4,6 +4,11 @@ import type { LayerGroup, Map as LeafletMap } from "leaflet";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Supercluster, { type PointFeature } from "supercluster";
 
+import {
+  clusterBboxesForViewport,
+  geographicBoundsForCoordinates,
+  longitudeNear,
+} from "@/lib/mapBounds";
 import type { Business, LatestScanJob, ScanCellInfo } from "@/types/api";
 
 interface LeadClusterProperties {
@@ -79,6 +84,10 @@ function scanCellStyle(cell: ScanCellInfo, scanJob: LatestScanJob) {
   if (cell.status === "completed") {
     return { label: "Completed", stroke: "var(--lf-brand-active)", fill: "var(--lf-success)", opacity: 0.1, weight: 1.5, dashArray: undefined };
   }
+  if (cell.status === "skipped") {
+    return { label: "Already covered", stroke: "var(--lf-info)", fill: "var(--lf-info)", opacity: 0.08, weight: 1.5, dashArray: "2, 5" };
+  }
+
   if (cell.status === "retry_wait") {
     return { label: "Retrying", stroke: "var(--lf-warning)", fill: "var(--lf-warning)", opacity: 0.14, weight: 1.5, dashArray: "4, 4" };
   }
@@ -98,6 +107,8 @@ export default function LeadMap({
   const clusterIndexRef = useRef<Supercluster<LeadClusterProperties> | null>(null);
   const lastViewKeyRef = useRef<string | null>(null);
   const onSelectBusinessRef = useRef(onSelectBusiness);
+  const isPopupOpenRef = useRef(false);
+  const hasDeferredClusterRefreshRef = useRef(false);
   const [isLeafletReady, setIsLeafletReady] = useState(false);
   const [mapLoadFailed, setMapLoadFailed] = useState(false);
 
@@ -109,41 +120,58 @@ export default function LeadMap({
     () => businesses.filter(hasBusinessCoordinates),
     [businesses],
   );
+  const businessBounds = useMemo(
+    () => geographicBoundsForCoordinates(validBusinesses.map((business) => ({
+      latitude: business.latitude!,
+      longitude: business.longitude!,
+    }))),
+    [validBusinesses],
+  );
 
   const fitBusinessBounds = useCallback((map: LeafletMap) => {
-    if (validBusinesses.length === 0) return false;
+    if (!businessBounds) return false;
 
     void import("leaflet").then((L) => {
-      const bounds = L.latLngBounds([]);
-      validBusinesses.forEach((business) => {
-        bounds.extend([business.latitude!, business.longitude!]);
-      });
-      if (bounds.isValid()) {
-        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
-      }
+      map.fitBounds(
+        L.latLngBounds(
+          [businessBounds.south, businessBounds.west],
+          [businessBounds.north, businessBounds.east],
+        ),
+        { padding: [40, 40], maxZoom: 14 },
+      );
     });
 
     return true;
-  }, [validBusinesses]);
+  }, [businessBounds]);
 
   const updateClustersOnMap = useCallback(() => {
     const map = mapInstanceRef.current;
     const markerLayer = markerLayerRef.current;
     const clusterIndex = clusterIndexRef.current;
     if (!map || !markerLayer || !clusterIndex) return;
+    // Filter/query updates can rebuild the spatial index while someone is
+    // using a popup. Preserve that interaction and refresh immediately after
+    // the popup closes instead of removing its action before React receives it.
+    if (isPopupOpenRef.current) {
+      hasDeferredClusterRefreshRef.current = true;
+      return;
+    }
 
     void import("leaflet").then((L) => {
       if (mapInstanceRef.current !== map) return;
       markerLayer.clearLayers();
 
       const bounds = map.getBounds();
-      const clusters = clusterIndex.getClusters(
-        [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()],
-        Math.floor(map.getZoom()),
-      );
+      const clusters = clusterBboxesForViewport(
+        bounds.getWest(),
+        bounds.getSouth(),
+        bounds.getEast(),
+        bounds.getNorth(),
+      ).flatMap((bbox) => clusterIndex.getClusters(bbox, Math.floor(map.getZoom())));
 
       clusters.forEach((feature) => {
         const [longitude, latitude] = feature.geometry.coordinates;
+        const displayedLongitude = longitudeNear(longitude, map.getCenter().lng);
         if (feature.properties.cluster) {
           const count = feature.properties.point_count ?? 1;
           const clusterId = feature.properties.cluster_id;
@@ -155,11 +183,11 @@ export default function LeadMap({
             iconSize: [size, size],
             iconAnchor: [size / 2, size / 2],
           });
-          const marker = L.marker([latitude, longitude], { icon, title: `Cluster of ${count} leads`, alt: `Cluster of ${count} leads`, keyboard: true });
+          const marker = L.marker([latitude, displayedLongitude], { icon, title: `Cluster of ${count} leads`, alt: `Cluster of ${count} leads`, keyboard: true });
           marker.on("click", () => {
             if (clusterId != null) {
               const expansionZoom = Math.min(clusterIndex.getClusterExpansionZoom(clusterId), 18);
-              map.flyTo([latitude, longitude], expansionZoom, { duration: 0.5 });
+              map.flyTo([latitude, displayedLongitude], expansionZoom, { duration: 0.5 });
             }
           });
           markerLayer.addLayer(marker);
@@ -185,7 +213,7 @@ export default function LeadMap({
           iconAnchor: [16, 16],
           popupAnchor: [0, -18],
         });
-        const marker = L.marker([latitude, longitude], { icon: pinIcon, title: `Grade ${grade} lead: ${business.name}`, alt: `Grade ${grade} lead: ${business.name}`, keyboard: true });
+        const marker = L.marker([latitude, displayedLongitude], { icon: pinIcon, title: `Grade ${grade} lead: ${business.name}`, alt: `Grade ${grade} lead: ${business.name}`, keyboard: true });
         const popup = document.createElement("div");
         popup.className = "lf-map-popup";
         popup.innerHTML = `
@@ -204,9 +232,17 @@ export default function LeadMap({
         `;
         marker.bindPopup(popup);
         marker.on("popupopen", () => {
+          isPopupOpenRef.current = true;
           const button = popup.querySelector<HTMLButtonElement>(`[data-open-lead-id="${business.id}"]`);
           if (button) {
             button.onclick = () => onSelectBusinessRef.current(business);
+          }
+        });
+        marker.on("popupclose", () => {
+          isPopupOpenRef.current = false;
+          if (hasDeferredClusterRefreshRef.current) {
+            hasDeferredClusterRefreshRef.current = false;
+            map.fire("moveend");
           }
         });
         markerLayer.addLayer(marker);
@@ -242,6 +278,8 @@ export default function LeadMap({
 
     return () => {
       mounted = false;
+      isPopupOpenRef.current = false;
+      hasDeferredClusterRefreshRef.current = false;
       const map = mapInstanceRef.current;
       if (map) {
         map.off("moveend", updateClustersOnMap);
@@ -280,6 +318,14 @@ export default function LeadMap({
       coverageLayer.clearLayers();
       const cells = scanJob?.cells ?? [];
       const center = getScanCenter(scanJob);
+      const coverageBounds = geographicBoundsForCoordinates(
+        cells
+          .filter((cell) => hasValidCoordinates(cell.latitude, cell.longitude))
+          .map((cell) => ({ latitude: cell.latitude, longitude: cell.longitude })),
+      );
+      const longitudeReference = coverageBounds
+        ? (coverageBounds.west + coverageBounds.east) / 2
+        : center?.[1] ?? 0;
 
       cells.forEach((cell) => {
         if (!hasValidCoordinates(cell.latitude, cell.longitude) || !scanJob) return;
@@ -287,7 +333,10 @@ export default function LeadMap({
         const radius = Number.isFinite(cell.radius_meters) && cell.radius_meters > 0
           ? cell.radius_meters
           : 3000;
-        const circle = L.circle([cell.latitude, cell.longitude], {
+        const circle = L.circle([
+          cell.latitude,
+          longitudeNear(cell.longitude, longitudeReference),
+        ], {
           radius,
           color: style.stroke,
           fillColor: style.fill,
@@ -355,7 +404,11 @@ export default function LeadMap({
   }, [scanJob]);
 
   return (
-    <div className="lf-map-canvas">
+    <div
+      className="lf-map-canvas"
+      data-testid="lead-map"
+      data-longitude-wrap={businessBounds?.crossesAntimeridian ? "antimeridian" : "standard"}
+    >
       <div ref={mapContainerRef} className="lf-map-canvas__viewport" />
 
       <div className="lf-map-controls">
@@ -379,6 +432,7 @@ export default function LeadMap({
             <span><i className="lf-map-legend-dot lf-map-legend-dot--current" aria-hidden />Current</span>
             <span><i className="lf-map-legend-dot lf-map-legend-dot--progress" aria-hidden />In progress</span>
             <span><i className="lf-map-legend-dot lf-map-legend-dot--completed" aria-hidden />Completed</span>
+            <span><i className="lf-map-legend-dot" style={{ borderColor: "var(--lf-info)", backgroundColor: "var(--lf-info-soft)" }} aria-hidden />Already covered</span>
             <span><i className="lf-map-legend-dot lf-map-legend-dot--paused" aria-hidden />Retrying / paused</span>
             <span><i className="lf-map-legend-dot lf-map-legend-dot--failed" aria-hidden />Failed</span>
           </div>
