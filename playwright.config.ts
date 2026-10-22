@@ -35,7 +35,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "npm run dev -- -p 3005 -H 127.0.0.1",
+    command: 'npm run dev --prefix "E:\\office\\lead-finder\\frontend" -- -p 3005 -H 127.0.0.1',
     url: "http://127.0.0.1:3005",
     reuseExistingServer: true,
     timeout: 120 * 1000,

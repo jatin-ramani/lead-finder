@@ -27,22 +27,24 @@ interface SidebarProps {
 function BrandLogo() {
   return (
     <div className="flex items-center gap-3 px-2 py-1">
-      <div className="lf-sidebar-v2__logo-mark flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[var(--lf-brand)] text-[var(--lf-on-brand)] shadow-[var(--lf-shadow-sm)]">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2">
-          <circle cx="11" cy="11" r="6" />
-          <path d="M15.5 15.5 L20 20" strokeLinecap="round" />
-          <path d="M11 8v6M8 11h6" strokeLinecap="round" strokeWidth="2" />
-        </svg>
+      <div className="lf-sidebar-v2__logo-mark flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white p-1.5 shadow-[0_4px_14px_rgba(79,70,229,0.25)] border border-slate-200/60 dark:border-slate-800 overflow-hidden">
+        <img
+          src="/logo/logo.svg"
+          alt="FindB Logo"
+          width={28}
+          height={28}
+          className="h-full w-full object-contain"
+        />
       </div>
       <div className="min-w-0">
         <div className="flex items-center gap-1.5 text-base font-bold leading-tight tracking-tight text-[var(--lf-text)]">
-          <span>Lead Finder</span>
-          <span className="rounded-full border border-[var(--lf-border)] bg-[var(--lf-accent-soft)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--lf-brand)]">
+          <span>FindB</span>
+          <span className="rounded-full border border-[var(--lf-accent)]/30 bg-[var(--lf-accent-soft)] px-1.5 py-0.5 text-[10px] font-bold text-[var(--lf-brand)]">
             PRO
           </span>
         </div>
         <div className="truncate text-[11px] font-medium text-[var(--lf-text-muted)]">
-          Sales Intelligence CRM
+          Lead Finder CRM
         </div>
       </div>
     </div>
@@ -69,10 +71,10 @@ export default function Sidebar({
       {/* Top Brand Header */}
       <div className="flex min-h-0 flex-1 flex-col p-4 pb-0">
         <Link
-          href="/"
+          href="/dashboard"
           onClick={onNavigate}
           className="block hover:opacity-95 transition-opacity"
-          aria-label="Lead Finder Home"
+          aria-label="Lead Finder Dashboard"
         >
           <BrandLogo />
         </Link>

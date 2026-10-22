@@ -49,7 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (me?.authenticated) {
         setAuthError(null);
         queryClient.setQueryData(queryKeys.auth.me(), { authenticated: true });
-        router.push('/');
+        router.push('/dashboard');
       } else {
         setStoredSessionToken(null);
         queryClient.setQueryData(queryKeys.auth.me(), { authenticated: false });

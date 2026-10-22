@@ -1,8 +1,6 @@
 'use client';
 
-import React from 'react';
 import Link from 'next/link';
-import FindBLogo from '@/components/FindBLogo';
 
 interface MarketingFooterProps {
   onOpenLogin: () => void;
@@ -10,65 +8,44 @@ interface MarketingFooterProps {
 
 export default function MarketingFooter({ onOpenLogin }: MarketingFooterProps) {
   return (
-    <footer className="w-full px-4 sm:px-8 lg:px-16 pb-8 pt-12">
-      <div className="mx-auto max-w-7xl rounded-[28px] sm:rounded-[36px] bg-[#0B1120] px-8 sm:px-12 lg:px-16 py-12 sm:py-16 shadow-2xl !text-white border border-slate-800">
+    <footer className="w-full bg-[#F9FAFB] lg:bg-white pt-0 pb-0 lg:pt-14 lg:pb-12 lg:px-6 xl:px-12 transition-all">
+      <div className="w-full mx-auto max-w-7xl rounded-none lg:rounded-[36px] bg-[#0B1B2F] px-5 sm:px-8 lg:px-14 xl:px-16 py-10 sm:py-12 lg:py-14 shadow-none lg:shadow-2xl !text-white border-0 lg:border border-slate-800/80">
         {/* Top Row: Brand Info + Navigation Columns */}
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-10 md:gap-16">
           {/* Left Column: Brand & Description */}
-          <div className="max-w-md space-y-5">
-            <Link href="/" aria-label="FindB Home" className="inline-block">
-              <FindBLogo variant="light" size="lg" />
-            </Link>
-            <p className="text-sm sm:text-base !text-slate-300 leading-relaxed font-normal">
-              FindB is the premier sales intelligence platform for discovering, qualifying, and exporting high-intent local business leads across any city in seconds.
-            </p>
-            <div className="flex items-center gap-3 text-xs !text-slate-400">
-              <span className="inline-block w-2 h-2 rounded-full bg-emerald-400" />
-              <span>Global Directory API Status: Operational</span>
+          <div className="max-w-md space-y-4">
+            <div className="flex items-center gap-2.5 sm:gap-3">
+              <div className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full bg-white shadow-md p-1.5 overflow-hidden">
+                <img
+                  src="/logo/logo.svg"
+                  alt="FindB Logo"
+                  width={24}
+                  height={24}
+                  className="h-full w-full object-contain"
+                />
+              </div>
+              <span className="text-xl sm:text-2xl font-bold tracking-tight !text-white select-none">
+                FindB
+              </span>
             </div>
+            <p className="text-xs sm:text-sm !text-slate-300 leading-relaxed font-normal">
+              FindB helps agencies, consultants, and outbound sales teams discover high-intent local businesses, uncover companies without websites, and acquire verified contact emails and phone numbers worldwide.
+            </p>
           </div>
 
-          {/* Right Columns: Product, Resources, Account */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-10 sm:gap-14 shrink-0">
-            {/* Column 1: Product */}
+          {/* Right Columns: Legal info + Account */}
+          <div className="flex flex-wrap sm:flex-nowrap gap-10 sm:gap-20 lg:gap-28 shrink-0">
+            {/* Column 1: Legal info */}
             <div>
-              <h4 className="text-sm font-bold !text-white mb-4 tracking-wider uppercase">
-                Product
+              <h4 className="text-sm font-bold !text-white mb-3 tracking-normal">
+                Legal info
               </h4>
-              <ul className="space-y-3 text-sm list-none p-0 m-0 font-medium">
-                <li>
-                  <Link href="/#features" className="!text-slate-300 hover:!text-white transition-colors block">
-                    Features
-                  </Link>
-                </li>
+              <ul className="space-y-2.5 text-xs sm:text-sm list-none p-0 m-0 font-medium">
                 <li>
                   <Link href="/pricing" className="!text-slate-300 hover:!text-white transition-colors block">
                     Pricing
                   </Link>
                 </li>
-                <li>
-                  <Link href="/#faq" className="!text-slate-300 hover:!text-white transition-colors block">
-                    FAQ
-                  </Link>
-                </li>
-                <li>
-                  <button
-                    type="button"
-                    onClick={onOpenLogin}
-                    className="cursor-pointer text-left !text-slate-300 hover:!text-white transition-colors block font-medium"
-                  >
-                    API Access
-                  </button>
-                </li>
-              </ul>
-            </div>
-
-            {/* Column 2: Resources */}
-            <div>
-              <h4 className="text-sm font-bold !text-white mb-4 tracking-wider uppercase">
-                Resources
-              </h4>
-              <ul className="space-y-3 text-sm list-none p-0 m-0 font-medium">
                 <li>
                   <Link href="/contact" className="!text-slate-300 hover:!text-white transition-colors block">
                     Contact Us
@@ -76,30 +53,25 @@ export default function MarketingFooter({ onOpenLogin }: MarketingFooterProps) {
                 </li>
                 <li>
                   <Link href="/faq" className="!text-slate-300 hover:!text-white transition-colors block">
-                    Help Center
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/cancel-subscription" className="!text-slate-300 hover:!text-white transition-colors block">
-                    Manage Billing
+                    F.A.Q
                   </Link>
                 </li>
               </ul>
             </div>
 
-            {/* Column 3: Account */}
+            {/* Column 2: Account */}
             <div>
-              <h4 className="text-sm font-bold !text-white mb-4 tracking-wider uppercase">
+              <h4 className="text-sm font-bold !text-white mb-3 tracking-normal">
                 Account
               </h4>
-              <ul className="space-y-3 text-sm list-none p-0 m-0 font-medium">
+              <ul className="space-y-2.5 text-xs sm:text-sm list-none p-0 m-0 font-medium">
                 <li>
                   <button
                     type="button"
                     onClick={onOpenLogin}
                     className="cursor-pointer text-left !text-slate-300 hover:!text-white transition-colors block font-medium"
                   >
-                    Sign In
+                    Login
                   </button>
                 </li>
                 <li>
@@ -108,7 +80,7 @@ export default function MarketingFooter({ onOpenLogin }: MarketingFooterProps) {
                     onClick={onOpenLogin}
                     className="cursor-pointer text-left !text-slate-300 hover:!text-white transition-colors block font-medium"
                   >
-                    Get Started Free
+                    Sign up
                   </button>
                 </li>
                 <li>
@@ -122,28 +94,25 @@ export default function MarketingFooter({ onOpenLogin }: MarketingFooterProps) {
         </div>
 
         {/* Divider Line */}
-        <div className="border-t border-slate-800 my-8 sm:my-10" />
+        <div className="border-t border-white/10 my-8 sm:my-10" />
 
         {/* Bottom Bar: Copyright & Policies */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs sm:text-sm !text-slate-400">
-          <div className="space-y-0.5">
-            <div>&copy; {new Date().getFullYear()} FindB Technologies Inc. All rights reserved.</div>
-            <div className="text-[11px] text-slate-500">
-              High-accuracy local B2B lead generation and intelligence.
-            </div>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs !text-slate-400">
+          <div className="space-y-0.5 !text-slate-400">
+            <div>FindB &middot; 2026</div>
+            <div>FindB Technologies LLC &middot; All rights reserved</div>
           </div>
-
           <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
             <Link href="/pricing" className="!text-slate-400 hover:!text-white transition-colors">
               Cookies Policy
             </Link>
-            <span className="!text-slate-600">|</span>
+            <span className="!text-white/20">|</span>
             <Link href="/pricing" className="!text-slate-400 hover:!text-white transition-colors">
               Privacy Policy
             </Link>
-            <span className="!text-slate-600">|</span>
+            <span className="!text-white/20">|</span>
             <Link href="/pricing" className="!text-slate-400 hover:!text-white transition-colors">
-              Terms of Service
+              Terms and Conditions
             </Link>
           </div>
         </div>

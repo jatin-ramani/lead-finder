@@ -9,17 +9,11 @@ export const THEME_STORAGE_KEY = "lead-finder:theme";
  */
 export const themeBootstrapScript = `
 (function () {
-  var mode = 'light';
+  document.documentElement.setAttribute('data-theme', 'light');
+  document.documentElement.classList.remove('dark');
+  document.documentElement.style.colorScheme = 'light';
   try {
-    var stored = localStorage.getItem('${THEME_STORAGE_KEY}');
-    if (stored === 'light' || stored === 'dark') mode = stored;
+    localStorage.setItem('${THEME_STORAGE_KEY}', 'light');
   } catch (e) {}
-  document.documentElement.setAttribute('data-theme', mode);
-  if (mode === 'dark') {
-    document.documentElement.classList.add('dark');
-  } else {
-    document.documentElement.classList.remove('dark');
-  }
-  document.documentElement.style.colorScheme = mode;
 })();
 `;

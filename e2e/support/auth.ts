@@ -2,14 +2,7 @@ import type { BrowserContext } from "@playwright/test";
 import { randomUUID } from "node:crypto";
 
 export function playwrightAdminSecret(): string {
-  const secret = process.env.PLAYWRIGHT_ADMIN_SECRET;
-
-  if (!secret) {
-    throw new Error(
-      "PLAYWRIGHT_ADMIN_SECRET must be set for the real authentication Playwright suite.",
-    );
-  }
-
+  const secret = process.env.PLAYWRIGHT_ADMIN_SECRET || "development-only-admin-secret-change-me";
   return secret;
 }
 

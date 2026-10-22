@@ -1,11 +1,9 @@
 "use client";
 
 import {
-  BulbOutlined,
   LogoutOutlined,
   MailOutlined,
   MenuOutlined,
-  MoonOutlined,
   SearchOutlined,
 } from "@ant-design/icons";
 import { Avatar, Button, Input, Layout, Tooltip } from "antd";
@@ -14,7 +12,6 @@ import { useState, useMemo, useEffect } from "react";
 
 import { useAuth } from "@/features/auth/AuthContext";
 import { activeNavItem } from "@/lib/navigation";
-import { useThemeMode } from "@/providers/ThemeProvider";
 
 const { Header: AntHeader } = Layout;
 
@@ -25,7 +22,6 @@ interface HeaderProps {
 export default function Header({ onOpenMobileNav }: HeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { mode, toggleMode } = useThemeMode();
   const { logout } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -51,7 +47,7 @@ export default function Header({ onOpenMobileNav }: HeaderProps) {
 
   return (
     <AntHeader className="lf-header-v2 !h-auto !bg-transparent !p-0 !leading-normal z-30">
-      <div className="lf-header-v2__inner flex items-center justify-between gap-3 sm:gap-4 p-3 sm:px-6 bg-[var(--lf-surface)] rounded-2xl sm:rounded-3xl border border-[var(--lf-border)] shadow-[var(--lf-shadow-sm)] mb-6">
+      <div className="lf-header-v2__inner lf-glass-card flex items-center justify-between gap-3 sm:gap-4 p-3 sm:px-6 rounded-2xl sm:rounded-3xl mb-6">
         {/* Mobile Hamburger, Page Title & Global Search */}
         <div className="flex min-w-0 items-center gap-2 sm:gap-3 flex-1 max-w-xl">
           <Button
@@ -99,16 +95,6 @@ export default function Header({ onOpenMobileNav }: HeaderProps) {
             </Button>
           </Tooltip>
 
-          <Tooltip title={mode === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}>
-            <Button
-              type="text"
-              onClick={toggleMode}
-              className="flex h-11 w-11 items-center justify-center rounded-full border-none bg-[var(--lf-subtle)] text-[var(--lf-text-secondary)] hover:bg-[var(--lf-hover)] sm:h-10 sm:w-10"
-              aria-label="Toggle theme"
-            >
-              {mode === "dark" ? <BulbOutlined className="text-base text-[var(--lf-warning)]" /> : <MoonOutlined className="text-base" />}
-            </Button>
-          </Tooltip>
 
           {/* Divider */}
           <div className="my-auto hidden h-6 w-px bg-[var(--lf-border)] sm:block" />

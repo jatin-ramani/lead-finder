@@ -10,7 +10,6 @@ import {
   type ReactNode,
 } from "react";
 
-import { usePersistentValue } from "@/hooks/usePersistentState";
 import { THEME_STORAGE_KEY } from "@/lib/theme-script";
 import { getAntdTheme, type ThemeMode } from "@/lib/theme";
 
@@ -30,46 +29,20 @@ export function useThemeMode(): ThemeContextValue {
   return context;
 }
 
-/** Light is the product default; an explicit stored choice may switch it. */
-function decodeMode(raw: string | null): ThemeMode {
-  return raw === "dark" ? "dark" : "light";
-}
-
 export default function ThemeProvider({ children }: { children: ReactNode }) {
-  const [mode, persistMode] = usePersistentValue<ThemeMode>(
-    THEME_STORAGE_KEY,
-    "light",
-    decodeMode,
-  );
-
-  const setMode = useCallback(
-    (next: ThemeMode) => {
-      document.documentElement.setAttribute("data-theme", next);
-      if (next === "dark") {
-        document.documentElement.classList.add("dark");
-      } else {
-        document.documentElement.classList.remove("dark");
-      }
-      document.documentElement.style.colorScheme = next;
-      persistMode(next);
-    },
-    [persistMode],
-  );
+  const mode: ThemeMode = "light";
 
   useEffect(() => {
-    document.documentElement.setAttribute("data-theme", mode);
-    if (mode === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-    document.documentElement.style.colorScheme = mode;
-  }, [mode]);
+    document.documentElement.setAttribute("data-theme", "light");
+    document.documentElement.classList.remove("dark");
+    document.documentElement.style.colorScheme = "light";
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, "light");
+    } catch {}
+  }, []);
 
-  const toggleMode = useCallback(
-    () => setMode(mode === "dark" ? "light" : "dark"),
-    [mode, setMode],
-  );
+  const setMode = useCallback(() => {}, []);
+  const toggleMode = useCallback(() => {}, []);
 
   const value = useMemo(
     () => ({ mode, setMode, toggleMode }),

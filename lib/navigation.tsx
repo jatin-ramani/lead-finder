@@ -32,7 +32,7 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       {
         key: "dashboard",
-        href: "/",
+        href: "/dashboard",
         label: "Dashboard",
         icon: <DashboardOutlined />,
         title: "Dashboard",
@@ -117,7 +117,7 @@ export const NAV_ITEMS: NavItem[] = NAV_SECTIONS.flatMap(
 
 export function activeNavItem(pathname: string): NavItem {
   const match = NAV_ITEMS.filter(
-    (item) => item.href !== "/" && (pathname === item.href || pathname.startsWith(`${item.href}/`)),
+    (item) => pathname === item.href || pathname.startsWith(`${item.href}/`),
   ).sort((a, b) => b.href.length - a.href.length)[0];
 
   return match ?? NAV_ITEMS[0];

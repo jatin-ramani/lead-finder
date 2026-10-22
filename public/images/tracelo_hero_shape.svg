@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="800" viewBox="0 0 1440 800" preserveAspectRatio="none">
+    <defs>
+      <linearGradient id="lfHeroGrad" x1="0%" y1="35%" x2="100%" y2="5%">
+        <stop offset="0%" stop-color="#4e46f6" />
+        <stop offset="22%" stop-color="#7032ea" />
+        <stop offset="50%" stop-color="#b625d9" />
+        <stop offset="75%" stop-color="#ed368d" />
+        <stop offset="90%" stop-color="#f66c7a" />
+        <stop offset="100%" stop-color="#f99e94" />
+      </linearGradient>
+    </defs>
+    <path d="M 0,0 L 0,798 C 360,796 720,764 960,670 C 1140,596 1265,350 1305,0 L 0,0 Z" fill="url(#lfHeroGrad)" />
+  </svg>
