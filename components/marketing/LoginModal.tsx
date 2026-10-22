@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Alert, Spin } from 'antd';
+import { Alert } from 'antd';
 import { CloseOutlined } from '@ant-design/icons';
 import { useAuth } from '@/features/auth/AuthContext';
+import DottedSpinner from '@/components/marketing/DottedSpinner';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -180,7 +181,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
             >
               {isSubmitting ? (
                 <>
-                  <Spin size="small" /> Signing in…
+                  <DottedSpinner size="sm" color="#2563EB" /> Signing in…
                 </>
               ) : (
                 'Continue'
