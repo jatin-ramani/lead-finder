@@ -947,7 +947,10 @@ export default function LandingPage({ initialLoginOpen = false }: LandingPagePro
                     <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 text-[#4F46E5] flex items-center justify-center text-xl shadow-xs group-hover:scale-105 transition-transform">
                       <SearchOutlined />
                     </div>
-                    <span className="text-4xl sm:text-5xl font-black text-[#878787] select-none leading-none">
+                    <span
+                      style={{ color: '#878787' }}
+                      className="text-4xl sm:text-5xl font-black select-none leading-none"
+                    >
                       1
                     </span>
                   </div>
@@ -967,7 +970,10 @@ export default function LandingPage({ initialLoginOpen = false }: LandingPagePro
                     <div className="w-12 h-12 rounded-2xl bg-violet-50 border border-violet-100 text-[#7C3AED] flex items-center justify-center text-xl shadow-xs group-hover:scale-105 transition-transform">
                       <SafetyCertificateOutlined />
                     </div>
-                    <span className="text-4xl sm:text-5xl font-black text-[#878787] select-none leading-none">
+                    <span
+                      style={{ color: '#878787' }}
+                      className="text-4xl sm:text-5xl font-black select-none leading-none"
+                    >
                       2
                     </span>
                   </div>
@@ -987,7 +993,10 @@ export default function LandingPage({ initialLoginOpen = false }: LandingPagePro
                     <div className="w-12 h-12 rounded-2xl bg-sky-50 border border-sky-100 text-[#0284C7] flex items-center justify-center text-xl shadow-xs group-hover:scale-105 transition-transform">
                       <SendOutlined />
                     </div>
-                    <span className="text-4xl sm:text-5xl font-black text-[#878787] select-none leading-none">
+                    <span
+                      style={{ color: '#878787' }}
+                      className="text-4xl sm:text-5xl font-black select-none leading-none"
+                    >
                       3
                     </span>
                   </div>
