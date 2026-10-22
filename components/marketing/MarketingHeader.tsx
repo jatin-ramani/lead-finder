@@ -45,19 +45,19 @@ export default function MarketingHeader({
               <Link
                 href="/"
                 data-discover="true"
-                className="w-[125px] h-[30px] lg:w-[190px] lg:h-[45px] flex items-center gap-2 lg:gap-3 group focus:outline-none shrink-0 no-underline select-none"
+                className="w-[125px] h-[30px] lg:w-[190px] lg:h-[45px] flex items-center justify-between group focus:outline-none shrink-0 no-underline select-none"
               >
                 {/* White Circular Badge with FindB Logo */}
-                <div className="h-[26px] w-[26px] lg:h-[38px] lg:w-[38px] shrink-0 flex items-center justify-center rounded-full bg-white shadow-xs transition-transform group-hover:scale-105 p-1 lg:p-1.5 overflow-hidden">
+                <div className="h-[30px] w-[30px] lg:h-[45px] lg:w-[45px] shrink-0 flex items-center justify-center rounded-full bg-white shadow-xs transition-transform group-hover:scale-105 p-0.5 lg:p-1 overflow-hidden">
                   <img
                     src="/logo/logo.svg"
                     alt="FindB Logo"
-                    width={24}
-                    height={24}
+                    width={40}
+                    height={40}
                     className="h-full w-full object-contain cursor-pointer"
                   />
                 </div>
-                <span className="text-[18px] lg:text-[27px] font-bold tracking-tight !text-white select-none drop-shadow-xs leading-none">
+                <span className="text-[25px] lg:text-[38px] font-black tracking-tight !text-white select-none drop-shadow-xs leading-none">
                   FindB
                 </span>
               </Link>

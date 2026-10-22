@@ -15,17 +15,17 @@ export default function MarketingFooter({ onOpenLogin, className = '' }: Marketi
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-10 md:gap-16">
           {/* Left Column: Brand & Description */}
           <div className="max-w-md space-y-4">
-            <div className="w-[125px] h-[30px] lg:w-[190px] lg:h-[45px] flex items-center gap-2 lg:gap-3 shrink-0 select-none">
-              <div className="h-[26px] w-[26px] lg:h-[38px] lg:w-[38px] shrink-0 flex items-center justify-center rounded-full bg-white shadow-md p-1 lg:p-1.5 overflow-hidden">
+            <div className="w-[125px] h-[30px] lg:w-[190px] lg:h-[45px] flex items-center justify-between shrink-0 select-none">
+              <div className="h-[30px] w-[30px] lg:h-[45px] lg:w-[45px] shrink-0 flex items-center justify-center rounded-full bg-white shadow-md p-0.5 lg:p-1 overflow-hidden">
                 <img
                   src="/logo/logo.svg"
                   alt="FindB Logo"
-                  width={24}
-                  height={24}
+                  width={40}
+                  height={40}
                   className="h-full w-full object-contain"
                 />
               </div>
-              <span className="text-[18px] lg:text-[27px] font-bold tracking-tight !text-white select-none leading-none">
+              <span className="text-[25px] lg:text-[38px] font-black tracking-tight !text-white select-none leading-none">
                 FindB
               </span>
             </div>
