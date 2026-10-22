@@ -947,9 +947,9 @@ export default function LandingPage({ initialLoginOpen = false }: LandingPagePro
                     <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 text-[#4F46E5] flex items-center justify-center text-xl shadow-xs group-hover:scale-105 transition-transform">
                       <SearchOutlined />
                     </div>
-                    <div className="w-12 h-12 rounded-2xl border border-gray-200/90 bg-gray-50/60 text-[#878787] flex items-center justify-center text-xl font-bold select-none">
+                    <span className="text-4xl sm:text-5xl font-black text-[#878787] select-none leading-none">
                       1
-                    </div>
+                    </span>
                   </div>
                   <h3 className="text-lg font-bold text-[#111827] mb-2">
                     Target Any City &amp; Niche
@@ -967,9 +967,9 @@ export default function LandingPage({ initialLoginOpen = false }: LandingPagePro
                     <div className="w-12 h-12 rounded-2xl bg-violet-50 border border-violet-100 text-[#7C3AED] flex items-center justify-center text-xl shadow-xs group-hover:scale-105 transition-transform">
                       <SafetyCertificateOutlined />
                     </div>
-                    <div className="w-12 h-12 rounded-2xl border border-gray-200/90 bg-gray-50/60 text-[#878787] flex items-center justify-center text-xl font-bold select-none">
+                    <span className="text-4xl sm:text-5xl font-black text-[#878787] select-none leading-none">
                       2
-                    </div>
+                    </span>
                   </div>
                   <h3 className="text-lg font-bold text-[#111827] mb-2">
                     Website &amp; Contact Audit
@@ -987,9 +987,9 @@ export default function LandingPage({ initialLoginOpen = false }: LandingPagePro
                     <div className="w-12 h-12 rounded-2xl bg-sky-50 border border-sky-100 text-[#0284C7] flex items-center justify-center text-xl shadow-xs group-hover:scale-105 transition-transform">
                       <SendOutlined />
                     </div>
-                    <div className="w-12 h-12 rounded-2xl border border-gray-200/90 bg-gray-50/60 text-[#878787] flex items-center justify-center text-xl font-bold select-none">
+                    <span className="text-4xl sm:text-5xl font-black text-[#878787] select-none leading-none">
                       3
-                    </div>
+                    </span>
                   </div>
                   <h3 className="text-lg font-bold text-[#111827] mb-2">
                     Export &amp; Close Deals
