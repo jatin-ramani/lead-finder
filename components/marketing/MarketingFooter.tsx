@@ -15,7 +15,7 @@ export default function MarketingFooter({ onOpenLogin, className = '' }: Marketi
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-10 md:gap-16">
           {/* Left Column: Brand & Description */}
           <div className="max-w-md space-y-4">
-            <div className="w-[125px] h-[30px] lg:w-[190px] lg:h-[45px] flex items-center justify-between shrink-0 select-none">
+            <div className="h-[30px] lg:h-[45px] flex items-center gap-2 lg:gap-2.5 shrink-0 select-none">
               <div className="h-[30px] w-[30px] lg:h-[45px] lg:w-[45px] shrink-0 flex items-center justify-center rounded-full bg-white shadow-md p-0.5 lg:p-1 overflow-hidden">
                 <img
                   src="/logo/logo.svg"
@@ -25,7 +25,7 @@ export default function MarketingFooter({ onOpenLogin, className = '' }: Marketi
                   className="h-full w-full object-contain"
                 />
               </div>
-              <span className="text-[25px] lg:text-[38px] font-black tracking-tight !text-white select-none leading-none">
+              <span className="text-[22px] lg:text-[34px] font-black tracking-tight !text-white select-none leading-none">
                 FindB
               </span>
             </div>
