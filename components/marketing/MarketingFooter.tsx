@@ -4,11 +4,12 @@ import Link from 'next/link';
 
 interface MarketingFooterProps {
   onOpenLogin: () => void;
+  className?: string;
 }
 
-export default function MarketingFooter({ onOpenLogin }: MarketingFooterProps) {
+export default function MarketingFooter({ onOpenLogin, className = '' }: MarketingFooterProps) {
   return (
-    <footer className="w-full bg-[#F9FAFB] lg:bg-white pt-0 pb-0 lg:pt-14 lg:pb-12 lg:px-6 xl:px-12 transition-all">
+    <footer className={`w-full bg-[#F9FAFB] pt-0 pb-8 sm:pb-10 lg:pt-0 lg:pb-12 lg:px-6 xl:px-12 transition-all ${className}`}>
       <div className="w-full mx-auto max-w-7xl rounded-none lg:rounded-[36px] bg-[#0B1B2F] px-5 sm:px-8 lg:px-14 xl:px-16 py-10 sm:py-12 lg:py-14 shadow-none lg:shadow-2xl !text-white border-0 lg:border border-slate-800/80">
         {/* Top Row: Brand Info + Navigation Columns */}
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-10 md:gap-16">

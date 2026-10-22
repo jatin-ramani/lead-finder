@@ -1107,7 +1107,7 @@ export default function LandingPage({ initialLoginOpen = false }: LandingPagePro
         </section>
 
         {/* 6. Frequently Asked Questions Section (Alternating Shade: Light Gray / #F9FAFB) */}
-        <section className="w-full bg-[#F9FAFB] py-14 sm:py-20 lg:py-28 border-t border-gray-100">
+        <section className="w-full bg-[#F9FAFB] pt-14 sm:pt-20 lg:pt-24 pb-6 sm:pb-8 lg:pb-10 border-t border-gray-100">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center">
             <h2 className="text-2xl sm:text-4xl lg:text-[40px] font-bold text-[#111827] tracking-tight leading-tight">
               Frequently Asked Questions
