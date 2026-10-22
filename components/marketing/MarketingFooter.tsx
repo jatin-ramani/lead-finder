@@ -22,7 +22,7 @@ export default function MarketingFooter({ onOpenLogin, className = '' }: Marketi
                   alt="FindB Logo"
                   width={40}
                   height={40}
-                  className="h-full w-full object-contain"
+                  className="h-full w-full object-contain mt-[3px]"
                 />
               </div>
               <span className="text-[22px] lg:text-[34px] font-black tracking-tight !text-white select-none leading-none">
