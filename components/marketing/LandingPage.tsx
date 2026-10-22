@@ -160,11 +160,11 @@ export default function LandingPage({ initialLoginOpen = false }: LandingPagePro
   const router = useRouter();
   const { isAuthenticated } = useAuth();
   const [isLoginOpen, setIsLoginOpen] = useState(initialLoginOpen);
-  const [category, setCategory] = useState('Dentists');
+  const [category, setCategory] = useState('Restaurants');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const locationInputRef = useRef<HTMLInputElement>(null);
-  const [location, setLocation] = useState('Austin, TX');
+  const [location, setLocation] = useState('');
   const [selectedDuration, setSelectedDuration] = useState<number>(1);
   const [isDraggingDuration, setIsDraggingDuration] = useState(false);
   const [dragPercent, setDragPercent] = useState<number | null>(null);
@@ -460,7 +460,7 @@ export default function LandingPage({ initialLoginOpen = false }: LandingPagePro
                   <input
                     ref={locationInputRef}
                     type="text"
-                    placeholder="City or Area (e.g. Austin, TX)"
+                    placeholder="City or Area (e.g. New York, NY)"
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
                     style={{ outline: 'none', border: 'none', boxShadow: 'none' }}
@@ -557,7 +557,7 @@ export default function LandingPage({ initialLoginOpen = false }: LandingPagePro
                       <div>
                         <span className="text-sm font-black tracking-tight text-slate-900 leading-none block">FindB</span>
                         <div className="text-[9.5px] text-slate-500 font-semibold mt-0.5 truncate max-w-[130px]">
-                          {location || 'Austin, TX'} &middot; {category}
+                          {location || 'New York, NY'} &middot; {category}
                         </div>
                       </div>
                     </div>
@@ -708,7 +708,7 @@ export default function LandingPage({ initialLoginOpen = false }: LandingPagePro
                     <span className="text-sm font-black tracking-tight text-slate-900">142 Leads Discovered!</span>
                   </div>
                   <p className="mt-2 text-xs font-medium text-slate-700 leading-snug">
-                    {location || 'Austin, TX'} &middot; <span className="font-bold text-rose-600">87 Without Website</span> &middot; <span className="font-bold text-emerald-600">94 Verified Emails</span> ready for outreach.
+                    {location || 'New York, NY'} &middot; <span className="font-bold text-rose-600">87 Without Website</span> &middot; <span className="font-bold text-emerald-600">94 Verified Emails</span> ready for outreach.
                   </p>
                   <div className="mt-2.5 text-right">
                     <button
@@ -942,7 +942,7 @@ export default function LandingPage({ initialLoginOpen = false }: LandingPagePro
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 text-left max-w-2xl lg:max-w-none mx-auto">
               {/* Step 1 */}
               <div className="group rounded-3xl bg-white p-6 sm:p-8 border border-gray-200/80 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.05)] hover:shadow-[0_12px_28px_-6px_rgba(79,70,229,0.12)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden flex flex-col justify-between">
-                <span className="absolute top-5 right-6 text-2xl sm:text-3xl font-extrabold text-slate-200 group-hover:text-indigo-200/80 transition-colors select-none">
+                <span className="absolute top-4 sm:top-5 right-5 sm:right-6 text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900/50 select-none pointer-events-none transition-opacity">
                   1
                 </span>
                 <div>
@@ -960,7 +960,7 @@ export default function LandingPage({ initialLoginOpen = false }: LandingPagePro
 
               {/* Step 2 */}
               <div className="group rounded-3xl bg-white p-6 sm:p-8 border border-gray-200/80 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.05)] hover:shadow-[0_12px_28px_-6px_rgba(124,58,237,0.12)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden flex flex-col justify-between">
-                <span className="absolute top-5 right-6 text-2xl sm:text-3xl font-extrabold text-slate-200 group-hover:text-violet-100/70 transition-colors select-none">
+                <span className="absolute top-4 sm:top-5 right-5 sm:right-6 text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900/50 select-none pointer-events-none transition-opacity">
                   2
                 </span>
                 <div>
@@ -978,7 +978,7 @@ export default function LandingPage({ initialLoginOpen = false }: LandingPagePro
 
               {/* Step 3 */}
               <div className="group rounded-3xl bg-white p-6 sm:p-8 border border-gray-200/80 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.05)] hover:shadow-[0_12px_28px_-6px_rgba(2,132,199,0.12)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden flex flex-col justify-between">
-                <span className="absolute top-5 right-6 text-2xl sm:text-3xl font-extrabold text-slate-200 group-hover:text-sky-100/70 transition-colors select-none">
+                <span className="absolute top-4 sm:top-5 right-5 sm:right-6 text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900/50 select-none pointer-events-none transition-opacity">
                   3
                 </span>
                 <div>
