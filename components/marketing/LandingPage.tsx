@@ -943,13 +943,13 @@ export default function LandingPage({ initialLoginOpen = false }: LandingPagePro
               {/* Step 1 */}
               <div className="group rounded-3xl bg-white p-6 sm:p-8 border border-gray-200/80 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.05)] hover:shadow-[0_12px_28px_-6px_rgba(79,70,229,0.12)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden flex flex-col justify-between">
                 <div>
-                  <div className="flex items-center gap-3.5 mb-6">
+                  <div className="flex items-center justify-between mb-6">
                     <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 text-[#4F46E5] flex items-center justify-center text-xl shadow-xs group-hover:scale-105 transition-transform">
                       <SearchOutlined />
                     </div>
-                    <span className="text-2xl sm:text-3xl font-extrabold text-slate-400 select-none">
+                    <div className="w-12 h-12 rounded-2xl border border-gray-200/90 bg-gray-50/60 text-[#878787] flex items-center justify-center text-xl font-bold select-none">
                       1
-                    </span>
+                    </div>
                   </div>
                   <h3 className="text-lg font-bold text-[#111827] mb-2">
                     Target Any City &amp; Niche
@@ -963,13 +963,13 @@ export default function LandingPage({ initialLoginOpen = false }: LandingPagePro
               {/* Step 2 */}
               <div className="group rounded-3xl bg-white p-6 sm:p-8 border border-gray-200/80 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.05)] hover:shadow-[0_12px_28px_-6px_rgba(124,58,237,0.12)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden flex flex-col justify-between">
                 <div>
-                  <div className="flex items-center gap-3.5 mb-6">
+                  <div className="flex items-center justify-between mb-6">
                     <div className="w-12 h-12 rounded-2xl bg-violet-50 border border-violet-100 text-[#7C3AED] flex items-center justify-center text-xl shadow-xs group-hover:scale-105 transition-transform">
                       <SafetyCertificateOutlined />
                     </div>
-                    <span className="text-2xl sm:text-3xl font-extrabold text-slate-400 select-none">
+                    <div className="w-12 h-12 rounded-2xl border border-gray-200/90 bg-gray-50/60 text-[#878787] flex items-center justify-center text-xl font-bold select-none">
                       2
-                    </span>
+                    </div>
                   </div>
                   <h3 className="text-lg font-bold text-[#111827] mb-2">
                     Website &amp; Contact Audit
@@ -983,13 +983,13 @@ export default function LandingPage({ initialLoginOpen = false }: LandingPagePro
               {/* Step 3 */}
               <div className="group rounded-3xl bg-white p-6 sm:p-8 border border-gray-200/80 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.05)] hover:shadow-[0_12px_28px_-6px_rgba(2,132,199,0.12)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden flex flex-col justify-between">
                 <div>
-                  <div className="flex items-center gap-3.5 mb-6">
+                  <div className="flex items-center justify-between mb-6">
                     <div className="w-12 h-12 rounded-2xl bg-sky-50 border border-sky-100 text-[#0284C7] flex items-center justify-center text-xl shadow-xs group-hover:scale-105 transition-transform">
                       <SendOutlined />
                     </div>
-                    <span className="text-2xl sm:text-3xl font-extrabold text-slate-400 select-none">
+                    <div className="w-12 h-12 rounded-2xl border border-gray-200/90 bg-gray-50/60 text-[#878787] flex items-center justify-center text-xl font-bold select-none">
                       3
-                    </span>
+                    </div>
                   </div>
                   <h3 className="text-lg font-bold text-[#111827] mb-2">
                     Export &amp; Close Deals
