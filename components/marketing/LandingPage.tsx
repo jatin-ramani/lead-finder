@@ -332,12 +332,12 @@ export default function LandingPage({ initialLoginOpen = false }: LandingPagePro
         >
           <defs>
             <linearGradient id="lfHeroSharpGradient" x1="0%" y1="35%" x2="100%" y2="5%">
-              <stop offset="0%" stopColor="var(--lf-hero-stop-1, #4e46f6)" />
-              <stop offset="22%" stopColor="var(--lf-hero-stop-2, #7032ea)" />
-              <stop offset="50%" stopColor="var(--lf-hero-stop-3, #b625d9)" />
-              <stop offset="75%" stopColor="var(--lf-hero-stop-4, #ed368d)" />
-              <stop offset="90%" stopColor="var(--lf-hero-stop-5, #f66c7a)" />
-              <stop offset="100%" stopColor="var(--lf-hero-stop-6, #f99e94)" />
+              <stop offset="0%" stopColor="var(--lf-hero-stop-1, #503BF6)" />
+              <stop offset="20%" stopColor="var(--lf-hero-stop-2, #6E37EE)" />
+              <stop offset="40%" stopColor="var(--lf-hero-stop-3, #8E34E9)" />
+              <stop offset="65%" stopColor="var(--lf-hero-stop-4, #B72DE0)" />
+              <stop offset="85%" stopColor="var(--lf-hero-stop-5, #D83EA8)" />
+              <stop offset="100%" stopColor="var(--lf-hero-stop-6, #EE4B7B)" />
             </linearGradient>
           </defs>
           <path

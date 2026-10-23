@@ -22,7 +22,7 @@ interface HeaderProps {
 export default function Header({ onOpenMobileNav }: HeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
 
   const page = useMemo(() => activeNavItem(pathname), [pathname]);
@@ -99,23 +99,24 @@ export default function Header({ onOpenMobileNav }: HeaderProps) {
           {/* Divider */}
           <div className="my-auto hidden h-6 w-px bg-[var(--lf-border)] sm:block" />
 
-          {/* Reference User Profile Card */}
+          {/* User Profile Card */}
           <div className="flex items-center gap-1.5 sm:gap-2.5 pl-0.5 sm:pl-1">
             <Avatar
+              src={user?.avatar_url}
               size={{ xs: 30, sm: 36, md: 38 }}
               className="lf-header-avatar shrink-0 bg-[var(--lf-brand)] text-xs font-bold text-[var(--lf-on-brand)] shadow-[var(--lf-shadow-xs)] sm:text-sm"
             >
-              AD
+              {(user?.full_name || user?.email || "U").slice(0, 2).toUpperCase()}
             </Avatar>
-            <div className="hidden md:block text-left min-w-0">
+            <div className="hidden md:block text-left min-w-0 max-w-[140px]">
               <div className="truncate text-xs font-bold leading-tight text-[var(--lf-text)]">
-                Administrator
+                {user?.full_name || "Lead Finder"}
               </div>
               <div className="truncate text-[11px] font-medium text-[var(--lf-text-muted)]">
-                Secure session
+                {user?.email || "Active session"}
               </div>
             </div>
-            <Tooltip title="Sign out of admin session">
+            <Tooltip title="Sign out">
               <Button
                 type="text"
                 size="small"

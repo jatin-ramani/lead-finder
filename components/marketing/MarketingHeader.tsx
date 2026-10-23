@@ -203,25 +203,28 @@ export default function MarketingHeader({
           </div>
         </div>
 
-        {/* Mobile Gradient Floating Dropdown Menu (Tracelo Style) */}
+        {/* Mobile Gradient Floating Dropdown Menu (Synchronized Brand Gradient) */}
         {mobileMenuOpen && (
           <div
             ref={mobileMenuRef}
-            className="lg:hidden absolute right-4 sm:right-8 top-[calc(100%+8px)] w-[230px] sm:w-[250px] z-50 text-white animate-in fade-in zoom-in-95 duration-150"
+            className="lf-mobile-menu lg:hidden absolute right-4 sm:right-8 top-[calc(100%+8px)] w-[230px] sm:w-[250px] z-50 text-white animate-in fade-in zoom-in-95 duration-150"
             style={{
-              background: 'linear-gradient(135deg, #DE4787 0%, #B139BE 45%, #6E5AEB 100%)',
+              background: 'linear-gradient(135deg, #503BF6 0%, #8335EA 35%, #B72DE0 65%, #EE4B7B 100%)',
               borderRadius: '20px',
-              boxShadow: '0 16px 40px rgba(0,0,0,0.3)',
+              boxShadow: '0 20px 45px -8px rgba(80, 59, 246, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.2) inset',
               padding: '16px',
+              border: '1px solid rgba(255, 255, 255, 0.25)',
+              backdropFilter: 'blur(20px)',
             }}
           >
-            <ul className="space-y-1 list-none p-0 m-0 text-left">
+            <ul className="space-y-1.5 list-none p-0 m-0 text-left">
               <li>
                 <Link
                   href="/faq"
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`block px-3 py-2 text-white font-medium text-sm rounded-xl transition-colors no-underline ${
-                    activePath === '/faq' ? 'bg-white/20 font-bold' : 'hover:bg-white/15'
+                  style={{ color: '#ffffff' }}
+                  className={`block px-3.5 py-2.5 !text-white font-semibold text-sm rounded-xl transition-all no-underline ${
+                    activePath === '/faq' ? 'bg-white/25 font-bold shadow-xs' : 'hover:bg-white/18'
                   }`}
                 >
                   F.A.Q
@@ -231,8 +234,9 @@ export default function MarketingHeader({
                 <Link
                   href="/pricing"
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`block px-3 py-2 text-white font-medium text-sm rounded-xl transition-colors no-underline ${
-                    activePath === '/pricing' ? 'bg-white/20 font-bold' : 'hover:bg-white/15'
+                  style={{ color: '#ffffff' }}
+                  className={`block px-3.5 py-2.5 !text-white font-semibold text-sm rounded-xl transition-all no-underline ${
+                    activePath === '/pricing' ? 'bg-white/25 font-bold shadow-xs' : 'hover:bg-white/18'
                   }`}
                 >
                   Pricing
@@ -242,8 +246,9 @@ export default function MarketingHeader({
                 <Link
                   href="/contact"
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`block px-3 py-2 text-white font-medium text-sm rounded-xl transition-colors no-underline ${
-                    activePath === '/contact' ? 'bg-white/20 font-bold' : 'hover:bg-white/15'
+                  style={{ color: '#ffffff' }}
+                  className={`block px-3.5 py-2.5 !text-white font-semibold text-sm rounded-xl transition-all no-underline ${
+                    activePath === '/contact' ? 'bg-white/25 font-bold shadow-xs' : 'hover:bg-white/18'
                   }`}
                 >
                   Contact Us
@@ -253,8 +258,9 @@ export default function MarketingHeader({
                 <Link
                   href="/cancel-subscription"
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`block px-3 py-2 text-white font-medium text-sm rounded-xl transition-colors no-underline ${
-                    activePath === '/cancel-subscription' ? 'bg-white/20 font-bold' : 'hover:bg-white/15'
+                  style={{ color: '#ffffff' }}
+                  className={`block px-3.5 py-2.5 !text-white font-semibold text-sm rounded-xl transition-all no-underline ${
+                    activePath === '/cancel-subscription' ? 'bg-white/25 font-bold shadow-xs' : 'hover:bg-white/18'
                   }`}
                 >
                   Cancel Subscription
@@ -265,7 +271,8 @@ export default function MarketingHeader({
                   <Link
                     href="/dashboard"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="cursor-pointer w-full flex items-center justify-center gap-2 py-2 px-3 rounded-full border border-white text-white font-bold text-xs hover:bg-white hover:text-[#503BF6] transition-all shadow-xs no-underline"
+                    style={{ color: '#ffffff' }}
+                    className="cursor-pointer w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-full border border-white/90 bg-white/10 !text-white font-bold text-xs hover:bg-white hover:!text-[#503BF6] transition-all shadow-xs no-underline"
                   >
                     <svg className="h-3.5 w-3.5 fill-current" viewBox="0 0 16 16">
                       <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5v-3zm8 0A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5v-3zm-8 8A1.5 1.5 0 0 1 2.5 9h3A1.5 1.5 0 0 1 7 10.5v3A1.5 1.5 0 0 1 5.5 15h-3A1.5 1.5 0 0 1 1 13.5v-3zm8 0A1.5 1.5 0 0 1 10.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 13.5v-3z"/>
@@ -279,7 +286,8 @@ export default function MarketingHeader({
                       setMobileMenuOpen(false);
                       onOpenLogin();
                     }}
-                    className="cursor-pointer w-full flex items-center justify-center gap-2 py-2 px-3 rounded-full border border-white text-white font-bold text-xs hover:bg-white hover:text-[#503BF6] transition-all shadow-xs"
+                    style={{ color: '#ffffff' }}
+                    className="cursor-pointer w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-full border border-white/90 bg-white/10 !text-white font-bold text-xs hover:bg-white hover:!text-[#503BF6] transition-all shadow-xs"
                   >
                     <svg
                       stroke="currentColor"

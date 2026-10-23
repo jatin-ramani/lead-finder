@@ -9,7 +9,7 @@ interface MarketingFooterProps {
 
 export default function MarketingFooter({ onOpenLogin, className = '' }: MarketingFooterProps) {
   return (
-    <footer className={`w-full bg-[#F9FAFB] pt-6 pb-8 sm:pb-10 lg:pt-6 lg:pb-12 lg:px-6 xl:px-12 transition-all ${className}`}>
+    <footer className={`w-full bg-[#0B1B2F] lg:bg-[#F9FAFB] pt-0 lg:pt-6 pb-0 lg:pb-12 lg:px-6 xl:px-12 transition-all ${className}`}>
       <div className="w-full mx-auto max-w-7xl rounded-none lg:rounded-[36px] bg-[#0B1B2F] px-5 sm:px-8 lg:px-14 xl:px-16 py-10 sm:py-12 lg:py-14 shadow-none lg:shadow-2xl !text-white border-0 lg:border border-slate-800/80">
         {/* Top Row: Brand Info + Navigation Columns */}
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-10 md:gap-16">
@@ -104,15 +104,15 @@ export default function MarketingFooter({ onOpenLogin, className = '' }: Marketi
             <div>FindB Technologies LLC &middot; All rights reserved</div>
           </div>
           <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-            <Link href="/pricing" className="!text-slate-400 hover:!text-white transition-colors">
+            <Link href="/cookies-policy" className="!text-slate-400 hover:!text-white transition-colors">
               Cookies Policy
             </Link>
             <span className="!text-white/20">|</span>
-            <Link href="/pricing" className="!text-slate-400 hover:!text-white transition-colors">
+            <Link href="/privacy-policy" className="!text-slate-400 hover:!text-white transition-colors">
               Privacy Policy
             </Link>
             <span className="!text-white/20">|</span>
-            <Link href="/pricing" className="!text-slate-400 hover:!text-white transition-colors">
+            <Link href="/terms-and-conditions" className="!text-slate-400 hover:!text-white transition-colors">
               Terms and Conditions
             </Link>
           </div>
